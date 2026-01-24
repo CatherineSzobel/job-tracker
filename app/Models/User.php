@@ -33,4 +33,8 @@ class User extends Authenticatable
         return $this->hasMany(JobApplication::class);
     }
 
+    public function links()
+    {
+        return $this->hasMany(Link::class);
+    }
 }

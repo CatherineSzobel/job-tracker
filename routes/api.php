@@ -16,7 +16,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return response()->json($request->user() ?? null);
 });
 
-
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/job-applications', [JobApplicationController::class, 'index']);
@@ -31,4 +30,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/interviews/{id}', [InterviewController::class, 'update']);
     Route::delete('/interviews/{id}', [InterviewController::class, 'destroy']);
 
+    Route::get('/links', [LinkController::class, 'index']);
+    Route::post('/links', [LinkController::class, 'store']);
+    Route::delete('/links/{id}', [LinkController::class, 'destroy']);
+
+    Route::get('/todos', [TodoController::class, 'index']);
+    Route::post('/todos', [TodoController::class, 'store']);
+    Route::put('/todos/{id}', [TodoController::class, 'update']);
+    Route::delete('/todos/{id}', [TodoController::class, 'destroy']);
 });

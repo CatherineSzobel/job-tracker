@@ -30,6 +30,10 @@ function App() {
           <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
           <Route path="/interviews" element={<ProtectedRoute><Interviews /></ProtectedRoute>} />
           <Route path="/jobs/:id" element={<ProtectedRoute><Application /></ProtectedRoute>} />
+          <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/links" element={<ProtectedRoute><Links /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
           {/* Catch-all */}
           <Route path="*" element={<p className="text-center mt-10">Page not found</p>} />
@@ -40,3 +44,5 @@ function App() {
 }
 
 export default App;
+
+
