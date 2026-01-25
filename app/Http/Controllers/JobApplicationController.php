@@ -19,9 +19,11 @@ class JobApplicationController extends Controller
             return response()->json([], 200);
         }
 
-        $query = $request->user()->jobApplications()
-            ->where('is_archived', false)
-            ->where('user_id', $user->id);
+        $query = $user->jobApplications();
+
+        $request->has('archived') && $request->boolean('archived')
+            ? $query->where('is_archived', true) : $query->where('is_archived', false);
+
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -37,7 +39,6 @@ class JobApplicationController extends Controller
 
         return $query->with('interviews')->get();
     }
-
 
     public function store(Request $request)
     {
@@ -67,6 +68,7 @@ class JobApplicationController extends Controller
 
         $data = $request->validate([
             'status' => 'sometimes|string|in:applied,interview,offer,rejected',
+            'is_archived' => 'sometimes|boolean',
         ]);
 
         $job->update($data);

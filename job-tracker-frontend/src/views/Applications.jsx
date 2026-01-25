@@ -1,10 +1,12 @@
 // src/views/Applications.jsx
 import { useState, useEffect } from "react";
-import JobCard from "../components/JobApplications/JobCard";
+import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
+import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
 
 export default function Applications() {
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -18,7 +20,6 @@ export default function Applications() {
   const [saving, setSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
-
 
   // Fetch jobs
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function Applications() {
 
     try {
       const res = await API.post("/job-applications", newJob);
-      setJobs([res.data.data, ...jobs]); // prepend new job
+      setJobs([res.data.data, ...jobs]);
       setShowForm(false);
       setNewJob({
         position: "",
@@ -74,15 +75,28 @@ export default function Applications() {
 
   return (
     <div className="max-w-4xl mx-auto mt-10 flex flex-col gap-4">
+      
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Job Applications ({jobs.length})</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-        >
-          + Add Application
-        </button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
+
+        <h1 className="text-2xl font-bold">
+          Job Applications ({jobs.length})
+        </h1>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          >
+            + Add Application
+          </button>
+          <button
+            onClick={() => navigate("/archives")}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          >
+            Archives
+          </button>
+        </div>
       </div>
 
       {/* Modal */}
@@ -128,7 +142,6 @@ export default function Applications() {
         </div>
       </div>
 
-
       {/* Job Cards */}
       {filteredJobs.length === 0 ? (
         <p className="text-center text-gray-500">
@@ -136,7 +149,10 @@ export default function Applications() {
         </p>
       ) : (
         filteredJobs.map(job => (
-          <JobCard key={job.id} job={job} />
+          <JobCard
+            key={job.id} job={job}
+            onArchive={(id) =>
+              setJobs(prev => prev.filter(job => job.id !== id))} />
         ))
       )}
 

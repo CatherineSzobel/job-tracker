@@ -16,6 +16,7 @@ export default function Dashboard() {
         const jobs = res.data;
         const summary = {
           total: jobs.length,
+          archived: jobs.filter(j => j.archived).length,
           applied: jobs.filter(j => j.status === "applied").length,
           interview: jobs.filter(j => j.status === "interview").length,
           offer: jobs.filter(j => j.status === "offer").length,
@@ -52,6 +53,9 @@ export default function Dashboard() {
           <div className="p-4 bg-white rounded shadow">
             <p className="font-semibold mb-2">Total Applications</p>
             <p className="text-xl">{stats.total}</p>
+
+            <p className="font-semibold mb-2">Archived Applications</p>
+            <p className="text-xl">{stats.todayApplications}</p>
           </div>
 
           <div className="p-4 bg-white rounded shadow">

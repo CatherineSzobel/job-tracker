@@ -1,11 +1,11 @@
 // src/views/Application.jsx
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams,useNavigate } from "react-router-dom";
 import API from "../api/axios";
 
 export default function Application() {
+  const navigate = useNavigate();
   const { id } = useParams();
-
   const [job, setJob] = useState(null);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,17 @@ export default function Application() {
       setSaving(false);
     }
   };
+  const deleteJob = async () => {
+    if (!window.confirm("Delete this job application?")) return;
 
+    try {
+      await API.delete(`/job-applications/${job.id}`);
+      navigate("/applications");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete job");
+    }
+  };
   if (loading) return <p className="text-center mt-10">Loading...</p>;
   if (!job) return <p className="text-center mt-10">Not found</p>;
 
@@ -82,26 +92,14 @@ export default function Application() {
           {editing ? (saving ? "Saving..." : "Save changes") : "Edit"}
         </button>
         <button
-          onClick={async () => {
-            if (!window.confirm("Delete this job application?")) return;
-
-            try {
-              await API.delete(`/job-applications/${job.id}`);
-              window.location.reload();
-            } catch (err) {
-              console.error(err);
-              alert("Failed to delete job");
-            }
-          }}
-          className="text-xs text-red-600 hover:text-red-800 transition"
+          onClick={deleteJob}
+          className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
         >
           Delete
         </button>
 
       </div>
 
-
-      {/* Body */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[
           {
@@ -166,7 +164,6 @@ export default function Application() {
         ))}
       </div>
 
-
       {/* Notes */}
       <div className="bg-white rounded-2xl shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-4">Notes</h2>
@@ -187,8 +184,6 @@ export default function Application() {
         )}
       </div>
 
-
-      {/* Interviews */}
       <div className="bg-white rounded-2xl shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-4">Interviews</h2>
 

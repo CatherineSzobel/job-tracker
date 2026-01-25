@@ -21,8 +21,8 @@ class JobApplicationSeeder extends Seeder
             ]
         );
 
-        // Each user has 5–10 job applications
-        for ($i = 0; $i < rand(5, 10); $i++) {
+        // Each user has 20–30 job applications
+        for ($i = 0; $i < rand(20, 30); $i++) {
             $job = JobApplication::create([
                 'user_id' => $user->id,
                 'company_name' => $faker->company,

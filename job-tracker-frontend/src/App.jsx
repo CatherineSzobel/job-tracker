@@ -14,6 +14,7 @@ import Profile from "./views/Profile";
 import Links from "./views/Links";
 import Settings from "./views/Settings";
 import Application from "./views/Application";
+import Archive from "./views/Archive";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/links" element={<ProtectedRoute><Links /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/archives" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
 
           {/* Catch-all */}
           <Route path="*" element={<p className="text-center mt-10">Page not found</p>} />
