@@ -42,7 +42,7 @@ export default function JobCard({ job }) {
 
       <div className="absolute top-2 right-2 flex gap-2">
 
-       
+
         <button
           onClick={() => setExpanded(!expanded)}
           className="text-xs text-blue-600 hover:text-blue-800 transition"
@@ -63,7 +63,7 @@ export default function JobCard({ job }) {
             onClick={() => navigate(`/jobs/${job.id}`)}
             className="hover:underline cursor-pointer"
           >
-            {job.position}
+            {job.position} - {job.company_name}
           </span>
         </h2>
 
@@ -74,7 +74,7 @@ export default function JobCard({ job }) {
               const newStatus = e.target.value;
               try {
                 await API.put(`/job-applications/${localJob.id}`, { status: newStatus });
-                setLocalJob(prev => ({ ...prev, status: newStatus })); 
+                setLocalJob(prev => ({ ...prev, status: newStatus }));
               } catch (err) {
                 console.error(err);
                 alert("Failed to update status");
@@ -87,9 +87,11 @@ export default function JobCard({ job }) {
             <option value="offer">Offer</option>
             <option value="rejected">Rejected</option>
           </select>
-
+          <span>Location: <strong>{job.location}</strong></span>
+          <span>Application Link: <strong><a href={job.job_link}> {job.job_link}</a></strong> </span>
+          <span>Application Date: <strong>{job.applied_date}</strong></span>
           <span>Priority: <strong>{job.priority}</strong></span>
-          <span>Applied: <strong>{job.applied_date}</strong></span>
+          <span>Notes: <strong>{job.notes}</strong></span>
         </div>
       </div>
 

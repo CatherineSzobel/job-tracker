@@ -16,7 +16,8 @@ class JobApplication extends Model
         'priority',
         'applied_date',
         'job_link',
-        'description'
+        'notes',
+        'is_archived'
     ];
 
     public function user()

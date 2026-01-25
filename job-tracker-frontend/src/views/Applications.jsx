@@ -45,9 +45,12 @@ export default function Applications() {
       setNewJob({
         position: "",
         company_name: "",
+        location: "",
         status: "applied",
         priority: "medium",
-        applied_date: "",
+        notes: "",
+        job_link: ""
+
       });
     } catch (err) {
       console.error(err);

@@ -19,7 +19,9 @@ class JobApplicationController extends Controller
             return response()->json([], 200);
         }
 
-        $query = $request->user()->jobApplications();
+        $query = $request->user()->jobApplications()
+            ->where('is_archived', false)
+            ->where('user_id', $user->id);
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -46,12 +48,11 @@ class JobApplicationController extends Controller
             'location' => 'nullable|string|max:255',
             'status' => 'sometimes|string|in:applied,interviewing,offered,rejected',
             'priority' => 'nullable|string|max:50',
-            'applied_date' => 'nullable|date',
             'job_link' => 'nullable|url',
             'description' => 'nullable|string',
             'notes' => 'nullable|string'
         ]);
-
+        $validated['applied_date'] = now()->toDateString();
         $job = $request->user()->jobApplications()->create($validated);
 
         return response()->json([

@@ -19,6 +19,15 @@ export default function JobForm({ setShowForm, newJob, setNewJob, saving, handle
                 className="border rounded px-3 py-2 w-full"
                 required
             />
+            <input
+                type="text"
+                name="location"
+                placeholder="Location"
+                value={newJob.location}
+                onChange={handleChange}
+                className="border rounded px-3 py-2 w-full"
+                required
+            />
             <select
                 name="status"
                 value={newJob.status}
@@ -41,14 +50,21 @@ export default function JobForm({ setShowForm, newJob, setNewJob, saving, handle
                 <option value="high">High</option>
             </select>
             <input
-                type="date"
-                name="applied_date"
-                value={newJob.applied_date}
+                type="text"
+                name="notes"
+                placeholder="Notes"
+                value={newJob.notes}
                 onChange={handleChange}
                 className="border rounded px-3 py-2 w-full"
-                required
             />
-
+            <input
+                type="text"
+                name="job_link"
+                placeholder="Job Link"
+                value={newJob.job_link}
+                onChange={handleChange}
+                className="border rounded px-3 py-2 w-full"
+            />
             <div className="flex justify-end gap-2 mt-2">
                 <button
                     type="button"

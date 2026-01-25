@@ -21,7 +21,8 @@ return new class extends Migration
             $table->string('priority')->default('medium');
             $table->date('applied_date')->nullable();
             $table->string('job_link')->nullable();
-            $table->text('description')->nullable();
+            $table->text('notes')->nullable();
+            $table->boolean('is_archived')->default(false);
             $table->timestamps();
         });
     }

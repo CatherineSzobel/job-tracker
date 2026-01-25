@@ -32,7 +32,8 @@ class JobApplicationSeeder extends Seeder
                 'priority' => $faker->randomElement(['low', 'medium', 'high']),
                 'applied_date' => $faker->dateTimeBetween('-3 months', 'now'),
                 'job_link' => $faker->url,
-                'description' => $faker->sentence,
+                'notes' => $faker->sentence,
+                'is_archived' => false
             ]);
 
             // Add 1–3 notes per job
