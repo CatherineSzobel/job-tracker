@@ -1,13 +1,14 @@
 // src/views/Interviews.jsx
 import { useState, useEffect } from "react";
 import API from "../api/axios";
+import InterviewForm from "../components/Interview/InterviewForm";
+import InterviewList from "../components/Interview/InterviewList";
 
 export default function Interviews() {
   const [interviews, setInterviews] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [editingInterview, setEditingInterview] = useState(null);
 
   const [newInterview, setNewInterview] = useState({
@@ -141,8 +142,6 @@ export default function Interviews() {
     setShowForm(true);
   };
 
-  // Check if interview is past
-  const isPastInterview = (date) => new Date(date) < new Date();
 
   return (
     <div className="max-w-4xl mx-auto mt-10 p-4">
@@ -164,61 +163,13 @@ export default function Interviews() {
       )}
 
       <div className="flex flex-col gap-4">
-        {interviews.map((i) => {
-          const isPast = isPastInterview(i.interview_date);
-          return (
-            <div
-              key={i.id}
-              className="p-4 bg-white rounded shadow hover:shadow-md transition relative"
-            >
-              <div className="absolute top-3 right-3 flex gap-3 text-sm">
-                <button
-                  onClick={() => startEdit(i)}
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteInterview(i.id)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  Delete
-                </button>
-              </div>
-
-              <h3 className="font-semibold text-gray-800">{i.job_title}</h3>
-
-              <div className="mt-2 flex flex-wrap gap-2 items-center text-sm">
-                <span className="px-2 py-1 rounded bg-blue-100 text-blue-700">
-                  {i.type}
-                </span>
-
-                <span className="px-2 py-1 rounded bg-gray-100 text-gray-700">
-                  {new Date(i.interview_date).toLocaleString()}
-                </span>
-
-                <span
-                  className={`px-2 py-1 rounded text-xs ${isPast
-                    ? "bg-red-100 text-red-700"
-                    : "bg-green-100 text-green-700"
-                    }`}
-                >
-                  {isPast ? "Past" : "Upcoming"}
-                </span>
-              </div>
-
-              <p className="mt-2 text-gray-600">
-                <strong>Location:</strong> {i.location || "—"}
-              </p>
-
-              {i.notes && (
-                <p className="mt-1 text-gray-600">
-                  <strong>Notes:</strong> {i.notes}
-                </p>
-              )}
-            </div>
-          );
-        })}
+        {interviews.map((i) => (
+          <InterviewList
+            key={i.id}
+            i={i}
+            startEdit={startEdit}
+            deleteInterview={deleteInterview}></InterviewList>
+        ))}
       </div>
 
       {showForm && (
@@ -227,89 +178,12 @@ export default function Interviews() {
             <h2 className="text-xl font-bold mb-4">
               {editingInterview ? "Edit Interview" : "Add New Interview"}
             </h2>
-
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <select
-                name="job_id"
-                value={newInterview.job_id}
-                onChange={handleChange}
-                className="border rounded px-3 py-2 w-full text-black"
-                required
-                disabled={!!editingInterview}
-              >
-                <option value="">Select Job</option>
-                {jobs.map((job) => (
-                  <option key={job.id} value={job.id}>
-                    {job.company_name} - {job.position}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                name="type"
-                value={newInterview.type}
-                onChange={handleChange}
-                className="border rounded px-3 py-2 w-full"
-                required
-              >
-                <option value="">Select Interview Type</option>
-                <option value="phone">Phone</option>
-                <option value="online">Online</option>
-                <option value="onsite">On-site</option>
-              </select>
-
-              <input
-                type="datetime-local"
-                name="interview_date"
-                value={newInterview.interview_date}
-                onChange={handleChange}
-                className="border rounded px-3 py-2 w-full"
-                required
-              />
-
-              <input
-                type="text"
-                name="location"
-                placeholder="Location"
-                value={newInterview.location}
-                onChange={handleChange}
-                className="border rounded px-3 py-2 w-full"
-                required
-              />
-
-              <textarea
-                name="notes"
-                placeholder="Notes"
-                value={newInterview.notes}
-                onChange={handleChange}
-                className="border rounded px-3 py-2 w-full"
-              />
-
-              <div className="flex justify-end gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingInterview(null);
-                  }}
-                  className="px-4 py-2 rounded border hover:bg-gray-100 transition"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
-                >
-                  {saving
-                    ? "Saving..."
-                    : editingInterview
-                      ? "Update"
-                      : "Add"}
-                </button>
-              </div>
-            </form>
+            <InterviewForm 
+            handleSubmit={handleSubmit} 
+            handleChange={handleChange} 
+            newInterview={newInterview} 
+            jobs={jobs} 
+            editingInterview={editingInterview}></InterviewForm>
           </div>
         </div>
       )}
