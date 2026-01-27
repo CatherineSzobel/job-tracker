@@ -1,61 +1,192 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Job Tracker
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Job Tracker is a modern full-stack web application designed to help job seekers efficiently manage their job applications, interviews, notes, and resources throughout their job search journey.
 
-## About Laravel
+## 🚀 Project Status
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**⚠️ Work In Progress** - Core features are functional, but additional features and refinements are planned. See [Planned Features](#planned-features) for upcoming additions.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 📋 Overview
 
-## Learning Laravel
+Job Tracker helps you:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+* Track all job applications in one central location
+* Schedule and manage interview appointments
+* Keep detailed notes on companies and interviews
+* Maintain a to-do list for job search tasks
+* Organize important links and resources for each application
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Technology Stack
 
-## Laravel Sponsors
+### Backend
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+* **Framework:** Laravel 12 (PHP 8.2+)
+* **Authentication:** Laravel Sanctum (API token-based)
+* **Database:** MySQL/PostgreSQL with Eloquent ORM
+* **Testing:** PHPUnit
+* **Code Quality:** Laravel Pint
 
-### Premium Partners
+### Frontend
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+* **Framework:** React 19 with JSX
+* **Routing:** React Router v7
+* **Styling:** Tailwind CSS v4
+* **Build Tool:** Vite v7
+* **HTTP Client:** Axios
+* **Charting:** Recharts
+* **Date Handling:** date-fns v4
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## ✨ Current Features
 
-## Code of Conduct
+### Core Functionality
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+* **Job Applications:** Track positions with status, priority, dates, and location info
+* **Interviews:** Schedule and manage interview appointments
+* **Notes:** Attach comprehensive notes to applications
+* **To-Do List:** Personal task management
+* **Links:** Store and organize useful resources
 
-## Security Vulnerabilities
+### User Experience
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+* **Dashboard:** Overview of job search progress
+* **Authentication:** User registration, login, and profile management
+* **Archive:** Keep old applications organized
+* **Calendar View:** Visual representation of scheduled interviews
+* **Responsive Design:** Works across desktop and mobile devices
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 📦 Project Structure
+
+```
+job-tracker/
+├── app/                 # Laravel backend
+│   ├── Http/Controllers/  # API controllers
+│   └── Models/           # Database models
+├── database/
+│   ├── migrations/       # Database schema
+│   └── factories/        # Test data factories
+├── routes/               # API routes
+├── job-tracker-frontend/ # React frontend
+│   ├── src/
+│   │   ├── components/  # React components
+│   │   ├── views/       # Page components
+│   │   └── api/         # API integration
+│   └── vite.config.js   # Vite configuration
+└── config/              # Application configuration
+```
+
+---
+
+## ⚙️ Setup & Running
+
+1. **Backend**
+
+```bash
+cd job-tracker
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan db:seed # optional
+php artisan serve
+```
+
+2. **Frontend**
+
+```bash
+cd job-tracker-frontend
+npm install
+npm run dev
+```
+
+Visit `http://localhost:3000` to use the app.
+
+---
+
+## 📋 Database Models
+
+* **User:** Application users with authentication
+* **JobApplication:** Job positions tracked with company, status, and dates
+* **Interview:** Interview scheduling and management
+* **Note:** Detailed notes attached to applications
+* **Todo:** Task list items
+* **Link:** Resource URLs and important links
+
+---
+
+## 🎯 Planned Features
+
+1. **Reminder System ⏰**
+
+   * Automatic reminders for pending applications
+   * Configurable thresholds
+   * notification alerts
+
+2. **Settings Page ⚙️**
+
+   * User preferences and profile customization
+   * Notification and privacy settings
+   * Theme options (light/dark)
+   * Data export/import
+
+3. **Enhanced Links Management 🔗**
+
+   * Store and organize documents like resumes, cover letters, LinkedIn, GitHub, portfolio, certifications
+   * Quick access from job application detail view
+
+**Future Enhancements:**
+
+* Interview preparation resources
+* Batch operations, custom tags, real-time notifications
+* Proper To-Do implementation, currently it is in but nothing is being done with it yet
+* Add proper testing
+* More to be added...
+
+---
+
+## 📝 API Documentation
+
+RESTful API endpoints using Laravel Sanctum for authentication.
+
+**Key Endpoints:**
+
+* `POST /api/auth/register` - Register new user
+* `POST /api/auth/login` - User login
+* `GET /api/job-applications` - List all job applications
+* `POST /api/job-applications` - Create new application
+* `GET /api/interviews` - List interviews
+* `GET /api/notes` - List notes
+* `GET /api/todos` - List to-do items
+* `GET /api/links` - List resource links
+
+---
+
+## 🤝 Contributing
+
+Contributions and suggestions are welcome! You can:
+
+* Report bugs
+* Suggest features
+* Submit pull requests
+
+---
+
+## 📄 License
+
+MIT License. See LICENSE file for details.
+
+---
+
+## 👤 Author
+
+Created as a personal project to streamline job search management.
+
+**Last Updated:** January 2026
+**Current Version:** 0.1.0 (
