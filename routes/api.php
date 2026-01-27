@@ -23,7 +23,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/job-applications/{id}', [JobApplicationController::class, 'show']);
     Route::put('/job-applications/{id}', [JobApplicationController::class, 'update']);
     Route::delete('/job-applications/{id}', [JobApplicationController::class, 'destroy']);
-    Route::post('/job-applications/{id}/notes', [JobApplicationController::class, 'addNote']);
     Route::post('/job-applications/{id}/interviews', [JobApplicationController::class, 'scheduleInterview']);
 
     Route::get('/interviews', [InterviewController::class, 'index']);

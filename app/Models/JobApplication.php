@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Note;
 
 class JobApplication extends Model
 {
@@ -23,11 +22,6 @@ class JobApplication extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function notes()
-    {
-        return $this->hasMany(Note::class);
     }
 
     public function interviews()

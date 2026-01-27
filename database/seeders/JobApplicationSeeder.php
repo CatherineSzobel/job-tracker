@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\JobApplication;
-use App\Models\Note;
 use App\Models\Interview;
 
 class JobApplicationSeeder extends Seeder
@@ -35,15 +34,6 @@ class JobApplicationSeeder extends Seeder
                 'notes' => $faker->sentence,
                 'is_archived' => false
             ]);
-
-            // Add 1–3 notes per job
-            for ($j = 0; $j < rand(1, 3); $j++) {
-                Note::create([
-                    'user_id' => $user->id,
-                    'job_application_id' => $job->id,
-                    'content' => $faker->sentence,
-                ]);
-            }
 
             // Add 0–2 interviews per job
             for ($k = 0; $k < rand(0, 2); $k++) {

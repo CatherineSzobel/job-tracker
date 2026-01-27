@@ -2,10 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\JobApplication;
-use App\Models\Note;
-use App\Models\Interview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -90,7 +87,7 @@ class JobApplicationController extends Controller
 
         $job = $user
             ->jobApplications()
-            ->with(['notes', 'interviews'])
+            ->with(['interviews'])
             ->find($id);
 
         if (!$job) {
@@ -104,37 +101,6 @@ class JobApplicationController extends Controller
             'success' => true,
             'data' => $job
         ]);
-    }
-
-    public function addNote(Request $request, $id)
-    {
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-
-        $job = $user
-            ->jobApplications()
-            ->find($id);
-
-        if (!$job) {
-            return response()->json([
-                'success' => false,
-                'message' => 'JobApplication not found'
-            ], 404);
-        }
-
-        $validated = $request->validate([
-            'content' => 'required|string'
-        ]);
-
-        $note = $job->notes()->create([
-            'user_id' => Auth::id(),
-            'content' => $validated['content']
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'data' => $note
-        ], 201);
     }
 
     public function scheduleInterview(Request $request, $id)
