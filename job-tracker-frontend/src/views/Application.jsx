@@ -1,12 +1,13 @@
 // src/views/Application.jsx
 import { useEffect, useState } from "react";
-import { useParams,useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axios";
 
 export default function Application() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [job, setJob] = useState(null);
+  const [originalJob, setOriginalJob] = useState(null);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -30,6 +31,16 @@ export default function Application() {
     setJob({ ...job, [e.target.name]: e.target.value });
   };
 
+  const startEditing = () => {
+    setOriginalJob(job); // snapshot for cancel
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setJob(originalJob);
+    setEditing(false);
+  };
+
   const saveChanges = async () => {
     setSaving(true);
     try {
@@ -43,6 +54,7 @@ export default function Application() {
       setSaving(false);
     }
   };
+
   const deleteJob = async () => {
     if (!window.confirm("Delete this job application?")) return;
 
@@ -54,9 +66,9 @@ export default function Application() {
       alert("Failed to delete job");
     }
   };
+
   if (loading) return <p className="text-center mt-10">Loading...</p>;
   if (!job) return <p className="text-center mt-10">Not found</p>;
-
 
   return (
     <div className="max-w-4xl mx-auto mt-10 flex flex-col gap-6">
@@ -76,30 +88,52 @@ export default function Application() {
               {job.position}
             </h1>
           )}
-          <span className="text-sm text-gray-500">
-            {job.company_name}
-          </span>
+          {editing ? (
+            <input
+              name="company_name"
+              value={job.company_name}
+              onChange={handleChange}
+              className="text-sm text-gray-500 border rounded-lg px-3 py-1"
+            />
+          ) : (
+            <span className="text-sm text-gray-500">
+              {job.company_name}
+            </span>
+          )}
         </div>
 
-        <button
-          onClick={() => (editing ? saveChanges() : setEditing(true))}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition
-      ${editing
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "border border-gray-300 hover:bg-gray-50"
-            }`}
-        >
-          {editing ? (saving ? "Saving..." : "Save changes") : "Edit"}
-        </button>
-        <button
-          onClick={deleteJob}
-          className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
-        >
-          Delete
-        </button>
+        <div className="flex gap-2">
+          {editing && (
+            <button
+              onClick={cancelEditing}
+              disabled={saving}
+              className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50 transition"
+            >
+              Cancel
+            </button>
+          )}
 
+          <button
+            onClick={() => (editing ? saveChanges() : startEditing())}
+            disabled={saving}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition
+              ${editing
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "border border-gray-300 hover:bg-gray-50"
+              }`}
+          >
+            {editing ? (saving ? "Saving..." : "Save changes") : "Edit"}
+          </button>
+          <button
+            onClick={deleteJob}
+            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
+      {/* Info cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[
           {
@@ -139,15 +173,7 @@ export default function Application() {
           },
           {
             label: "Applied Date",
-            content: editing ? (
-              <input
-                type="date"
-                name="applied_date"
-                value={job.applied_date}
-                onChange={handleChange}
-                className="border rounded-lg px-3 py-2"
-              />
-            ) : (
+            content: (
               <span className="font-medium">{job.applied_date}</span>
             )
           }
@@ -168,36 +194,35 @@ export default function Application() {
       <div className="bg-white rounded-2xl shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-4">Notes</h2>
 
-        {job.notes?.length ? (
-          <ul className="flex flex-col gap-3">
-            {job.notes.map(note => (
-              <li
-                key={note.id}
-                className="border border-gray-200 rounded-xl p-4 text-sm bg-gray-50"
-              >
-                {note.content}
-              </li>
-            ))}
-          </ul>
+        {editing ? (
+          <textarea
+            name="notes"
+            value={job.notes || ""}
+            onChange={handleChange}
+            rows={5}
+            className="w-full border rounded-lg px-3 py-2 resize-none"
+            placeholder="Add notes about this application..."
+          />
+        ) : job.notes ? (
+          <p className="text-gray-700 whitespace-pre-wrap">{job.notes}</p>
         ) : (
           <p className="text-gray-400 text-sm">No notes yet.</p>
         )}
       </div>
 
+      {/* Interviews */}
       <div className="bg-white rounded-2xl shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-4">Interviews</h2>
 
         {job.interviews?.length ? (
           <ul className="flex flex-col gap-4">
-            {job.interviews.map(interview => (
+            {job.interviews.map((interview) => (
               <li
                 key={interview.id}
                 className="flex gap-4 border-l-4 border-blue-500 pl-4"
               >
                 <div>
-                  <p className="font-medium capitalize">
-                    {interview.type}
-                  </p>
+                  <p className="font-medium capitalize">{interview.type}</p>
                   <p className="text-sm text-gray-500">
                     {interview.interview_date}
                   </p>
@@ -214,7 +239,6 @@ export default function Application() {
           </p>
         )}
       </div>
-
     </div>
   );
 }

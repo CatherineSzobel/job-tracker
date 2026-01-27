@@ -66,11 +66,19 @@ class JobApplicationController extends Controller
         $data = $request->validate([
             'status' => 'sometimes|string|in:applied,interview,offer,rejected',
             'is_archived' => 'sometimes|boolean',
+            'priority' => 'sometimes|string|max:50',
+            'notes' => 'sometimes|string|nullable',
+            'location' => 'sometimes|string|max:255',
+            'job_link' => 'sometimes|url|nullable',
+            'company_name' => 'sometimes|string|max:255',
+            'position' => 'sometimes|string|max:255',
         ]);
 
         $job->update($data);
 
-        return response()->json($job);
+        return response()->json([
+            'data' => $job
+        ]);
     }
 
     public function destroy($id)
