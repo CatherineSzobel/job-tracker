@@ -15,6 +15,7 @@ import Links from "./views/Links";
 import Settings from "./views/Settings";
 import Application from "./views/Application";
 import Archive from "./views/Archive";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
           <Route path="*" element={<p className="text-center mt-10">Page not found</p>} />
         </Routes>
       </div>
+      <Footer />
     </>
   );
 }
