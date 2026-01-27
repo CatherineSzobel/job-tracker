@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axios";
+import InterviewCard from "../components/Interview/InterviewCard";
 
 export default function Application() {
   const navigate = useNavigate();
@@ -211,32 +212,31 @@ export default function Application() {
       </div>
 
       {/* Interviews */}
-      <div className="bg-white rounded-2xl shadow-sm p-6">
-        <h2 className="text-lg font-semibold mb-4">Interviews</h2>
-
+      <div className="bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Interviews</h2>
+          <button
+            onClick={() => alert("Add Interview - To be implemented")}
+            className="px-3 py-1.5 text-xs font-medium
+                 bg-blue-600 text-white rounded-lg
+                 hover:bg-blue-700 transition"
+          >
+            + Add Interview
+          </button>
+        </div>
+        {/* Content */}
         {job.interviews?.length ? (
           <ul className="flex flex-col gap-4">
             {job.interviews.map((interview) => (
-              <li
-                key={interview.id}
-                className="flex gap-4 border-l-4 border-blue-500 pl-4"
-              >
-                <div>
-                  <p className="font-medium capitalize">{interview.type}</p>
-                  <p className="text-sm text-gray-500">
-                    {interview.interview_date}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {interview.location}
-                  </p>
-                </div>
+              <li key={interview.id}>
+                <InterviewCard interview={interview} />
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-gray-400 text-sm">
+          <div className="text-sm text-gray-400 italic">
             No interviews scheduled.
-          </p>
+          </div>
         )}
       </div>
     </div>
