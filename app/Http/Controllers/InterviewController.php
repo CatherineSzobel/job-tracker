@@ -32,7 +32,7 @@ class InterviewController extends Controller
             'interview_date' => 'sometimes|date',
             'type' => 'sometimes|string',
             'location' => 'sometimes|string',
-            'notes' => 'sometimes|string',
+            'notes' => 'sometimes|string|nullable',
         ]);
 
         $interview->update($data);

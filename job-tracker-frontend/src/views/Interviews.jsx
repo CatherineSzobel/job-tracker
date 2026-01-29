@@ -10,7 +10,7 @@ export default function Interviews() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingInterview, setEditingInterview] = useState(null);
-
+  const [saving, setSaving] = useState(false);
   const [newInterview, setNewInterview] = useState({
     job_id: "",
     type: "",
@@ -178,12 +178,13 @@ export default function Interviews() {
             <h2 className="text-xl font-bold mb-4">
               {editingInterview ? "Edit Interview" : "Add New Interview"}
             </h2>
-            <InterviewForm 
-            handleSubmit={handleSubmit} 
-            handleChange={handleChange} 
-            newInterview={newInterview} 
-            jobs={jobs} 
-            editingInterview={editingInterview}></InterviewForm>
+            <InterviewForm
+              handleSubmit={handleSubmit}
+              handleChange={handleChange}
+              saving={saving}
+              newInterview={newInterview}
+              jobs={jobs}
+              editingInterview={editingInterview}></InterviewForm>
           </div>
         </div>
       )}

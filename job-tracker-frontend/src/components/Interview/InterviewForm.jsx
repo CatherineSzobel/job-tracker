@@ -1,4 +1,5 @@
-export default function InterviewForm({ handleSubmit, handleChange, newInterview, jobs, editingInterview }) {
+export default function InterviewForm({ handleSubmit, handleChange, saving,newInterview, jobs, editingInterview }) {
+
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <select
