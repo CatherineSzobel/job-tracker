@@ -31,10 +31,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/interviews/{id}', [InterviewController::class, 'update']);
     Route::delete('/interviews/{id}', [InterviewController::class, 'destroy']);
 
-    Route::get('/links', [LinkController::class, 'index']);
-    Route::post('/links', [LinkController::class, 'store']);
-    Route::delete('/links/{id}', [LinkController::class, 'destroy']);
-
     Route::get('/todos', [TodoController::class, 'index']);
     Route::post('/todos', [TodoController::class, 'store']);
     Route::put('/todos/{id}', [TodoController::class, 'update']);
