@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Todo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TodoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return auth()->user()->todos;
+
+        return response()->json(
+            $request->user()->todos()->latest()->get()
+        );
     }
 
     public function store(Request $request)
@@ -19,13 +23,14 @@ class TodoController extends Controller
         ]);
 
         return Todo::create([
-            'user_id' => auth()->id(),
+            'user_id' => request()->user()->id(),
             'text' => $data['text'],
         ]);
     }
 
     public function update(Request $request, Todo $todo)
     {
+        abort_if($todo->user_id !== $request->user()->id(), 403);
 
         $data = $request->validate([
             'text' => 'sometimes|string|max:255',
@@ -36,8 +41,10 @@ class TodoController extends Controller
         return $todo;
     }
 
-    public function destroy(Todo $todo)
+    public function destroy(Request $request, Todo $todo)
     {
+        abort_if($todo->user_id !== $request->user()->id(), 403);
+
         $todo->delete();
         return response()->noContent();
     }

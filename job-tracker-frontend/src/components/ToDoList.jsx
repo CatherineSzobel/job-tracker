@@ -1,21 +1,67 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import API from "../api/axios";
+
 export default function TodoList() {
     const [todos, setTodos] = useState([]);
     const [newTodo, setNewTodo] = useState("");
+    const [loading, setLoading] = useState(true);
 
-    const addTodo = () => {
+    // Load todos
+    useEffect(() => {
+        API.get("/todos")
+            .then(res => {
+                const todosArray = Array.isArray(res.data)
+                    ? res.data
+                    : res.data.data;
+
+                setTodos(todosArray ?? []);
+            })
+            .catch(err => console.error(err))
+            .finally(() => setLoading(false));
+    }, []);
+
+    const addTodo = async () => {
         if (!newTodo.trim()) return;
-        setTodos(prev => [{ id: Date.now(), text: newTodo, done: false }, ...prev]);
-        setNewTodo("");
+
+        try {
+            const res = await API.post("/todos", {
+                text: newTodo,
+            });
+
+            setTodos(prev => [res.data, ...prev]);
+            setNewTodo("");
+        } catch (err) {
+            console.error(err);
+            alert("Failed to add todo");
+        }
     };
 
-    const toggleTodo = id => {
-        setTodos(prev => prev.map(todo => todo.id === id ? { ...todo, done: !todo.done } : todo));
+    const toggleTodo = async todo => {
+        try {
+            const res = await API.put(`/todos/${todo.id}`, {
+                done: !todo.done,
+            });
+
+            setTodos(prev =>
+                prev.map(t => (t.id === res.data.id ? res.data : t))
+            );
+        } catch (err) {
+            console.error(err);
+            alert("Failed to update todo");
+        }
     };
 
-    const deleteTodo = id => {
-        setTodos(prev => prev.filter(todo => todo.id !== id));
+    const deleteTodo = async id => {
+        try {
+            await API.delete(`/todos/${id}`);
+            setTodos(prev => prev.filter(t => t.id !== id));
+        } catch (err) {
+            console.error(err);
+            alert("Failed to delete todo");
+        }
     };
+
+    if (loading) return <p className="text-sm text-gray-500">Loading todos…</p>;
 
     return (
         <div className="flex flex-col gap-2">
@@ -42,7 +88,10 @@ export default function TodoList() {
                         className={`flex justify-between items-center px-2 py-1 border rounded ${todo.done ? "line-through text-gray-400" : ""
                             }`}
                     >
-                        <span onClick={() => toggleTodo(todo.id)} className="cursor-pointer">
+                        <span
+                            onClick={() => toggleTodo(todo)}
+                            className="cursor-pointer"
+                        >
                             {todo.text}
                         </span>
                         <button
