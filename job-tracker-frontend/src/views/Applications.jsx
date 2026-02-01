@@ -1,11 +1,12 @@
 // src/views/Applications.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
 
 export default function Applications() {
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,7 @@ export default function Applications() {
   const [saving, setSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [importing, setImporting] = useState(false);
 
   // Fetch jobs
   useEffect(() => {
@@ -73,9 +75,60 @@ export default function Applications() {
     return statusMatch && priorityMatch;
   });
 
+  const exportJobs = async () => {
+    try {
+      const res = await API.get("/job-applications/export", {
+        responseType: "blob",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "job-applications.xlsx");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+    } catch (err) {
+      console.error("Export failed", err);
+    }
+  };
+
+  const importJobs = async (file) => {
+    setImporting(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      await API.post("/job-applications/import", formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const res = await API.get("/job-applications");
+      setJobs(res.data);
+      alert("Import successful");
+
+    } catch (err) {
+      if (err.response) {
+        console.error("Import failed", err.response.data);
+        alert("Import failed: " + (err.response.data.message || JSON.stringify(err.response.data)));
+      } else {
+        console.error("Import failed", err); alert("Failed to import jobs");
+      }
+
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto mt-10 flex flex-col gap-4">
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
 
@@ -96,6 +149,33 @@ export default function Applications() {
           >
             Archives
           </button>
+          <button
+            onClick={exportJobs}
+            className="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300"
+          >
+            Export Excel
+          </button>
+
+          <button
+            disabled={importing}
+            onClick={() => fileInputRef.current.click()}
+            className="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+          >
+            {importing ? "Importing..." : "Import Excel"}
+          </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files.length > 0) {
+                importJobs(e.target.files[0]);
+                e.target.value = null;
+              }
+            }}
+          />
         </div>
       </div>
 

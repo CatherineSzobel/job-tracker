@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\JobApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Exports\JobApplicationsExport;
+use App\Imports\JobApplicationsImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Validators\ValidationException;
 
 class JobApplicationController extends Controller
 {
@@ -83,8 +87,7 @@ class JobApplicationController extends Controller
 
     public function destroy($id)
     {
-        $job = JobApplication::findOrFail($id);
-        $job->delete();
+        JobApplication::findOrFail($id)->delete();
         return response()->json(['message' => 'Deleted']);
     }
 
@@ -113,10 +116,7 @@ class JobApplicationController extends Controller
 
     public function scheduleInterview(Request $request, $id)
     {
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-
-        $job = $user->jobApplications()->find($id);
+        $job = $request->user()->jobApplications()->find($id);
 
         if (!$job) {
             return response()->json([
@@ -140,5 +140,57 @@ class JobApplicationController extends Controller
             'success' => true,
             'data' => $interview
         ], 201);
+    }
+
+    public function export(Request $request)
+    {
+        return Excel::download(new JobApplicationsExport, 'job-applications.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
+        $uploaded = $request->file('file');
+
+        // Check ZIP extension for Excel
+        $ext = strtolower($uploaded->getClientOriginalExtension());
+        if (in_array($ext, ['xlsx', 'xls']) 
+            && !class_exists('ZipArchive')) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'PHP zip extension is required to import Excel files. Please enable ext-zip.',
+            ], 500);
+
+        }
+
+        $import = new JobApplicationsImport;
+
+        try {
+            Excel::import($import, $uploaded);
+        } catch (ValidationException $e) {
+            // Catch skipped/failed rows
+            $failures = $e->failures();
+            return response()->json([
+                'success' => true,
+                'failures' => array_map(function ($f) {
+                    return [
+                        'row' => $f->row(),
+                        'attribute' => $f->attribute(),
+                        'errors' => $f->errors(),
+                        'values' => $f->values(),
+                    ];
+                }, $failures),
+                'message' => 'Import completed with some rows skipped due to validation errors.'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Import successful',
+        ]);
     }
 }

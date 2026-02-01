@@ -20,6 +20,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/job-applications', [JobApplicationController::class, 'index']);
     Route::post('/job-applications', [JobApplicationController::class, 'store']);
+    Route::get('/job-applications/export', [JobApplicationController::class, 'export']);
+    Route::post('/job-applications/import', [JobApplicationController::class, 'import']);
     Route::get('/job-applications/{id}', [JobApplicationController::class, 'show']);
     Route::put('/job-applications/{id}', [JobApplicationController::class, 'update']);
     Route::delete('/job-applications/{id}', [JobApplicationController::class, 'destroy']);
