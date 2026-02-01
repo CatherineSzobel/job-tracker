@@ -1,81 +1,125 @@
-// src/views/Profile.jsx
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import API from "../api/axios";
 
 export default function Profile() {
-  const [user, setUser] = useState(null);
-  const [links, setLinks] = useState([]);
-  const [newLink, setNewLink] = useState({ name: "", url: "" });
+  const [profile, setProfile] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
+  // Fetch profile
   useEffect(() => {
-    // Fetch user info and links (mock for now)
-    API.get("/user-profile")
+    API.get("/profile")
       .then(res => {
-        setUser(res.data.user);
-        setLinks(res.data.links || []);
+        setProfile(res.data.data); // assume profile exists
       })
-      .catch(err => console.error(err));
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
   }, []);
 
-  const addLink = () => {
-    if (!newLink.name.trim() || !newLink.url.trim()) return;
-    setLinks(prev => [...prev, { id: Date.now(), ...newLink }]);
-    setNewLink({ name: "", url: "" });
+  const updateField = (key, value) => {
+    setProfile(prev => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
-  const deleteLink = id => setLinks(prev => prev.filter(link => link.id !== id));
+  const saveProfile = async () => {
+    setSaving(true);
+    try {
+      const res = await API.put("/profile", profile);
+      setProfile(res.data.data);
+      setEditing(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 text-gray-500">Loading profile...</div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="p-6 text-red-500">
+        Profile not found. Please contact support.
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-3xl mx-auto mt-10 p-4">
-      <h1 className="text-2xl font-bold mb-4">Profile</h1>
-
-      {user && (
-        <div className="mb-6">
-          <p><strong>Name:</strong> {user.name}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-        </div>
-      )}
-
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2">Links</h2>
-
-        <ul className="mb-2">
-          {links.map(link => (
-            <li key={link.id} className="flex justify-between items-center mb-1">
-              <a href={link.url} target="_blank" className="text-blue-600 hover:underline">{link.name}</a>
-              <button
-                onClick={() => deleteLink(link.id)}
-                className="text-red-500 hover:text-red-700 text-sm"
-              >
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Link name"
-            value={newLink.name}
-            onChange={e => setNewLink(prev => ({ ...prev, name: e.target.value }))}
-            className="border rounded px-2 py-1 flex-1"
-          />
-          <input
-            type="url"
-            placeholder="URL"
-            value={newLink.url}
-            onChange={e => setNewLink(prev => ({ ...prev, url: e.target.value }))}
-            className="border rounded px-2 py-1 flex-1"
-          />
+    <div className="max-w-2xl mx-auto p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Profile</h1>
+        {!editing && (
           <button
-            onClick={addLink}
-            className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
+            className="btn"
+            onClick={() => setEditing(true)}
           >
-            Add
+            Edit
+          </button>
+        )}
+      </div>
+
+      {/* Profile Fields */}
+      <div className="space-y-4">
+        <input
+          className="input"
+          disabled={!editing}
+          value={profile.name ?? ""}
+          onChange={e => updateField("name", e.target.value)}
+          placeholder="Name"
+        />
+
+        <input
+          className="input"
+          disabled={!editing}
+          value={profile.title ?? ""}
+          onChange={e => updateField("title", e.target.value)}
+          placeholder="Title (e.g. Frontend Developer)"
+        />
+
+        <input
+          className="input"
+          disabled={!editing}
+          value={profile.location ?? ""}
+          onChange={e => updateField("location", e.target.value)}
+          placeholder="Location"
+        />
+
+        <textarea
+          className="textarea"
+          disabled={!editing}
+          value={profile.bio ?? ""}
+          onChange={e => updateField("bio", e.target.value)}
+          placeholder="Short bio"
+          rows={4}
+        />
+      </div>
+
+      {/* Save / Cancel */}
+      {editing && (
+        <div className="flex gap-2 mt-6">
+          <button
+            className="btn btn-primary"
+            onClick={saveProfile}
+            disabled={saving}
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+          <button
+            className="btn"
+            onClick={() => setEditing(false)}
+          >
+            Cancel
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }

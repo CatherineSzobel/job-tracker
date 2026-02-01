@@ -20,6 +20,14 @@ class JobApplicationSeeder extends Seeder
             ]
         );
 
+        $user->profile()->create([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'title' => 'Software Engineer',
+            'bio' => 'This is a test user for seeding job applications.',
+            'location' => 'San Francisco, CA',
+        ]);
+
         // Each user has 20–30 job applications
         for ($i = 0; $i < rand(20, 30); $i++) {
             $job = JobApplication::create([

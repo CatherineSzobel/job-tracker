@@ -18,14 +18,19 @@ class AuthController extends Controller
 
         ]);
 
-
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password'])
         ]);
 
-
+        $user->profile()->create([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'title' => '',
+            'bio' => '',
+            'location' => '',
+        ]);
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -44,15 +49,13 @@ class AuthController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required']
         ]);
-        
+
         if (!Auth::attempt($credentials)) {
             return response()->json([
                 'message' => 'Invalid credentials'
             ], 401);
         }
-
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
+        $user = $request->user();
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

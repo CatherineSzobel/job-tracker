@@ -33,6 +33,11 @@ class User extends Authenticatable
         return $this->hasMany(JobApplication::class);
     }
 
+    public function profile()
+    {
+        return $this->hasOne(Profile::class);
+    }
+
     public function todos()
     {
         return $this->hasMany(Todo::class);

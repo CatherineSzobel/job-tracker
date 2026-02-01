@@ -4,7 +4,8 @@ use App\Http\Controllers\InterviewController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\JobApplicationController;
-use App\Http\Controllers\LinkController;
+use App\Http\Controllers\ProfileLinkController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TodoController;
 use Illuminate\Http\Request;
 
@@ -35,4 +36,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/todos', [TodoController::class, 'store']);
     Route::put('/todos/{id}', [TodoController::class, 'update']);
     Route::delete('/todos/{id}', [TodoController::class, 'destroy']);
+
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+
+    Route::post('/profile/links', [ProfileLinkController::class, 'store']);
+    Route::put('/profile/links/{link}', [ProfileLinkController::class, 'update']);
+    Route::delete('/profile/links/{link}', [ProfileLinkController::class, 'destroy']);
 });
