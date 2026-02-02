@@ -144,47 +144,58 @@ export default function Interviews() {
 
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">
+    <div className="max-w-6xl mx-auto mt-10 px-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h1 className="text-3xl font-bold text-primary">
           Interviews Schedule ({interviews.length})
         </h1>
+
         <button
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          className="bg-accent text-surface px-5 py-2 rounded-lg hover:bg-accent-hover transition shadow"
         >
           + Add Interview
         </button>
       </div>
 
-      {loading && <p className="text-center mt-10">Loading...</p>}
-      {!loading && !interviews.length && (
-        <p className="text-center mt-10">No interviews scheduled.</p>
+      {loading && (
+        <p className="text-center mt-10 text-secondary-text">Loading...</p>
       )}
 
-      <div className="flex flex-col gap-4">
+      {!loading && !interviews.length && (
+        <div className="p-6 bg-surface border border-border rounded-xl shadow text-center text-secondary-text">
+          No interviews scheduled.
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
         {interviews.map((i) => (
           <InterviewList
             key={i.id}
             i={i}
             startEdit={startEdit}
-            deleteInterview={deleteInterview}></InterviewList>
+            deleteInterview={deleteInterview}
+          />
         ))}
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">
+        <div className="fixed inset-0 bg-primary/60 bg-opacity-40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl">
+            <h2 className="text-2xl font-bold mb-4 text-primary">
               {editingInterview ? "Edit Interview" : "Add New Interview"}
             </h2>
+
             <InterviewForm
               handleSubmit={handleSubmit}
               handleChange={handleChange}
               saving={saving}
               newInterview={newInterview}
               jobs={jobs}
-              editingInterview={editingInterview}></InterviewForm>
+              editingInterview={editingInterview}
+              setShowForm={setShowForm}
+              setEditingInterview={setEditingInterview}
+            />
           </div>
         </div>
       )}
