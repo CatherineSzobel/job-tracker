@@ -65,48 +65,48 @@ export default function Calendar() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-4">
-      <h1 className="text-2xl font-bold mb-4">Interview Calendar</h1>
+    <div className="max-w-6xl mx-auto mt-10 p-4 border border-border rounded-2xl shadow-lg bg-surface">
+      <h1 className="text-3xl font-bold mb-6 bg-accent rounded-lg p-2 text-surface">Interview Calendar</h1>
 
       {/* Navigation Controls */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-6">
         <button
           onClick={prevMonth}
-          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+          className="px-4 py-2 bg-accent-soft text-surface rounded-lg hover:bg-accent transition"
         >
           Previous
         </button>
 
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-xl font-semibold text-primary">
           {format(currentMonth, "MMMM yyyy")}
         </h2>
 
         <button
           onClick={nextMonth}
-          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+          className="px-4 py-2 bg-accent-soft text-surface rounded-lg hover:bg-accent transition"
         >
           Next
         </button>
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-3">
         {days.map(day => {
           const dayInterviews = getInterviewsForDay(day);
+          const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
 
           return (
             <div
               key={day}
               onClick={() => handleDayClick(day)}
-              className="border rounded p-2 h-24 cursor-pointer hover:bg-gray-50 transition"
+              className={`border rounded-lg p-3 h-28 cursor-pointer transition flex flex-col justify-between ${isToday ? "border-accent bg-accent-soft" : "border-border hover:bg-surface-soft"
+                }`}
             >
-              <div className="font-semibold">
-                {format(day, "d")}
-              </div>
+              <div className={`font-semibold ${isToday ? "text-secondary" : "text-primary-text"}`}>{format(day, "d")}</div>
 
               {dayInterviews.length > 0 && (
-                <div className="mt-1 text-xs text-blue-600">
-                  {dayInterviews.length} interview(s)
+                <div className={`mt-2 text-sm font-medium ${isToday ? "text-secondary" : "text-primary-text"}`}>
+                  {dayInterviews.length} interview{dayInterviews.length > 1 ? "s" : ""}
                 </div>
               )}
             </div>
@@ -114,43 +114,36 @@ export default function Calendar() {
         })}
       </div>
 
+      {/* Modal */}
       {showModal && selectedDay && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-300 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">
+        <div className="fixed inset-0 bg-primary/60 bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-surface p-6 rounded-2xl shadow-xl w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4 text-primary">
               Interviews on {format(selectedDay, "MMMM d, yyyy")}
             </h2>
 
             {getInterviewsForDay(selectedDay).length === 0 ? (
-              <p>No interviews scheduled.</p>
+              <p className="text-secondary-text">No interviews scheduled.</p>
             ) : (
               <div className="flex flex-col gap-3">
                 {getInterviewsForDay(selectedDay).map(i => (
                   <div
                     key={i.id}
-                    className="border p-3 rounded bg-gray-50"
+                    className="border border-border rounded-lg p-3 bg-surface-soft shadow-sm hover:shadow-md transition"
                   >
-                    <p className="font-semibold">
-                      {i.job_position}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {i.job_company}
-                    </p>
-                    <p className="text-sm">
-                      Type: {i.type}
-                    </p>
-                    <p className="text-sm">
-                      Location: {i.location}
-                    </p>
+                    <p className="font-semibold text-accent">{i.job_position}</p>
+                    <p className="text-sm text-secondary-text">{i.job_company}</p>
+                    <p className="text-sm text-primary-text">Type: {i.type}</p>
+                    <p className="text-sm text-primary-text">Location: {i.location}</p>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end mt-6">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 border rounded hover:bg-gray-100"
+                className="px-4 py-2 bg-accent-soft text-surface rounded-lg hover:bg-accent transition"
               >
                 Close
               </button>
@@ -159,5 +152,6 @@ export default function Calendar() {
         </div>
       )}
     </div>
+
   );
 }

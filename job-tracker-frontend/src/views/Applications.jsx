@@ -152,7 +152,7 @@ export default function Applications() {
           </h1>
 
           <div className="flex items-center gap-2 relative" ref={dropdownRef}>
-            <button className="px-4 py-2 rounded-md text-sm bg-blue-400 hover:bg-blue-600 text-white font-semibold transition" onClick={() => setShowForm(true)}>
+            <button className="px-4 py-2 rounded-md text-sm bg-accent-soft hover:bg-accent text-surface font-semibold transition" onClick={() => setShowForm(true)}>
               + Add
             </button>
 

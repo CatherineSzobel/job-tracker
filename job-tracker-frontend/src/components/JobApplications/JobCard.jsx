@@ -61,7 +61,7 @@ export default function JobCard({ job, onArchive }) {
         </button>
         <button
           onClick={handleArchive}
-          className="px-3 py-1 text-xs bg-blue-400 hover:bg-blue-500 text-white rounded transition">
+          className="px-3 py-1 text-xs bg-accent-soft hover:bg-accent text-surface rounded transition">
           Archive
         </button>
       </div>
