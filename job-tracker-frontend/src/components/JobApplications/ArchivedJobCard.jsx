@@ -22,7 +22,7 @@ export default function ArchivedJobCard({ job, onRestore }) {
                     {job.position}
                 </h2>
                 <button onClick={handleRestore}
-                    className="p-2 rounded-lg font-bold bg-green-500 hover:bg-green-600 text-white text-xs">
+                    className="p-2 rounded-lg font-bold bg-green-700 hover:bg-green-600 text-white text-xs">
                     Restore
                 </button>
             </div>

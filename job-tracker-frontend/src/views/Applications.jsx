@@ -1,4 +1,3 @@
-// src/views/Applications.jsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
@@ -7,21 +6,28 @@ import JobForm from "../components/JobApplications/JobForm";
 
 export default function Applications() {
   const fileInputRef = useRef(null);
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
+
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+
   const [newJob, setNewJob] = useState({
     position: "",
     company_name: "",
+    location: "",
     status: "applied",
     priority: "medium",
-    applied_date: "",
+    notes: "",
+    job_link: "",
   });
-  const [saving, setSaving] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
-  const [importing, setImporting] = useState(false);
 
   // Fetch jobs
   useEffect(() => {
@@ -31,7 +37,17 @@ export default function Applications() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Handle input changes
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleChange = (e) => {
     setNewJob({ ...newJob, [e.target.name]: e.target.value });
   };
@@ -52,8 +68,7 @@ export default function Applications() {
         status: "applied",
         priority: "medium",
         notes: "",
-        job_link: ""
-
+        job_link: "",
       });
     } catch (err) {
       console.error(err);
@@ -79,16 +94,13 @@ export default function Applications() {
     try {
       const res = await API.get("/job-applications/export", {
         responseType: "blob",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", "job-applications.xlsx");
-
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -127,115 +139,104 @@ export default function Applications() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 flex flex-col gap-4">
+    <div className="max-w-5xl mx-auto px-4 py-10">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
+      {/* HEADER */}
+      <div className="rounded-2xl p-6 mb-6 bg-surface shadow-md border border-border">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">
+            Job Applications
+            <span className="ml-2 text-sm text-muted">
+              ({jobs.length})
+            </span>
+          </h1>
 
-        <h1 className="text-2xl font-bold">
-          Job Applications ({jobs.length})
-        </h1>
+          <div className="flex items-center gap-2 relative" ref={dropdownRef}>
+            <button className="px-4 py-2 rounded-md text-sm bg-blue-400 hover:bg-blue-600 text-white font-semibold transition" onClick={() => setShowForm(true)}>
+              + Add
+            </button>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          >
-            + Add Application
-          </button>
-          <button
-            onClick={() => navigate("/archives")}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          >
-            Archives
-          </button>
-          <button
-            onClick={exportJobs}
-            className="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300"
-          >
-            Export Excel
-          </button>
+            {/* Dropdown */}
+            <button
+              onClick={() => setShowMenu((s) => !s)}
+              className="w-9 h-9 flex items-center justify-center font-extrabold hover:border rounded-lg text-blue-400 transition"
+            >
+              ⋮
+            </button>
 
-          <button
-            disabled={importing}
-            onClick={() => fileInputRef.current.click()}
-            className="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-          >
-            {importing ? "Importing..." : "Import Excel"}
-          </button>
+            {showMenu && (
+              <div className="absolute right-0 top-11 w-40 rounded-lg shadow-lg border overflow-hidden z-50 bg-surface border-border text-primary">
+                <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-300" onClick={() => navigate("/archives")}>
+                  Archives
+                </button>
+                <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-300" onClick={exportJobs}>
+                  Export Excel
+                </button>
+                <button className="w-full text-left px-4 py-2 text-sm  disabled:opacity-50 hover:bg-gray-300" onClick={() => fileInputRef.current.click()} disabled={importing}>
+                  {importing ? "Importing…" : "Import Excel"}
+                </button>
+              </div>
+            )}
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls"
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files.length > 0) {
-                importJobs(e.target.files[0]);
-                e.target.value = null;
-              }
-            }}
-          />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files.length > 0) {
+                  importJobs(e.target.files[0]);
+                  e.target.value = null;
+                }
+              }}
+            />
+          </div>
+        </div>
+        {/* FILTER BAR */}
+        <div className="rounded-xl p-4 mb-6 flex gap-6 text-sm">
+          <div>
+            <label className="block mb-1">Status</label>
+            <select className="border rounded-lg px-3 py-1 text-secondary-text border-secondary-muted" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="all">All</option>
+              <option value="applied">Applied</option>
+              <option value="interview">Interview</option>
+              <option value="offer">Offer</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-1 ">Priority</label>
+            <select className="border rounded-lg px-3 py-1 text-secondary-text border-secondary-muted" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+              <option value="all">All</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Modal */}
+      {/* JOB LIST */}
+      {filteredJobs.length === 0 ? (
+        <p className="text-center text-muted">No applications found.</p>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {filteredJobs.map((job) => (
+            <JobCard key={job.id} job={job} onArchive={(id) => setJobs((prev) => prev.filter((j) => j.id !== id))} />
+          ))}
+        </div>
+      )}
+
+      {/* MODAL */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Add Job Application</h2>
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-primary/60">
+          <div className="bg-surface rounded-xl shadow-xl p-6 w-full max-w-2xl">
+            <h2 className="text-lg font-semibold mb-4 text-primary">Add Job Application</h2>
             <JobForm setShowForm={setShowForm} newJob={newJob} setNewJob={setNewJob} saving={saving} handleSubmit={handleSubmit} handleChange={handleChange} />
           </div>
         </div>
       )}
-
-      <div className="flex flex-wrap items-center gap-4 mb-4">
-        {/* Status Filter */}
-        <div className="flex items-center gap-2">
-          <label className="font-medium">Status:</label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="border rounded px-3 py-2"
-          >
-            <option value="all">All</option>
-            <option value="applied">Applied</option>
-            <option value="interview">Interview</option>
-            <option value="offer">Offer</option>
-            <option value="rejected">Rejected</option>
-          </select>
-        </div>
-
-        {/* Priority Filter */}
-        <div className="flex items-center gap-2">
-          <label className="font-medium">Priority:</label>
-          <select
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="border rounded px-3 py-2"
-          >
-            <option value="all">All</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Job Cards */}
-      {filteredJobs.length === 0 ? (
-        <p className="text-center text-gray-500">
-          No job applications found.
-        </p>
-      ) : (
-        filteredJobs.map(job => (
-          <JobCard
-            key={job.id} job={job}
-            onArchive={(id) =>
-              setJobs(prev => prev.filter(job => job.id !== id))} />
-        ))
-      )}
-
     </div>
   );
 }
