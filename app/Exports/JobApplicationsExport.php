@@ -2,7 +2,6 @@
 
 namespace App\Exports;
 
-use App\Models\JobApplication;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\{
     FromCollection,
@@ -54,9 +53,9 @@ class JobApplicationsExport implements
         return [
             $job->company_name,
             $job->position,
-            $job->status,        
-            $job->priority,         
-            $job->applied_date->format('Y-m-d'),
+            $job->status,
+            $job->priority,
+            $job->applied_date?->format('Y-m-d'),
             $job->location,
             $this->cleanText($job->notes),
             $job->job_link,

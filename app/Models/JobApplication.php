@@ -18,7 +18,11 @@ class JobApplication extends Model
         'notes',
         'is_archived'
     ];
-
+    protected $casts = [
+        'applied_date' => 'date:Y-m-d',
+        'is_archived' => 'boolean',
+    ];
+    
     public function user()
     {
         return $this->belongsTo(User::class);
