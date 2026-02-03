@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
+import ProfileLinks from "../components/ProfileLinks";
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -53,73 +54,97 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Profile</h1>
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-semibold">Profile</h1>
+          <p className="text-sm text-gray-500">
+            Manage how your profile.
+          </p>
+        </div>
+
         {!editing && (
-          <button
-            className="btn"
-            onClick={() => setEditing(true)}
-          >
-            Edit
+          <button className="btn btn-primary" onClick={() => setEditing(true)}>
+            Edit profile
           </button>
         )}
       </div>
 
-      {/* Profile Fields */}
-      <div className="space-y-4">
-        <input
-          className="input"
-          disabled={!editing}
-          value={profile.name ?? ""}
-          onChange={e => updateField("name", e.target.value)}
-          placeholder="Name"
-        />
+      <div className="bg-white rounded-xl shadow-sm border p-6 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Name
+            </label>
+            <input
+              className="input"
+              disabled={!editing}
+              value={profile.name ?? ""}
+              onChange={(e) => updateField("name", e.target.value)}
+              placeholder="Your name"
+            />
+          </div>
 
-        <input
-          className="input"
-          disabled={!editing}
-          value={profile.title ?? ""}
-          onChange={e => updateField("title", e.target.value)}
-          placeholder="Title (e.g. Frontend Developer)"
-        />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Title
+            </label>
+            <input
+              className="input"
+              disabled={!editing}
+              value={profile.title ?? ""}
+              onChange={(e) => updateField("title", e.target.value)}
+              placeholder="Frontend Developer"
+            />
+          </div>
 
-        <input
-          className="input"
-          disabled={!editing}
-          value={profile.location ?? ""}
-          onChange={e => updateField("location", e.target.value)}
-          placeholder="Location"
-        />
-
-        <textarea
-          className="textarea"
-          disabled={!editing}
-          value={profile.bio ?? ""}
-          onChange={e => updateField("bio", e.target.value)}
-          placeholder="Short bio"
-          rows={4}
-        />
-      </div>
-
-      {/* Save / Cancel */}
-      {editing && (
-        <div className="flex gap-2 mt-6">
-          <button
-            className="btn btn-primary"
-            onClick={saveProfile}
-            disabled={saving}
-          >
-            {saving ? "Saving..." : "Save"}
-          </button>
-          <button
-            className="btn"
-            onClick={() => setEditing(false)}
-          >
-            Cancel
-          </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Location
+            </label>
+            <input
+              className="input"
+              disabled={!editing}
+              value={profile.location ?? ""}
+              onChange={(e) => updateField("location", e.target.value)}
+              placeholder="City, Country"
+            />
+          </div>
         </div>
-      )}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Bio
+          </label>
+          <textarea
+            className="textarea"
+            disabled={!editing}
+            value={profile.bio ?? ""}
+            onChange={(e) => updateField("bio", e.target.value)}
+            placeholder="Write a short bio about yourself"
+            rows={4}
+          />
+        </div>
+
+        {editing && (
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <button
+              className="btn"
+              onClick={() => setEditing(false)}
+              disabled={saving}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={saveProfile}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save changes"}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
