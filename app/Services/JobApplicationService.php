@@ -1,0 +1,117 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\JobApplication;
+use App\Imports\JobApplicationsImport;
+use App\Exports\JobApplicationsExport;
+use Illuminate\Support\Collection;
+use Illuminate\Http\UploadedFile;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Validators\ValidationException;
+use RuntimeException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+
+class JobApplicationService
+{
+    /**
+     * Create a new job application for a user
+     */
+    public function create(array $data, $user): JobApplication
+    {
+        $data['applied_date'] = now()->toDateString();
+
+        return $user->jobApplications()->create($data);
+    }
+
+    /**
+     * Update an existing job application
+     */
+    public function update(JobApplication $job, array $data): JobApplication
+    {
+        $job->update($data);
+        return $job;
+    }
+
+    /**
+     * Delete a job application
+     */
+    public function delete(JobApplication $job): void
+    {
+        $job->delete();
+    }
+
+    /**
+     * Schedule an interview for a job application
+     */
+    public function scheduleInterview(JobApplication $job, array $data, $user)
+    {
+        return $job->interviews()->create(array_merge($data, [
+            'user_id' => $user->id,
+        ]));
+    }
+
+    /**
+     * Import job applications from an Excel file
+     */
+    public function importExcel(UploadedFile $file): array
+    {
+        $ext = strtolower($file->getClientOriginalExtension());
+        if (in_array($ext, ['xlsx', 'xls']) && !class_exists('ZipArchive')) {
+            throw new RuntimeException(
+                'PHP zip extension is required to import Excel files. Please enable ext-zip.'
+            );
+        }
+
+        $import = new JobApplicationsImport;
+
+        try {
+            Excel::import($import, $file);
+        } catch (ValidationException $e) {
+            $failures = array_map(fn($f) => [
+                'row' => $f->row(),
+                'attribute' => $f->attribute(),
+                'errors' => $f->errors(),
+                'values' => $f->values(),
+            ], $e->failures());
+
+            return ['failures' => $failures];
+        }
+
+        return ['failures' => []];
+    }
+
+    /**
+     * Export job applications to Excel
+     */
+    public function exportExcel(): BinaryFileResponse
+    {
+        return Excel::download(new JobApplicationsExport, 'job-applications.xlsx');
+    }
+
+    /**
+     * Filter job applications for a user
+     */
+    public function filter($user, array $filters = []): Collection
+    {
+        $query = $user->jobApplications()->with('interviews');
+
+        if (isset($filters['archived'])) {
+            $query->where('is_archived', $filters['archived']);
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['priority'])) {
+            $query->where('priority', $filters['priority']);
+        }
+
+        if (!empty($filters['applied_date'])) {
+            $query->whereDate('applied_date', $filters['applied_date']);
+        }
+
+        return $query->get();
+    }
+}

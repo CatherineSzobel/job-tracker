@@ -2,74 +2,52 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\JobApplication\JobApplicationImportRequest;
 use App\Models\JobApplication;
+use App\Services\JobApplicationService;
+
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Exports\JobApplicationsExport;
 use App\Http\Requests\JobApplication\ScheduleInterviewRequest;
 use App\Http\Requests\JobApplication\StoreJobApplicationRequest;
 use App\Http\Requests\JobApplication\UpdateJobApplicationRequest;
-use App\Imports\JobApplicationsImport;
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Validators\ValidationException;
+
+
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class JobApplicationController extends Controller
 {
-    public function index(Request $request): Collection
+    public function __construct(private JobApplicationService $jobApplicationService) {}
+    public function index(Request $request): JsonResponse
     {
-        $query = $request->user()
-            ->jobApplications()
-            ->with('interviews');
-
-        $query->where(
-            'is_archived',
-            $request->boolean('archived')
-        );
-
-        if ($request->filled('status')) {
-            $query->where('status', $request['status']);
-        }
-
-        if ($request->filled('priority')) {
-            $query->where('priority', $request['priority']);
-        }
-
-        if ($request->filled('applied_date')) {
-            $query->whereDate('applied_date', $request['applied_date']);
-        }
-
-        return $query->get();
+        $filters = $request->only(['archived', 'status', 'priority', 'applied_date']);
+        $jobs = $this->jobApplicationService->filter($request->user(), $filters);
+        return response()->json($jobs);
     }
 
-    public function store(StoreJobApplicationRequest $request): JsonResponse
+    public function store(StoreJobApplicationRequest $request)
     {
+        $job = $this->jobApplicationService->create(
+            $request->validated(),
+            $request->user()
+        );
 
-        $validated = $request->validated();
-        $validated['applied_date'] = now()->toDateString();
-        $job = $request->user()->jobApplications()->create($validated);
-
-        return response()->json([
-            'success' => true,
-            'data' => $job
-        ], 201);
+        return response()->json(['success' => true, 'data' => $job], 201);
     }
 
     public function update(UpdateJobApplicationRequest $request, int $id): JsonResponse
     {
         $job = JobApplication::findOrFail($id);
-        $job->update($request->validated());
+        $updatedJob = $this->jobApplicationService->update($job, $request->validated());
 
-        return response()->json([
-            'data' => $job
-        ]);
+        return response()->json(['data' => $updatedJob]);
     }
 
     public function destroy(int $id): JsonResponse
     {
-        JobApplication::findOrFail($id)->delete();
+        $job = JobApplication::findOrFail($id);
+        $this->jobApplicationService->delete($job);
+
         return response()->json(['message' => 'Deleted']);
     }
 
@@ -93,7 +71,7 @@ class JobApplicationController extends Controller
         ]);
     }
 
-    public function scheduleInterview(ScheduleInterviewRequest $request, $id): JsonResponse
+    public function scheduleInterview(ScheduleInterviewRequest $request, int $id)
     {
         $job = $request->user()->jobApplications()->find($id);
 
@@ -103,67 +81,38 @@ class JobApplicationController extends Controller
                 'message' => 'JobApplication not found'
             ], 404);
         }
+        $interview = $this->jobApplicationService->scheduleInterview(
+            $job,
+            $request->validated(),
+            $request->user()
+        );
 
-        $interview = $job->interviews()->create(array_merge($request->validated(), [
-            'user_id' => $request->user()->id
-        ]));
-
-        return response()->json([
-            'success' => true,
-            'data' => $interview
-        ], 201);
+        return response()->json(['success' => true, 'data' => $interview], 201);
     }
 
     public function export(): BinaryFileResponse
     {
-        return Excel::download(new JobApplicationsExport, 'job-applications.xlsx');
+        return $this->jobApplicationService->exportExcel();
     }
 
-    public function import(Request $request): JsonResponse
+    public function import(JobApplicationImportRequest $request): JsonResponse
     {
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
-        ]);
+        $validated = $request->validated();
+        $file = $validated['file'];
 
-        $uploaded = $request->file('file');
+        $result = $this->jobApplicationService->importExcel($file);
 
-        // Check ZIP extension for Excel
-        $ext = strtolower($uploaded->getClientOriginalExtension());
-        if (
-            in_array($ext, ['xlsx', 'xls'])
-            && !class_exists('ZipArchive')
-        ) {
-
-            return response()->json([
-                'success' => false,
-                'message' => 'PHP zip extension is required to import Excel files. Please enable ext-zip.',
-            ], 500);
-        }
-
-        $import = new JobApplicationsImport;
-
-        try {
-            Excel::import($import, $uploaded);
-        } catch (ValidationException $e) {
-            // Catch skipped/failed rows
-            $failures = $e->failures();
+        if (!empty($result['failures'])) {
             return response()->json([
                 'success' => true,
-                'failures' => array_map(function ($f) {
-                    return [
-                        'row' => $f->row(),
-                        'attribute' => $f->attribute(),
-                        'errors' => $f->errors(),
-                        'values' => $f->values(),
-                    ];
-                }, $failures),
+                'failures' => $result['failures'],
                 'message' => 'Import completed with some rows skipped due to validation errors.'
             ]);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Import successful',
+            'message' => 'Import successful'
         ]);
     }
 }
