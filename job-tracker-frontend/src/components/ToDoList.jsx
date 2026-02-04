@@ -6,7 +6,6 @@ export default function TodoList() {
     const [newTodo, setNewTodo] = useState("");
     const [loading, setLoading] = useState(true);
 
-    // Load todos
     useEffect(() => {
         API.get("/todos")
             .then(res => {
@@ -64,6 +63,25 @@ export default function TodoList() {
         }
     };
 
+    function formatTodoDate(dateString) {
+        const date = new Date(dateString)
+        const today = new Date()
+
+        // normalize to midnight
+        date.setHours(0, 0, 0, 0)
+        today.setHours(0, 0, 0, 0)
+
+        const diffDays = Math.round(
+            (today - date) / (1000 * 60 * 60 * 24)
+        )
+
+        if (diffDays === 0) return "today"
+        if (diffDays === 1) return "yesterday"
+        if (diffDays < 7) return `${diffDays} days ago`
+
+        return date.toLocaleDateString("en-CA") // YYYY-MM-DD
+    }
+
     if (loading) return <p className="text-sm text-gray-500">Loading todos…</p>;
 
     return (
@@ -83,33 +101,52 @@ export default function TodoList() {
                     Add
                 </button>
             </div>
-            
+
             <ul className="flex flex-col gap-2 max-h-52 overflow-y-auto">
                 {todos.map(todo => (
                     <li
                         key={todo.id}
-                        className={`flex justify-between items-center px-3 py-2 border  rounded-lg transition ${todo.done ? "line-through text-secondary-text bg-secondary-soft" : "bg-surface hover:bg-surface-hover"
+                        className={`flex items-center gap-3 px-3 py-2 border rounded-lg transition
+                            ${todo.done
+                                ? "line-through text-secondary-text bg-secondary-soft"
+                                : "bg-surface hover:bg-surface-hover"
                             }`}
                     >
+
                         <input
                             type="checkbox"
                             checked={todo.done}
                             onChange={() => toggleTodo(todo)}
-                            className="p-2 m-px cursor-pointer"
+                            className="cursor-pointer"
                         />
 
-                        <span className="cursor-pointer flex-1">
+                        <span className="flex-1 cursor-pointer truncate">
                             {todo.text}
                         </span>
-                        <button
-                            onClick={() => deleteTodo(todo.id)}
-                            className="text-red-500 hover:text-red-700 text-sm"
-                        >
-                            ✕
-                        </button>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                            <span className="text-xs text-gray-400 whitespace-nowrap">
+                                {formatTodoDate(todo.created_at)}
+                            </span>
+
+                            <button
+                                onClick={() => alert("Calendar integration coming soon!")}
+                                className="px-3 py-1 text-xs rounded-full border bg-blue-50 text-blue-600 hover:bg-blue-100 transition whitespace-nowrap"
+                            >
+                                Add to calendar
+                            </button>
+
+                            <button
+                                onClick={() => deleteTodo(todo.id)}
+                                className="text-red-500 hover:text-red-700 text-sm"
+                            >
+                                ✕
+                            </button>
+                        </div>
                     </li>
                 ))}
             </ul>
+
         </div>
     );
 }
