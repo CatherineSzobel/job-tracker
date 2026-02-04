@@ -37,16 +37,19 @@ export default function TodoList() {
     };
 
     const toggleTodo = async todo => {
+        const previousTodos = [...todos];
+        setTodos(prev =>
+            prev.map(t =>
+                t.id === todo.id ? { ...t, done: !t.done } : t
+            )
+        );
         try {
-            const res = await API.put(`/todos/${todo.id}`, {
+            await API.put(`/todos/${todo.id}`, {
                 done: !todo.done,
             });
-
-            setTodos(prev =>
-                prev.map(t => (t.id === res.data.id ? res.data : t))
-            );
         } catch (err) {
             console.error(err);
+            setTodos(previousTodos);
             alert("Failed to update todo");
         }
     };
@@ -64,34 +67,38 @@ export default function TodoList() {
     if (loading) return <p className="text-sm text-gray-500">Loading todos…</p>;
 
     return (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
             <div className="flex gap-2">
                 <input
                     type="text"
-                    placeholder="New todo..."
+                    placeholder="Add a new task..."
                     value={newTodo}
                     onChange={e => setNewTodo(e.target.value)}
-                    className="flex-1 border rounded px-2 py-1"
+                    className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent transition"
                 />
                 <button
                     onClick={addTodo}
-                    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
+                    className="bg-accent hover:bg-accent-soft text-surface px-4 py-2 rounded-lg transition"
                 >
                     Add
                 </button>
             </div>
-
-            <ul className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+            
+            <ul className="flex flex-col gap-2 max-h-52 overflow-y-auto">
                 {todos.map(todo => (
                     <li
                         key={todo.id}
-                        className={`flex justify-between items-center px-2 py-1 border rounded ${todo.done ? "line-through text-gray-400" : ""
+                        className={`flex justify-between items-center px-3 py-2 border  rounded-lg transition ${todo.done ? "line-through text-secondary-text bg-secondary-soft" : "bg-surface hover:bg-surface-hover"
                             }`}
                     >
-                        <span
-                            onClick={() => toggleTodo(todo)}
-                            className="cursor-pointer"
-                        >
+                        <input
+                            type="checkbox"
+                            checked={todo.done}
+                            onChange={() => toggleTodo(todo)}
+                            className="p-2 m-px cursor-pointer"
+                        />
+
+                        <span className="cursor-pointer flex-1">
                             {todo.text}
                         </span>
                         <button
