@@ -21,7 +21,8 @@ export default function JobCard({ job, onArchive }) {
 
   const handleArchive = async () => {
     try {
-      await API.put(`/job-applications/${localJob.id}`, { is_archived: true });
+      const res = await API.put(`/job-applications/${localJob.id}`, { is_archived: true });
+      setLocalJob(res.data.data || res.data);
       if (onArchive) onArchive(localJob.id);
     } catch (err) {
       console.error(err);

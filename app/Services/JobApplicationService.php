@@ -96,8 +96,11 @@ class JobApplicationService
     {
         $query = $user->jobApplications()->with('interviews');
 
-        if (isset($filters['archived'])) {
-            $query->where('is_archived', $filters['archived']);
+        if (!array_key_exists('archived', $filters)) {
+            $query->where('is_archived', false);
+        } else {
+            $archived = filter_var($filters['archived'], FILTER_VALIDATE_BOOLEAN);
+            $query->where('is_archived', $archived);
         }
 
         if (!empty($filters['status'])) {
