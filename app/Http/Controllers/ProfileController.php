@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Profile\ProfileUpdateRequest;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ProfileController extends Controller
 {
-    public function show(Request $request)
+    public function show(Request $request): JsonResponse
     {
         $profile = $request->user()
             ->profile()
@@ -17,17 +19,11 @@ class ProfileController extends Controller
         return response()->json(['data' => $profile]);
     }
 
-    public function update(Request $request)
+    public function update(ProfileUpdateRequest $request): JsonResponse
     {
         $profile = $request->user()->profile;
 
-        $data = $request->validate([
-            'name' => 'nullable|string',
-            'title' => 'nullable|string',
-            'bio' => 'nullable|string',
-            'location' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $profile->update($data);
 
         return response()->json(['data' => $profile->load('links')]);

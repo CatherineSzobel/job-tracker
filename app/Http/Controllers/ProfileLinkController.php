@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Profile\ProfileLinkStoreRequest;
+use App\Http\Requests\Profile\ProfileLinkUpdateRequest;
 use App\Models\ProfileLink;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ProfileLinkController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $profile = $request->user()->profile;
 
@@ -20,7 +23,7 @@ class ProfileLinkController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(ProfileLinkStoreRequest $request): JsonResponse
     {
         $profile = $request->user()->profile;
 
@@ -28,11 +31,7 @@ class ProfileLinkController extends Controller
             return response()->json(['message' => 'Profile not found'], 404);
         }
 
-        $data = $request->validate([
-            'type' => 'required|string',
-            'url' => 'required|url',
-        ]);
-
+        $data = $request->validated();
         $link = $profile->links()->create($data);
 
         return response()->json([
@@ -40,7 +39,7 @@ class ProfileLinkController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, ProfileLink $link)
+    public function update(ProfileLinkUpdateRequest $request, ProfileLink $link): JsonResponse
     {
         $profile = $request->user()->profile;
 
@@ -48,11 +47,7 @@ class ProfileLinkController extends Controller
             abort(403);
         }
 
-        $data = $request->validate([
-            'type' => 'required|string',
-            'url' => 'required|url',
-        ]);
-
+        $data = $request->validated();
         $link->update($data);
 
         return response()->json([
@@ -60,7 +55,7 @@ class ProfileLinkController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, ProfileLink $link)
+    public function destroy(Request $request, ProfileLink $link): JsonResponse
     {
         $profile = $request->user()->profile;
 
@@ -70,6 +65,6 @@ class ProfileLinkController extends Controller
 
         $link->delete();
 
-        return response()->noContent();
+        return response()->json(['message' => 'Link deleted successfully']);
     }
 }

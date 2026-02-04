@@ -2,50 +2,41 @@
 // app/Http/Controllers/TodoController.php
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Todo\TodoStoreRequest;
+use App\Http\Requests\Todo\TodoUpdateRequest;
 use App\Models\Todo;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class TodoController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-
         return response()->json(
             $request->user()->todos()->latest()->get()
         );
     }
 
-    public function store(Request $request)
+    public function store(TodoStoreRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'text' => 'required|string|max:255',
-        ]);
+        $data = $request->validated();
 
-        return Todo::create([
-            'user_id' => request()->user()->id(),
+        return response()->json(Todo::create([
+            'user_id' => $request->user()->id,
             'text' => $data['text'],
-        ]);
+        ]));
     }
 
-    public function update(Request $request, Todo $todo)
+    public function update(TodoUpdateRequest $request, Todo $todo): JsonResponse
     {
-        abort_if($todo->user_id !== $request->user()->id(), 403);
-
-        $data = $request->validate([
-            'text' => 'sometimes|string|max:255',
-            'done' => 'sometimes|boolean',
-        ]);
-
+        $data = $request->validated();
         $todo->update($data);
-        return $todo;
+        return response()->json($todo);
     }
 
-    public function destroy(Request $request, Todo $todo)
+    public function destroy(Todo $todo): JsonResponse
     {
-        abort_if($todo->user_id !== $request->user()->id(), 403);
-
         $todo->delete();
-        return response()->noContent();
+        return response()->json(['message' => 'Todo deleted successfully']);
     }
 }

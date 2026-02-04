@@ -3,13 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Interview\InterviewUpdateRequest;
 use App\Models\Interview;
-use App\Models\JobApplication;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class InterviewController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request):Collection
     {
         return Interview::with('jobApplication:id,company_name,position')
             ->where('user_id', $request->user()->id)
@@ -26,23 +28,18 @@ class InterviewController extends Controller
             ]);
     }
 
-    public function update(Request $request, Interview $interview)
+    public function update(InterviewUpdateRequest $request, Interview $interview): JsonResponse
     {
-        $data = $request->validate([
-            'interview_date' => 'sometimes|date',
-            'type' => 'sometimes|string',
-            'location' => 'sometimes|string',
-            'notes' => 'sometimes|string|nullable',
-        ]);
-
+        $data = $request->validated();
         $interview->update($data);
 
         return response()->json($interview);
     }
 
 
-    public function destroy(Interview $interview)
+    public function destroy(Interview $interview): JsonResponse
     {
+
         $interview->delete();
         return response()->json(['message' => 'Deleted successfully']);
     }

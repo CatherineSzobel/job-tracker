@@ -6,54 +6,48 @@ use App\Models\JobApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Exports\JobApplicationsExport;
+use App\Http\Requests\JobApplication\ScheduleInterviewRequest;
+use App\Http\Requests\JobApplication\StoreJobApplicationRequest;
+use App\Http\Requests\JobApplication\UpdateJobApplicationRequest;
 use App\Imports\JobApplicationsImport;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Validators\ValidationException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class JobApplicationController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Collection
     {
-        $user = $request->user();
+        $query = $request->user()
+            ->jobApplications()
+            ->with('interviews');
 
-        if (!$user) {
-            return response()->json([], 200);
+        $query->where(
+            'is_archived',
+            $request->boolean('archived')
+        );
+
+        if ($request->filled('status')) {
+            $query->where('status', $request['status']);
         }
 
-        $query = $user->jobApplications();
-
-        $request->has('archived') && $request->boolean('archived')
-            ? $query->where('is_archived', true) : $query->where('is_archived', false);
-
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
+        if ($request->filled('priority')) {
+            $query->where('priority', $request['priority']);
         }
 
-        if ($request->has('priority')) {
-            $query->where('priority', $request->priority);
+        if ($request->filled('applied_date')) {
+            $query->whereDate('applied_date', $request['applied_date']);
         }
 
-        if ($request->has('applied_date')) {
-            $query->whereDate('applied_date', $request->applied_date);
-        }
-
-        return $query->with('interviews')->get();
+        return $query->get();
     }
 
-    public function store(Request $request)
+    public function store(StoreJobApplicationRequest $request): JsonResponse
     {
 
-        $validated = $request->validate([
-            'company_name' => 'required|string|max:255',
-            'position' => 'required|string|max:255',
-            'location' => 'nullable|string|max:255',
-            'status' => 'sometimes|string|in:applied,interviewing,offered,rejected',
-            'priority' => 'nullable|string|max:50',
-            'job_link' => 'nullable|url',
-            'description' => 'nullable|string',
-            'notes' => 'nullable|string'
-        ]);
+        $validated = $request->validated();
         $validated['applied_date'] = now()->toDateString();
         $job = $request->user()->jobApplications()->create($validated);
 
@@ -63,40 +57,25 @@ class JobApplicationController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateJobApplicationRequest $request, int $id): JsonResponse
     {
         $job = JobApplication::findOrFail($id);
-
-        $data = $request->validate([
-            'status' => 'sometimes|string|in:applied,interview,offer,rejected',
-            'is_archived' => 'sometimes|boolean',
-            'priority' => 'sometimes|string|max:50',
-            'notes' => 'sometimes|string|nullable',
-            'location' => 'sometimes|string|max:255',
-            'job_link' => 'sometimes|url|nullable',
-            'company_name' => 'sometimes|string|max:255',
-            'position' => 'sometimes|string|max:255',
-        ]);
-
-        $job->update($data);
+        $job->update($request->validated());
 
         return response()->json([
             'data' => $job
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(int $id): JsonResponse
     {
         JobApplication::findOrFail($id)->delete();
         return response()->json(['message' => 'Deleted']);
     }
 
-    public function show($id)
+    public function show(Request $request, int $id): JsonResponse
     {
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-
-        $job = $user
+        $job = $request->user()
             ->jobApplications()
             ->with(['interviews'])
             ->find($id);
@@ -114,7 +93,7 @@ class JobApplicationController extends Controller
         ]);
     }
 
-    public function scheduleInterview(Request $request, $id)
+    public function scheduleInterview(ScheduleInterviewRequest $request, $id): JsonResponse
     {
         $job = $request->user()->jobApplications()->find($id);
 
@@ -125,15 +104,8 @@ class JobApplicationController extends Controller
             ], 404);
         }
 
-        $validated = $request->validate([
-            'interview_date' => 'required|date',
-            'type' => 'sometimes|in:phone,online,onsite',
-            'location' => 'nullable|string',
-            'notes' => 'nullable|string',
-        ]);
-
-        $interview = $job->interviews()->create(array_merge($validated, [
-            'user_id' => Auth::id()
+        $interview = $job->interviews()->create(array_merge($request->validated(), [
+            'user_id' => $request->user()->id
         ]));
 
         return response()->json([
@@ -142,12 +114,12 @@ class JobApplicationController extends Controller
         ], 201);
     }
 
-    public function export(Request $request)
+    public function export(): BinaryFileResponse
     {
         return Excel::download(new JobApplicationsExport, 'job-applications.xlsx');
     }
 
-    public function import(Request $request)
+    public function import(Request $request): JsonResponse
     {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls',
@@ -157,14 +129,15 @@ class JobApplicationController extends Controller
 
         // Check ZIP extension for Excel
         $ext = strtolower($uploaded->getClientOriginalExtension());
-        if (in_array($ext, ['xlsx', 'xls']) 
-            && !class_exists('ZipArchive')) {
+        if (
+            in_array($ext, ['xlsx', 'xls'])
+            && !class_exists('ZipArchive')
+        ) {
 
             return response()->json([
                 'success' => false,
                 'message' => 'PHP zip extension is required to import Excel files. Please enable ext-zip.',
             ], 500);
-
         }
 
         $import = new JobApplicationsImport;
