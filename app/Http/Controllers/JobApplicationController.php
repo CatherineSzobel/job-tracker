@@ -45,10 +45,8 @@ class JobApplicationController extends Controller
 
     public function destroy(int $id): JsonResponse
     {
-        $job = JobApplication::findOrFail($id);
-        $this->jobApplicationService->delete($job);
-
-        return response()->json(['message' => 'Deleted']);
+        $this->jobApplicationService->delete($id);
+        return response()->json(['message' => 'JobApplication deleted successfully']);
     }
 
     public function show(Request $request, int $id): JsonResponse

@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class InterviewController extends Controller
 {
-    public function index(Request $request):Collection
+    public function index(Request $request): Collection
     {
         return Interview::with('jobApplication:id,company_name,position')
             ->where('user_id', $request->user()->id)
@@ -37,10 +37,10 @@ class InterviewController extends Controller
     }
 
 
-    public function destroy(Interview $interview): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
 
-        $interview->delete();
-        return response()->json(['message' => 'Deleted successfully']);
+        Interview::findOrFail($id)->delete();
+        return response()->json(['message' => 'Interview deleted successfully']);
     }
 }

@@ -36,9 +36,9 @@ class JobApplicationService
     /**
      * Delete a job application
      */
-    public function delete(JobApplication $job): void
+    public function delete(int $id): void
     {
-        $job->delete();
+        JobApplication::findOrFail($id)->delete();
     }
 
     /**
