@@ -5,7 +5,7 @@ export default function Status({ label, count, total }) {
         offer: "bg-green-100 text-green-700",
         rejected: "bg-red-100 text-red-700",
     };
-    const percentage = total ? (count / total) * 100 : 0;
+    const percentage = Math.min((count / total) * 100, 100);
     return (
         <div className="mb-2">
             <span className={`inline-block px-2 py-1 rounded text-sm font-medium ${statusColors[label.toLowerCase()]}`}>
