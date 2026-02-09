@@ -113,4 +113,9 @@ class JobApplicationController extends Controller
             'message' => 'Import successful'
         ]);
     }
+
+    public function stats(Request $request): JsonResponse
+    {
+        return response()->json(['data' => $this->jobApplicationService->getStatsForUser($request->user())]);
+    }
 }

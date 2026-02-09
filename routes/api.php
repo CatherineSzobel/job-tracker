@@ -20,6 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/job-applications', [JobApplicationController::class, 'index']);
+    Route::get('/job-applications/stats', [JobApplicationController::class, 'stats']);
     Route::post('/job-applications', [JobApplicationController::class, 'store']);
     Route::get('/job-applications/export', [JobApplicationController::class, 'export']);
     Route::post('/job-applications/import', [JobApplicationController::class, 'import']);
@@ -29,13 +30,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/job-applications/{id}/interviews', [JobApplicationController::class, 'scheduleInterview']);
 
     Route::get('/interviews', [InterviewController::class, 'index']);
-    Route::put('/interviews/{id}', [InterviewController::class, 'update']);
-    Route::delete('/interviews/{id}', [InterviewController::class, 'destroy']);
+    Route::put('/interviews/{id}', [InterviewController::class, 'update'])
+        ->whereNumber('id');
+    Route::delete('/interviews/{id}', [InterviewController::class, 'destroy'])
+        ->whereNumber('id');
 
     Route::get('/todos', [TodoController::class, 'index']);
     Route::post('/todos', [TodoController::class, 'store']);
-    Route::put('/todos/{id}', [TodoController::class, 'update']);
-    Route::delete('/todos/{id}', [TodoController::class, 'destroy']);
+    Route::put('/todos/{id}', [TodoController::class, 'update'])
+        ->whereNumber('id');
+    Route::delete('/todos/{id}', [TodoController::class, 'destroy'])
+        ->whereNumber('id');
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);

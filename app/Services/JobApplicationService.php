@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\JobApplication;
 use App\Imports\JobApplicationsImport;
 use App\Exports\JobApplicationsExport;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Http\UploadedFile;
 use Maatwebsite\Excel\Facades\Excel;
@@ -116,5 +117,32 @@ class JobApplicationService
         }
 
         return $query->get();
+    }
+
+    public function getStatsForUser($user): array
+    {
+        $jobs = $user->jobApplications()->with('interviews')->get();
+
+        $today = Carbon::today();
+        $startOfWeek = Carbon::now()->startOfWeek();
+
+        $todayApplications = $jobs->filter(fn($job) => $job->applied_date && $job->applied_date->gte($today))->count();
+        $weekApplications = $jobs->filter(fn($job) => $job->applied_date && $job->applied_date->gte($startOfWeek))->count();
+        $upcomingInterviews = $jobs->flatMap(fn($job) => $job->interviews)
+            ->filter(fn($interview) => $interview->scheduled_at->gte($today))
+            ->count();
+
+
+        return [
+            'total' => $jobs->count(),
+            'archived' => $jobs->where('is_archived', true)->count(),
+            'applied' => $jobs->where('status', 'applied')->count(),
+            'interview' => $jobs->where('status', 'interview')->count(),
+            'offer' => $jobs->where('status', 'offer')->count(),
+            'rejected' => $jobs->where('status', 'rejected')->count(),
+            'todayApplications' => $todayApplications,
+            'weekApplications' => $weekApplications,
+            'upcomingInterviews' => $upcomingInterviews,
+        ];
     }
 }
