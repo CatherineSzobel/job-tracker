@@ -1,100 +1,96 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../api/axios";
+import { Sun, Moon } from "lucide-react";
 
 export default function Navbar() {
-    const [user, setUser] = useState(null);
-    const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+  const navigate = useNavigate();
 
-    // Fetch current user
-    useEffect(() => {
-        API.get("/user")
-            .then((res) => setUser(res.data))
-            .catch((err) => {
-                console.error(err);
-                setUser(null);
-            });
-    }, []);
+  useEffect(() => {
+    API.get("/user")
+      .then((res) => setUser(res.data))
+      .catch(() => setUser(null));
+  }, []);
 
-    // Handle menu selection
-    const handleMenuChange = (e) => {
-        const value = e.target.value;
+  // Load saved dark mode preference
+  useEffect(() => {
+    const saved = localStorage.getItem("darkMode") === "true";
+    setDarkMode(saved);
+    document.documentElement.classList.toggle("dark", saved);
+  }, []);
 
-        if (value === "logout") {
-            API.post("/logout")
-                .then(() => {
-                    setUser(null);
-                    localStorage.removeItem("token");
-                    navigate("/login");
-                })
-                .catch((err) => console.error(err));
-        } else {
-            navigate(`/${value}`);
-        }
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      const newMode = !prev;
+      localStorage.setItem("darkMode", newMode);
+      document.documentElement.classList.toggle("dark", newMode);
+      return newMode;
+    });
+  };
 
-        e.target.value = "";
-    };
+  const handleMenuChange = (e) => {
+    const value = e.target.value;
+    if (value === "logout") {
+      API.post("/logout")
+        .then(() => {
+          setUser(null);
+          localStorage.removeItem("token");
+          navigate("/login");
+        })
+        .catch(console.error);
+    } else {
+      navigate(`/${value}`);
+    }
+    e.target.value = "";
+  };
 
-    return (
-        <nav className="bg-primary-soft text-surface p-4 shadow-md">
-            <div className="max-w-6xl mx-auto flex justify-between items-center">
+  return (
+    <header className="flex items-center justify-between p-4 bg-primary-soft shadow-md text-white">
+      <div>
+        <h1 className="text-lg font-semibold">Dashboard</h1>
+      </div>
 
-                {/* LEFT SIDE - Logo + Nav Links */}
-                <div className="flex items-center gap-6">
-                    <Link to="/" className="text-lg font-bold hover:text-accent">
-                        Job Tracker
-                    </Link>
+      {/* Right: User info + Dark mode */}
+      <div className="flex items-center gap-4">
+        {/* Dark mode toggle */}
+        <button
+          onClick={toggleDarkMode}
+          className="p-2 rounded hover:bg-primary transition-colors"
+          title="Toggle dark mode"
+        >
+          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
 
-                    <div className="flex gap-4 text-sm">
-                        <Link to="/" className="hover:text-accent-soft">
-                            Dashboard
-                        </Link>
-
-                        <Link to="/applications" className="hover:text-accent-soft">
-                            Applications
-                        </Link>
-
-                        <Link to="/interviews" className="hover:text-accent-soft">
-                            Interviews
-                        </Link>
-
-                        <Link to="/calendar" className="hover:text-accent-soft">
-                            Calendar
-                        </Link>
-                    </div>
-                </div>
-
-                {/* RIGHT SIDE - User / Auth */}
-                {user ? (
-                    <div className="flex items-center gap-3">
-                        <p className="text-sm">{`Welcome, ${user.name}`}</p>
-
-                        <select
-                            onChange={handleMenuChange}
-                            defaultValue=""
-                            className="text-sm rounded border border-border p-1 bg-surface text-primary hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-                        >
-                            <option value="" disabled>
-                                Menu
-                            </option>
-                            <option value="profile">Profile</option>
-                            <option value="links">Links</option>
-                            <option value="settings">Settings</option>
-                            <option value="logout">Logout</option>
-                        </select>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-4 text-sm">
-                        <Link to="/register" className="hover:text-accent-soft">
-                            Register
-                        </Link>
-
-                        <Link to="/login" className="hover:text-accent-soft">
-                            Login
-                        </Link>
-                    </div>
-                )}
-            </div>
-        </nav>
-    );
+        {user ? (
+          <div className="flex items-center gap-2">
+            <p className="text-sm hidden md:block">{`Hello, ${user.name}`}</p>
+            <select
+              onChange={handleMenuChange}
+              defaultValue=""
+              className="text-sm rounded border border-border p-1 bg-surface text-primary hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              <option value="" disabled>
+                Menu
+              </option>
+              <option value="profile">Profile</option>
+              <option value="links">Links</option>
+              <option value="settings">Settings</option>
+              <option value="logout">Logout</option>
+            </select>
+          </div>
+        ) : (
+          <div className="flex gap-2 text-sm">
+            <Link to="/register" className="hover:text-accent-soft">
+              Register
+            </Link>
+            <Link to="/login" className="hover:text-accent-soft">
+              Login
+            </Link>
+          </div>
+        )}
+      </div>
+    </header>
+  );
 }
