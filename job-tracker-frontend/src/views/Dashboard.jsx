@@ -4,6 +4,9 @@ import TodoList from "../components/ToDoList";
 import GoalBar from "../components/Dashboard/GoalBar";
 import Status from "../components/Dashboard/Status";
 
+import StatCard from "../components/Dashboard/StatsCard";
+import { Briefcase, Archive, Calendar } from "lucide-react";
+
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,87 +21,116 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-
-  if (loading)
+  if (loading) {
     return (
-      <p className="text-center mt-10 text-muted">Loading…</p>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
+      </div>
     );
+  }
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 px-4">
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
 
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Top Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <StatCard
+          label="Total Applications"
+          value={stats?.total || 0}
+          icon={<Briefcase size={20} />}
+          accent="text-indigo-600"
+        />
 
-          {/* Combined Summary Card */}
-          <div className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-xl transition col-span-1 md:col-span-3">
+        <StatCard
+          label="Archived Applications"
+          value={stats?.archived || 0}
+          icon={<Archive size={20} />}
+          accent="text-gray-600"
+        />
 
-            {/* Status badges */}
-            <div className="flex flex-wrap gap-4 mb-6">
-              <div className="flex-1 min-w-30 p-3 bg-white rounded-xl shadow text-center border border-gray-100">
-                <p className="text-sm font-medium text-green-500">Applied</p>
-                <p className="text-xl font-bold text-green-500">{stats.applied}</p>
-              </div>
+        <StatCard
+          label="Upcoming Interviews"
+          value={stats?.upcomingInterviews || 0}
+          icon={<Calendar size={20} />}
+          accent="text-green-600"
+        />
+      </div>
 
-              <div className="flex-1 min-w-30 p-3 bg-white rounded-xl shadow text-center border border-gray-100">
-                <p className="text-sm font-medium text-blue-500">Interview</p>
-                <p className="text-xl font-bold text-blue-500">{stats.interview}</p>
-              </div>
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-              <div className="flex-1 min-w-30 p-3 bg-white rounded-xl shadow text-center border border-gray-100">
-                <p className="text-sm font-medium text-purple-500">Offer</p>
-                <p className="text-xl font-bold text-purple-500">{stats.offer}</p>
-              </div>
-
-              <div className="flex-1 min-w-30 p-3 bg-white rounded-xl shadow text-center border border-gray-100">
-                <p className="text-sm font-medium text-red-500">Rejected</p>
-                <p className="text-xl font-bold text-red-500">{stats.rejected}</p>
-              </div>
-            </div>
-
-            {/* Upcoming Interviews */}
-            <div className="p-4 mb-6 bg-gray-50 rounded-xl shadow-inner text-center">
-              <p className="text-xl font-semibold text-gray-700">Total Applications</p>
-              <p className="text-4xl font-bold text-gray-900">{stats.total}</p>
-            </div>
-            {/* Upcoming Interviews */}
-            <div className="p-4 mb-6 bg-gray-50 rounded-xl shadow-inner text-center">
-              <p className="text-lg font-medium mt-4 text-gray-700">Archived Applications</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.archived}</p>
-            </div>
-            {/* Upcoming Interviews */}
-            <div className="p-4 mb-6 bg-gray-50 rounded-xl shadow-inner text-center">
-              <p className="text-sm font-medium text-gray-700">Upcoming Interviews</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.upcomingInterviews}</p>
-            </div>
-
-          </div>
+        {/* LEFT COLUMN */}
+        <div className="lg:col-span-4 flex flex-col gap-6">
 
           {/* Quick Todo */}
-          <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow hover:shadow-lg transition col-span-1 md:col-span-2">
-            <p className="font-semibold mb-4 text-gray-800">Quick Todo</p>
+          <div className="bg-white shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
+            <h2 className="text-lg font-semibold mb-4">Quick Todo</h2>
             <TodoList />
           </div>
 
           {/* Goals */}
-          <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow hover:shadow-lg transition">
-            <p className="font-semibold mb-4 text-gray-800">Goals</p>
-            <GoalBar
-              label="Today's Applications"
-              current={stats.todayApplications}
-              goal={dailyGoal}
-              barColor="accent"
-            />
-            <GoalBar
-              label="This Week's Applications"
-              current={stats.weekApplications}
-              goal={weeklyGoal}
-              barColor="accent-soft"
+          <div className="bg-white shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
+            <h2 className="text-lg font-semibold mb-4">Goals</h2>
+            <div className="flex flex-col gap-4">
+              <GoalBar
+                label="Today's Applications"
+                current={stats?.todayApplications || 0}
+                goal={dailyGoal}
+                barColor={stats?.todayApplications >= dailyGoal ? "green" : "accent"}
+              />
+              <GoalBar
+                label="This Week's Applications"
+                current={stats?.weekApplications || 0}
+                goal={weeklyGoal}
+                barColor={stats?.weekApplications >= weeklyGoal ? "green" : "accent-soft"}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* CENTER COLUMN */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+
+          {/* Status Badges */}
+          <div className="bg-white shadow-md rounded-2xl p-6 flex flex-wrap gap-4 justify-between transition-shadow hover:shadow-xl">
+            <div className="flex-1 min-w-30">
+              <Status label="Applied" count={stats.applied || 0} total={stats?.total || 1} />
+            </div>
+            <div className="flex-1 min-w-30">
+              <Status label="Interview" count={stats.interview || 0} total={stats?.total || 1} />
+            </div>
+            <div className="flex-1 min-w-30">
+              <Status label="Offer" count={stats.offer || 0} total={stats?.total || 1} />
+            </div>
+            <div className="flex-1 min-w-30">
+              <Status label="Rejected" count={stats.rejected || 0} total={stats?.total || 1} />
+            </div>
+          </div>
+
+
+          {/* Insights Placeholder */}
+          <div className="bg-white shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
+            <h3 className="text-md font-semibold mb-2">Insights</h3>
+            <p className="text-sm text-gray-500">Application activity overview coming soon…</p>
+          </div>
+
+        </div>
+
+        {/* RIGHT COLUMN */}
+        <div className="lg:col-span-3 flex flex-col gap-6">
+
+          {/* Notes */}
+          <div className="bg-white shadow-md rounded-2xl p-6 sticky top-6 transition-shadow hover:shadow-xl">
+            <h2 className="text-lg font-semibold mb-4">Notes</h2>
+            <textarea
+              className="w-full h-40 p-2 border rounded-md focus:outline-none focus:ring focus:ring-accent resize-none"
+              placeholder="Write your notes..."
             />
           </div>
 
         </div>
-      )}
-    </div >
+
+      </div>
+    </div>
   );
 }

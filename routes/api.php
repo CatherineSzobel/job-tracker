@@ -24,10 +24,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/job-applications', [JobApplicationController::class, 'store']);
     Route::get('/job-applications/export', [JobApplicationController::class, 'export']);
     Route::post('/job-applications/import', [JobApplicationController::class, 'import']);
-    Route::get('/job-applications/{id}', [JobApplicationController::class, 'show']);
-    Route::put('/job-applications/{id}', [JobApplicationController::class, 'update']);
-    Route::delete('/job-applications/{id}', [JobApplicationController::class, 'destroy']);
-    Route::post('/job-applications/{id}/interviews', [JobApplicationController::class, 'scheduleInterview']);
+    Route::get('/job-applications/{id}', [JobApplicationController::class, 'show'])
+        ->whereNumber('id');
+    Route::put('/job-applications/{id}', [JobApplicationController::class, 'update'])
+        ->whereNumber('id');
+    Route::delete('/job-applications/{id}', [JobApplicationController::class, 'destroy'])
+        ->whereNumber('id');
+    Route::post('/job-applications/{id}/interviews', [JobApplicationController::class, 'scheduleInterview'])
+        ->whereNumber('id');
 
     Route::get('/interviews', [InterviewController::class, 'index']);
     Route::put('/interviews/{id}', [InterviewController::class, 'update'])
