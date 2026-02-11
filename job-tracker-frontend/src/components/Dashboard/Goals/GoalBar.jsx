@@ -9,22 +9,25 @@ export default function GoalBar({
 
   return (
     <div className="space-y-1">
+      {/* Label + % */}
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-gray-800">{label}</p>
-        <span className="text-xs font-medium text-gray-500">
+        <p className="text-sm font-semibold text-light-text dark:text-white">{label}</p>
+        <span className="text-xs font-medium text-dark dark:text-light">
           {percentage.toFixed(0)}%
         </span>
       </div>
 
-      <div className="flex justify-between text-xs text-gray-500">
+      {/* Current / Goal */}
+      <div className="flex justify-between text-xs text-dark dark:text-light">
         <span>{current} done</span>
         <span>{goal} goal</span>
       </div>
 
-      <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+      {/* Progress Bar */}
+      <div className="h-3 bg-dark-soft dark:bg-light rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ease-out
-            ${isComplete ? "bg-green-500" : color}`}
+            ${isComplete ? "bg-green-500 dark:bg-green-400" : color}`}
           style={{ width: `${percentage}%` }}
         />
       </div>

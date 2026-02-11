@@ -23,10 +23,10 @@ export default function Navbar() {
 
   const toggleDarkMode = () => {
     setDarkMode((prev) => {
-      const newMode = !prev;
-      localStorage.setItem("darkMode", newMode);
-      document.documentElement.classList.toggle("dark", newMode);
-      return newMode;
+      const next = !prev;
+      localStorage.setItem("darkMode", next);
+      document.documentElement.classList.toggle("dark", next);
+      return next;
     });
   };
 
@@ -47,17 +47,24 @@ export default function Navbar() {
   };
 
   return (
-    <header className="flex items-center justify-between p-4 bg-primary-soft shadow-md text-white">
-      <div>
-        <h1 className="text-lg font-semibold">Dashboard</h1>
-      </div>
+    <header
+      className="
+        flex items-center justify-between p-4 shadow-md
+        bg-white text-gray-900
+        dark:bg-gray-900 dark:text-gray-100
+      "
+    >
+      <h1 className="text-lg font-semibold">Dashboard</h1>
 
-      {/* Right: User info + Dark mode */}
       <div className="flex items-center gap-4">
         {/* Dark mode toggle */}
         <button
           onClick={toggleDarkMode}
-          className="p-2 rounded hover:bg-primary transition-colors"
+          className="
+            p-2 rounded transition-colors
+            hover:bg-gray-200
+            dark:hover:bg-gray-800
+          "
           title="Toggle dark mode"
         >
           {darkMode ? <Sun size={18} /> : <Moon size={18} />}
@@ -65,11 +72,19 @@ export default function Navbar() {
 
         {user ? (
           <div className="flex items-center gap-2">
-            <p className="text-sm hidden md:block">{`Hello, ${user.name}`}</p>
+            <p className="text-sm hidden md:block">
+              Hello, {user.name}
+            </p>
+
             <select
               onChange={handleMenuChange}
               defaultValue=""
-              className="text-sm rounded border border-border p-1 bg-surface text-primary hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+              className="
+                text-sm rounded border p-1
+                bg-white text-gray-900 border-gray-300
+                dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600
+                focus:outline-none focus:ring-1 focus:ring-accent
+              "
             >
               <option value="" disabled>
                 Menu
@@ -81,11 +96,11 @@ export default function Navbar() {
             </select>
           </div>
         ) : (
-          <div className="flex gap-2 text-sm">
-            <Link to="/register" className="hover:text-accent-soft">
+          <div className="flex gap-3 text-sm">
+            <Link to="/register" className="hover:underline">
               Register
             </Link>
-            <Link to="/login" className="hover:text-accent-soft">
+            <Link to="/login" className="hover:underline">
               Login
             </Link>
           </div>

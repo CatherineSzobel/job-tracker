@@ -9,15 +9,16 @@ export default function InterviewForm({
 }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Job Select */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Job
                 </label>
                 <select
                     name="job_id"
                     value={newInterview.job_id}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-black"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-subtle rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-light-text dark:text-dark-text bg-light dark:bg-dark-subtle transition-colors"
                     required
                     disabled={!!editingInterview}
                 >
@@ -30,16 +31,17 @@ export default function InterviewForm({
                 </select>
             </div>
 
+            {/* Type & Date */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Interview Type
                     </label>
                     <select
                         name="type"
                         value={newInterview.type}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-dark-subtle rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-light-text dark:text-dark-text bg-light dark:bg-dark-subtle transition-colors"
                         required
                     >
                         <option value="">Select Interview Type</option>
@@ -50,7 +52,7 @@ export default function InterviewForm({
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Date & Time
                     </label>
                     <input
@@ -58,14 +60,15 @@ export default function InterviewForm({
                         name="interview_date"
                         value={newInterview.interview_date}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-dark-subtle rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-light-text dark:text-dark-text bg-light dark:bg-dark-subtle transition-colors"
                         required
                     />
                 </div>
             </div>
 
+            {/* Location */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Location
                 </label>
                 <input
@@ -74,13 +77,14 @@ export default function InterviewForm({
                     placeholder="Location"
                     value={newInterview.location}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-subtle rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-light-text dark:text-dark-text bg-light dark:bg-dark-subtle transition-colors"
                     required
                 />
             </div>
 
+            {/* Notes */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Notes
                 </label>
                 <textarea
@@ -89,10 +93,11 @@ export default function InterviewForm({
                     value={newInterview.notes}
                     onChange={handleChange}
                     rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-subtle rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-light-text dark:text-dark-text bg-light dark:bg-dark-subtle transition-colors"
                 />
             </div>
 
+            {/* Buttons */}
             <div className="flex gap-3 pt-4">
                 <button
                     type="submit"
@@ -105,7 +110,7 @@ export default function InterviewForm({
                 <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg transition"
+                    className="flex-1 bg-gray-200 dark:bg-dark-subtle hover:bg-gray-300 dark:hover:bg-dark-subtle/80 text-gray-700 dark:text-dark-muted py-2 rounded-lg transition"
                 >
                     Cancel
                 </button>

@@ -1,17 +1,18 @@
 import { Archive, Briefcase, Calendar } from "lucide-react";
 import StatCard from "./StatsCard";
+
 const statCards = [
   {
     label: "Total Applications",
     valueKey: "total",
     icon: <Briefcase size={20} />,
-    accent: "text-indigo-600",
+    accent: "text-blue-600",
   },
   {
     label: "Archived Applications",
     valueKey: "archived",
     icon: <Archive size={20} />,
-    accent: "text-gray-600",
+    accent: "text-red-600",
   },
   {
     label: "Upcoming Interviews",
@@ -31,6 +32,7 @@ export default function StatusGrid({ stats }) {
           value={stats?.[valueKey] ?? 0}
           icon={icon}
           accent={accent}
+          className="bg-light-soft dark:bg-dark-soft text-light-text dark:text-white transition-colors"
         />
       ))}
     </div>

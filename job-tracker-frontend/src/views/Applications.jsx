@@ -44,19 +44,16 @@ export default function Applications() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleChange = (e) => {
     setNewJob({ ...newJob, [e.target.name]: e.target.value });
   };
 
-  // Submit new job
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-
     try {
       const res = await API.post("/job-applications", newJob);
       setJobs([res.data.data, ...jobs]);
@@ -82,19 +79,14 @@ export default function Applications() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
-        <p className="ml-2 text-gray-600">Loading...</p>
+        <p className="ml-2 text-gray-600 dark:text-gray-300">Loading...</p>
       </div>
     );
   }
 
-
-  const filteredJobs = jobs.filter(job => {
-    const statusMatch =
-      statusFilter === "all" || job.status === statusFilter;
-
-    const priorityMatch =
-      priorityFilter === "all" || job.priority === priorityFilter;
-
+  const filteredJobs = jobs.filter((job) => {
+    const statusMatch = statusFilter === "all" || job.status === statusFilter;
+    const priorityMatch = priorityFilter === "all" || job.priority === priorityFilter;
     return statusMatch && priorityMatch;
   });
 
@@ -104,7 +96,6 @@ export default function Applications() {
         responseType: "blob",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -112,7 +103,6 @@ export default function Applications() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-
     } catch (err) {
       console.error("Export failed", err);
     }
@@ -120,7 +110,6 @@ export default function Applications() {
 
   const importJobs = async (file) => {
     setImporting(true);
-
     const formData = new FormData();
     formData.append("file", file);
 
@@ -128,19 +117,15 @@ export default function Applications() {
       await API.post("/job-applications/import", formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-
       const res = await API.get("/job-applications");
       setJobs(res.data);
       alert("Import successful");
-
     } catch (err) {
-      if (err.response) {
-        console.error("Import failed", err.response.data);
-        alert("Import failed: " + (err.response.data.message || JSON.stringify(err.response.data)));
-      } else {
-        console.error("Import failed", err); alert("Failed to import jobs");
-      }
-
+      console.error("Import failed", err.response || err);
+      alert(
+        "Import failed: " +
+          (err.response?.data?.message || JSON.stringify(err.response?.data) || err.message)
+      );
     } finally {
       setImporting(false);
     }
@@ -148,39 +133,51 @@ export default function Applications() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-
       {/* HEADER */}
-      <div className="rounded-2xl p-6 mb-6 bg-surface shadow-md border border-border">
+      <div className="rounded-2xl p-6 mb-6 bg-surface dark:bg-dark-soft shadow-md border border-border dark:border-dark-subtle transition-colors">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">
+          <h1 className="text-2xl font-semibold text-light-text dark:text-dark-text">
             Job Applications
-            <span className="ml-2 text-sm text-muted">
+            <span className="ml-2 text-sm text-muted dark:text-dark-muted">
               ({jobs.length})
             </span>
           </h1>
 
           <div className="flex items-center gap-2 relative" ref={dropdownRef}>
-            <button className="px-4 py-2 rounded-md text-sm bg-accent-soft hover:bg-accent text-surface font-semibold transition" onClick={() => setShowForm(true)}>
+            <button
+              className="px-4 py-2 rounded-md text-sm bg-accent-soft hover:bg-accent text-surface font-semibold transition-colors"
+              onClick={() => setShowForm(true)}
+            >
               + Add
             </button>
 
             {/* Dropdown */}
             <button
               onClick={() => setShowMenu((s) => !s)}
-              className="w-9 h-9 flex items-center justify-center font-extrabold hover:border rounded-lg text-blue-400 transition"
+              className="w-9 h-9 flex items-center justify-center font-extrabold hover:border rounded-lg text-blue-400 dark:text-blue-300 transition-colors"
             >
               ⋮
             </button>
 
             {showMenu && (
-              <div className="absolute right-0 top-11 w-40 rounded-lg shadow-lg border overflow-hidden z-50 bg-surface border-border text-primary">
-                <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-300" onClick={() => navigate("/archives")}>
+              <div className="absolute right-0 top-11 w-40 rounded-lg shadow-lg border overflow-hidden z-50 bg-surface dark:bg-dark-soft border-border dark:border-dark-subtle text-primary dark:text-dark-text transition-colors">
+                <button
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                  onClick={() => navigate("/archives")}
+                >
                   Archives
                 </button>
-                <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-300" onClick={exportJobs}>
+                <button
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                  onClick={exportJobs}
+                >
                   Export Excel
                 </button>
-                <button className="w-full text-left px-4 py-2 text-sm  disabled:opacity-50 hover:bg-gray-300" onClick={() => fileInputRef.current.click()} disabled={importing}>
+                <button
+                  className="w-full text-left px-4 py-2 text-sm disabled:opacity-50 hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                  onClick={() => fileInputRef.current.click()}
+                  disabled={importing}
+                >
                   {importing ? "Importing…" : "Import Excel"}
                 </button>
               </div>
@@ -200,11 +197,16 @@ export default function Applications() {
             />
           </div>
         </div>
+
         {/* FILTER BAR */}
         <div className="rounded-xl p-4 mb-6 flex gap-6 text-sm">
           <div>
-            <label className="block mb-1">Status</label>
-            <select className="border rounded-lg px-3 py-1 text-secondary-text border-secondary-muted" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <label className="block mb-1 text-light-text dark:text-dark-text">Status</label>
+            <select
+              className="border rounded-lg px-3 py-1 text-light-text dark:text-dark-text border-secondary-muted dark:border-dark-subtle bg-surface dark:bg-dark-soft transition-colors"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
               <option value="all">All</option>
               <option value="applied">Applied</option>
               <option value="interview">Interview</option>
@@ -214,8 +216,12 @@ export default function Applications() {
           </div>
 
           <div>
-            <label className="block mb-1 ">Priority</label>
-            <select className="border rounded-lg px-3 py-1 text-secondary-text border-secondary-muted" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+            <label className="block mb-1 text-light-text dark:text-dark-text">Priority</label>
+            <select
+              className="border rounded-lg px-3 py-1 text-light-text dark:text-dark-text border-secondary-muted dark:border-dark-subtle bg-surface dark:bg-dark-soft transition-colors"
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+            >
               <option value="all">All</option>
               <option value="high">High</option>
               <option value="medium">Medium</option>
@@ -227,11 +233,15 @@ export default function Applications() {
 
       {/* JOB LIST */}
       {filteredJobs.length === 0 ? (
-        <p className="text-center text-muted">No applications found.</p>
+        <p className="text-center text-muted dark:text-dark-muted">No applications found.</p>
       ) : (
         <div className="flex flex-col gap-4">
           {filteredJobs.map((job) => (
-            <JobCard key={job.id} job={job} onArchive={(id) => setJobs((prev) => prev.filter((j) => j.id !== id))} />
+            <JobCard
+              key={job.id}
+              job={job}
+              onArchive={(id) => setJobs((prev) => prev.filter((j) => j.id !== id))}
+            />
           ))}
         </div>
       )}
@@ -239,9 +249,18 @@ export default function Applications() {
       {/* MODAL */}
       {showForm && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-primary/60">
-          <div className="bg-surface rounded-xl shadow-xl p-6 w-full max-w-2xl">
-            <h2 className="text-lg font-semibold mb-4 text-primary">Add Job Application</h2>
-            <JobForm setShowForm={setShowForm} newJob={newJob} setNewJob={setNewJob} saving={saving} handleSubmit={handleSubmit} handleChange={handleChange} />
+          <div className="bg-surface dark:bg-dark-soft rounded-xl shadow-xl p-6 w-full max-w-2xl transition-colors">
+            <h2 className="text-lg font-semibold mb-4 text-light-text dark:text-dark-text">
+              Add Job Application
+            </h2>
+            <JobForm
+              setShowForm={setShowForm}
+              newJob={newJob}
+              setNewJob={setNewJob}
+              saving={saving}
+              handleSubmit={handleSubmit}
+              handleChange={handleChange}
+            />
           </div>
         </div>
       )}

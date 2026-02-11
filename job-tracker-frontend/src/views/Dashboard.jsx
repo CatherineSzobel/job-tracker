@@ -56,7 +56,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-light p-4 sm:p-6 lg:p-8 dark:bg-dark transition-colors rounded-2xl">
 
       {/* Top Stats */}
       <StatusGrid stats={stats} />
@@ -68,8 +68,8 @@ export default function Dashboard() {
         <div className="lg:col-span-4 flex flex-col gap-6">
 
           {/* Quick Todo */}
-          <div className="bg-white shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
-            <h2 className="text-lg font-semibold mb-4">Quick Todo</h2>
+          <div className="bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
+            <h2 className="text-lg font-semibold mb-4 text-light-text dark:text-white">Quick Todo</h2>
             <TodoList />
           </div>
 
@@ -84,8 +84,8 @@ export default function Dashboard() {
           <StatusBadges stats={stats} />
 
           {/* Insights */}
-          <div className="bg-white shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
-            <h3 className="text-md font-semibold mb-2">Insights</h3>
+          <div className="bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
+            <h3 className="text-md font-semibold mb-2 text-light-text dark:text-white">Insights</h3>
             <InsightChart stats={stats} />
           </div>
 
@@ -95,18 +95,24 @@ export default function Dashboard() {
         <div className="lg:col-span-3 flex flex-col gap-6">
 
           {/* Notes */}
-          <div className="bg-white shadow-md rounded-2xl p-6 sticky top-6 transition-shadow hover:shadow-xl">
-            <h2 className="text-lg font-semibold mb-4">Notes</h2>
+          <div className="bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 sticky top-6 transition-shadow hover:shadow-xl">
+            <h2 className="text-lg font-semibold mb-4 text-light-text dark:text-white">Notes</h2>
             <textarea
-              className="w-full h-40 p-2 border rounded-md focus:outline-none focus:ring focus:ring-accent resize-none"
+              className="w-full h-40 p-2 border border-light-muted dark:border-dark-subtle rounded-md focus:outline-none focus:ring focus:ring-accent dark:focus:ring-accent resize-none bg-light dark:bg-dark text-light-text dark:text-white placeholder-light-muted dark:placeholder-gray-400"
               placeholder="Write your notes..."
             />
-            <button onClick={handleSaveNotes} className="mt-2 px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-dark transition-colors">Save</button>
+            <button
+              onClick={handleSaveNotes}
+              className="mt-2 px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-soft transition-colors"
+            >
+              Save
+            </button>
           </div>
 
         </div>
 
       </div>
     </div>
+
   );
 }

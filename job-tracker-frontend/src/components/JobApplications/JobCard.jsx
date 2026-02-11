@@ -53,31 +53,37 @@ export default function JobCard({ job, onArchive }) {
   };
 
   return (
-    <div className="relative bg-white border border-gray-300 rounded-xl p-4 shadow-sm text-sm transition-all hover:shadow-md hover:-translate-y-1">
+    <div className="relative bg-white dark:bg-dark-soft rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
       <div className="absolute top-2 right-2 flex gap-2">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-xs text-blue-600 hover:text-blue-800 transition">
+          className="text-xs text-blue-600 dark:text-accent hover:text-blue-800 dark:hover:text-accent-soft transition"
+        >
           {expanded ? "Collapse" : "Expand"}
         </button>
         <button
           onClick={handleArchive}
-          className="px-3 py-1 text-xs bg-accent-soft hover:bg-accent text-surface rounded transition">
+          className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent-soft hover:bg-blue-200 dark:hover:bg-accent text-blue-800 dark:text-surface rounded transition-colors"
+        >
           Archive
         </button>
       </div>
-      <h2 onClick={() => navigate(`/jobs/${job.id}`)}
-        className="font-semibold text-gray-800 truncate cursor-pointer hover:underline mb-2">
+
+      <h2
+        onClick={() => navigate(`/jobs/${job.id}`)}
+        className="font-semibold text-gray-800 dark:text-dark-text truncate cursor-pointer hover:underline mb-2"
+      >
         {job.position} - {job.company_name}
       </h2>
 
-      <div className="flex flex-col text-gray-500 gap-1 text-xs">
+      <div className="flex flex-col gap-1 text-xs text-gray-600 dark:text-dark-muted">
         <div className="flex flex-wrap items-center gap-2">
           <span>Status:</span>
           <select
             value={localJob.status}
             onChange={e => updateStatus(e.target.value)}
-            className="border rounded px-2 py-1 text-xs w-fit">
+            className="px-2 py-1 rounded bg-white dark:bg-dark-soft text-gray-800 dark:text-dark-text focus:ring-1 focus:ring-accent transition-colors"
+          >
             <option value="applied">Applied</option>
             <option value="interview">Interview</option>
             <option value="offer">Offer</option>
@@ -88,7 +94,12 @@ export default function JobCard({ job, onArchive }) {
         <span><strong>Location:</strong> {job.location}</span>
         <span>
           <strong>Application Link:</strong>{" "}
-          <a href={job.job_link} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline">
+          <a
+            href={job.job_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-700 dark:text-accent hover:underline"
+          >
             {job.job_link}
           </a>
         </span>
@@ -98,17 +109,17 @@ export default function JobCard({ job, onArchive }) {
       </div>
 
       {expanded && (
-        <div className="mt-3 border-t pt-3 flex flex-col gap-2">
+        <div className="mt-3 pt-3 flex flex-col gap-2 border-t border-gray-200 dark:border-dark-subtle transition-colors">
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => navigate(`/jobs/${job.id}`)}
-              className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+              className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent hover:bg-blue-200 dark:hover:bg-accent-soft text-blue-800 dark:text-surface rounded transition-colors"
             >
               View Job
             </button>
             <button
               onClick={deleteJob}
-              className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
+              className="px-3 py-1 text-xs bg-red-100 dark:bg-red-400 hover:bg-red-200 dark:hover:bg-red-300 text-red-700 dark:text-dark-text rounded transition-colors"
             >
               Delete
             </button>

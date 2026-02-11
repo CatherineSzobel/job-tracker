@@ -71,32 +71,31 @@ export default function Application() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
-        <p className="ml-2 text-gray-600">Loading...</p>
+        <div className="w-12 h-12   rounded-full animate-spin"></div>
+        <p className="ml-2 text-light-muted dark:text-dark-muted">Loading...</p>
       </div>
     );
   }
 
-
   if (!job) {
-    return <p className="text-center mt-10 text-muted">Not found</p>;
+    return <p className="text-center mt-10 text-light-muted dark:text-dark-muted">Not found</p>;
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
+    <div className="max-w-5xl mx-auto px-4 py-10 bg-light dark:bg-dark-soft rounded-2xl transition-colors">
 
       {/* HEADER */}
-      <div className="bg-linear-to-r from-primary to-primary-soft text-surface rounded-2xl p-6 mb-2 flex justify-between items-start">
+      <div className="bg-light-soft dark:bg-dark rounded-2xl p-6 mb-4 flex justify-between items-start transition-colors">
         <div>
           {editing ? (
             <input
               name="position"
               value={job.position}
               onChange={handleChange}
-              className="text-2xl font-semibold bg-primary-soft border border-primary-subtle rounded-md px-3 py-1 text-surface"
+              className="text-2xl font-semibold w-full px-3 py-1 rounded-2xl   bg-light dark:bg-dark-text text-light-text dark:text-dark transition-colors"
             />
           ) : (
-            <h1 className="text-2xl font-semibold">{job.position}</h1>
+            <h1 className="text-2xl font-semibold rounded-2xl text-light-text dark:text-dark-text">{job.position}</h1>
           )}
 
           {editing ? (
@@ -104,43 +103,49 @@ export default function Application() {
               name="company_name"
               value={job.company_name}
               onChange={handleChange}
-              className="mt-2 text-sm bg-primary-soft border border-primary-subtle rounded-md px-3 py-1 text-secondary-text"
+              className="mt-2 text-sm w-full px-3 py-1 rounded-md e bg-light-soft dark:bg-dark-subtle text-light-muted dark:text-dark-muted transition-colors"
             />
           ) : (
-            <p className="mt-1 text-sm text-secondary-text">{job.company_name}</p>
+            <p className="mt-1 text-sm text-light-muted dark:text-dark-muted">{job.company_name}</p>
           )}
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 mt-2">
           {editing && (
-            <button className="text-sm text-secondary-text hover:text-surface" onClick={cancelEditing}>
+            <button
+              className="text-sm text-light-muted dark:text-dark-muted hover:text-accent dark:hover:text-accent transition-colors"
+              onClick={cancelEditing}
+            >
               Cancel
             </button>
           )}
 
           <button
             onClick={() => (editing ? saveChanges() : startEditing())}
-            className="text-sm font-medium text-accent hover:text-accent-soft px-3 py-1"
+            className="text-sm font-medium text-accent hover:text-accent-soft transition-colors px-3 py-1"
           >
             {editing ? (saving ? "Saving…" : "Save") : "Edit"}
           </button>
 
-          <button className="text-sm text-red-300 hover:text-red-200" onClick={deleteJob}>
+          <button
+            className="text-sm text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors px-3 py-1"
+            onClick={deleteJob}
+          >
             Delete
           </button>
         </div>
       </div>
 
-      {/* META ROW (closer to header) */}
-      <div className="bg-secondary border border-secondary-soft rounded-xl p-4 mb-6 flex flex-wrap gap-8 text-sm">
+      {/* META ROW */}
+      <div className="bg-light-soft dark:bg-dark-soft  rounded-xl p-4 mb-6 flex flex-wrap gap-8 text-sm transition-colors">
         <div>
-          <span className="block text-secondary-text">Status</span>
+          <span className="block text-light-muted dark:text-dark-muted">Status</span>
           {editing ? (
             <select
               name="status"
               value={job.status}
               onChange={handleChange}
-              className="border-b border-secondary-muted bg-transparent"
+              className=" bg-transparent text-light-text dark:text-dark-text transition-colors"
             >
               <option value="applied">Applied</option>
               <option value="interview">Interview</option>
@@ -148,38 +153,37 @@ export default function Application() {
               <option value="rejected">Rejected</option>
             </select>
           ) : (
-            <span className="capitalize text-secondary-text">{job.status}</span>
+            <span className="capitalize text-light-muted dark:text-dark-muted">{job.status}</span>
           )}
         </div>
 
         <div>
-          <span className="block text-secondary-text">Priority</span>
+          <span className="block text-light-muted dark:text-dark-muted">Priority</span>
           {editing ? (
             <select
               name="priority"
               value={job.priority}
               onChange={handleChange}
-              className="border-b border-secondary-muted bg-transparent"
+              className=" bg-transparent text-light-text dark:text-dark-text transition-colors"
             >
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </select>
           ) : (
-            <span className="capitalize text-secondary-text">{job.priority}</span>
+            <span className="capitalize text-light-muted dark:text-dark-muted">{job.priority}</span>
           )}
         </div>
 
         <div>
-          <span className="block text-secondary-text">Applied</span>
-          <span className="text-secondary-text">{job.applied_date}</span>
+          <span className="block text-light-muted dark:text-dark-muted">Applied</span>
+          <span className="text-light-muted dark:text-dark-muted">{job.applied_date}</span>
         </div>
       </div>
 
-
       {/* NOTES */}
       <div className="mb-10">
-        <h2 className="text-primary font-semibold mb-2">Notes</h2>
+        <h2 className="text-accent font-semibold mb-2">Notes</h2>
 
         {editing ? (
           <textarea
@@ -187,22 +191,25 @@ export default function Application() {
             value={job.notes || ""}
             onChange={handleChange}
             rows={6}
-            className="w-full border border-secondary-muted rounded-md px-3 py-2 focus:ring-2 focus:ring-accent"
+            className="w-full  rounded-md px-3 py-2 bg-light-soft dark:bg-dark-soft text-light-text dark:text-dark-text focus:ring-2 focus:ring-accent transition-colors"
             placeholder="Notes about this application…"
           />
         ) : job.notes ? (
-          <p className="text-muted whitespace-pre-wrap">{job.notes}</p>
+          <p className="text-light-text dark:text-dark-text whitespace-pre-wrap">{job.notes}</p>
         ) : (
-          <p className="text-secondary-text text-sm">No notes yet.</p>
+          <p className="text-light-muted dark:text-dark-muted text-sm">No notes yet.</p>
         )}
       </div>
 
       {/* INTERVIEWS */}
-      <div className="bg-surface border border-border rounded-xl p-6">
+      <div className="bg-light-soft dark:bg-dark-soft rounded-xl p-6 transition-colors">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="font-semibold text-primary">Interviews</h2>
+          <h2 className="font-semibold text-accent dark:text-accent">Interviews</h2>
 
-          <button className="text-sm text-accent hover:text-accent-soft" onClick={() => alert("Add Interview")}>
+          <button
+            className="text-sm text-accent dark:text-accent hover:text-accent-soft dark:hover:text-accent-soft transition-colors"
+            onClick={() => alert("Add Interview")}
+          >
             + Add interview
           </button>
         </div>
@@ -214,7 +221,7 @@ export default function Application() {
             ))}
           </ul>
         ) : (
-          <p className="text-secondary-text text-sm">No interviews scheduled.</p>
+          <p className="text-light-muted dark:text-dark-muted text-sm">No interviews scheduled.</p>
         )}
       </div>
     </div>

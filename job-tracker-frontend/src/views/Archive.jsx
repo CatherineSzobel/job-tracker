@@ -25,22 +25,22 @@ export default function Archive() {
         setArchivedJobs(prev => prev.filter(job => job.id !== restoredJobId));
     };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
-        <p className="ml-2 text-gray-600">Loading...</p>
-      </div>
-    );
-  }
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <div className="w-12 h-12 border-4 border-light-muted dark:border-dark-muted border-t-accent rounded-full animate-spin"></div>
+                <p className="ml-2 text-light-muted dark:text-dark-muted">Loading...</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="max-w-6xl mx-auto mt-10 px-4">
+        <div className="max-w-6xl mx-auto mt-10 px-4 transition-colors">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold text-primary">Archive</h1>
+                <h1 className="text-3xl font-bold text-light-text dark:text-dark-text">Archive</h1>
                 <button
-                    className="bg-primary-soft hover:bg-primary text-surface px-5 py-2 rounded-lg hover:bg-accent-hover transition shadow"
+                    className="bg-accent hover:bg-accent-soft dark:bg-accent hover:bg-primary dark:hover:bg-accent-soft text-surface px-5 py-2 rounded-lg transition shadow"
                     onClick={() => navigate("/applications")}
                 >
                     Applications
@@ -49,7 +49,7 @@ export default function Archive() {
 
             {/* Empty state */}
             {archivedJobs.length === 0 ? (
-                <div className="p-6 bg-surface border border-border rounded-xl shadow text-center text-secondary-text">
+                <div className="p-6 bg-light-soft dark:bg-dark-soft rounded-xl shadow text-center text-light-muted dark:text-dark-muted transition-colors">
                     No archived jobs yet.
                 </div>
             ) : (

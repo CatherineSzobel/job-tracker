@@ -1,4 +1,3 @@
-// src/views/Interviews.jsx
 import { useState, useEffect } from "react";
 import API from "../api/axios";
 import InterviewForm from "../components/Interview/InterviewForm";
@@ -19,7 +18,6 @@ export default function Interviews() {
     notes: "",
   });
 
-  // Fetch jobs and associated interviews
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -40,12 +38,10 @@ export default function Interviews() {
     fetchData();
   }, []);
 
-  // Handle form input changes
   const handleChange = (e) => {
     setNewInterview({ ...newInterview, [e.target.name]: e.target.value });
   };
 
-  // Format date for Laravel DB
   const formatDateForLaravel = (dateString) => {
     const date = new Date(dateString);
     return `${date.getFullYear()}-${(date.getMonth() + 1)
@@ -56,14 +52,13 @@ export default function Interviews() {
         .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}:00`;
   };
 
-  // Submit form (create or edit)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
 
     try {
       const payload = {
-        type: newInterview.type || "online", // default to online
+        type: newInterview.type || "online",
         interview_date: formatDateForLaravel(newInterview.interview_date),
         location: newInterview.location,
         notes: newInterview.notes || "",
@@ -71,16 +66,11 @@ export default function Interviews() {
 
       let res;
       if (editingInterview) {
-        // Update existing
         res = await API.put(`/interviews/${editingInterview.id}`, payload);
-
         setInterviews((prev) =>
-          prev.map((i) =>
-            i.id === editingInterview.id ? { ...i, ...res.data } : i
-          )
+          prev.map((i) => (i.id === editingInterview.id ? { ...i, ...res.data } : i))
         );
       } else {
-        // Create new
         res = await API.post(
           `/job-applications/${newInterview.job_id}/interviews`,
           payload
@@ -115,10 +105,8 @@ export default function Interviews() {
     }
   };
 
-  // Delete interview
   const deleteInterview = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this interview?"))
-      return;
+    if (!window.confirm("Are you sure you want to delete this interview?")) return;
 
     try {
       await API.delete(`/interviews/${id}`);
@@ -129,7 +117,6 @@ export default function Interviews() {
     }
   };
 
-  // Start editing an interview
   const startEdit = (interview) => {
     setEditingInterview(interview);
     setNewInterview({
@@ -145,30 +132,29 @@ export default function Interviews() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
-        <p className="ml-2 text-gray-600">Loading...</p>
+        <div className="w-12 h-12 border-4 border-light-muted dark:border-dark-muted border-t-accent rounded-full animate-spin"></div>
+        <p className="ml-2 text-light-muted dark:text-dark-muted">Loading...</p>
       </div>
     );
   }
 
-
   return (
-    <div className="max-w-6xl mx-auto mt-10 px-4">
+    <div className="max-w-6xl mx-auto mt-10 px-4 transition-colors">
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold text-primary">
+        <h1 className="text-3xl font-bold text-light-text dark:text-dark-text">
           Interviews Schedule ({interviews.length})
         </h1>
-
         <button
           onClick={() => setShowForm(true)}
-          className="bg-accent text-surface px-5 py-2 rounded-lg hover:bg-accent-hover transition shadow"
+          className="bg-accent dark:bg-accent hover:bg-accent-soft dark:hover:bg-accent-soft text-surface px-5 py-2 rounded-lg transition shadow"
         >
           + Add Interview
         </button>
       </div>
 
       {!loading && !interviews.length && (
-        <div className="p-6 bg-surface border border-border rounded-xl shadow text-center text-secondary-text">
+        <div className="p-6 bg-light-soft dark:bg-dark-soft rounded-xl shadow text-center text-light-muted dark:text-dark-muted transition-colors">
           No interviews scheduled.
         </div>
       )}
@@ -185,9 +171,9 @@ export default function Interviews() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-primary/60 bg-opacity-40 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl">
-            <h2 className="text-2xl font-bold mb-4 text-primary">
+        <div className="fixed inset-0 bg-primary/60 flex items-center justify-center z-50 px-4">
+          <div className="bg-light dark:bg-dark-soft rounded-xl shadow-xl p-6 w-full max-w-2xl transition-colors">
+            <h2 className="text-2xl font-bold mb-4 text-light-text dark:text-dark-text">
               {editingInterview ? "Edit Interview" : "Add New Interview"}
             </h2>
 

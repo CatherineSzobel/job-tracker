@@ -15,37 +15,43 @@ export default function ArchivedJobCard({ job, onRestore }) {
     };
 
     return (
-        <div className="relative bg-gray-50 border border-gray-300 rounded-xl p-4 shadow-sm text-sm transition-all hover:shadow-md hover:-translate-y-1">
+        <div className="relative bg-white dark:bg-dark-soft rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
             <div className="flex justify-between items-start mb-2">
-                <h2 onClick={() => navigate(`/jobs/${job.id}`)}
-                    className="font-semibold text-gray-700 hover:underline cursor-pointer truncate max-w-[70%]">
+                <h2
+                    onClick={() => navigate(`/jobs/${job.id}`)}
+                    className="font-semibold text-gray-800 dark:text-dark-text hover:underline cursor-pointer truncate max-w-[70%]"
+                >
                     {job.position}
                 </h2>
-                <button onClick={handleRestore}
-                    className="p-2 rounded-lg font-bold bg-green-700 hover:bg-green-600 text-white text-xs">
+                <button
+                    onClick={handleRestore}
+                    className="p-2 rounded-lg font-bold bg-green-700 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-500 text-white text-xs transition-colors"
+                >
                     Restore
                 </button>
             </div>
 
-            <div className="flex flex-col text-gray-500 gap-0.5 text-xs">
+            <div className="flex flex-col text-gray-600 dark:text-dark-muted gap-0.5 text-xs">
                 <span>
-                    Company: <strong>{job.company_name}</strong>
+                    Company: <strong className="text-gray-800 dark:text-dark-text">{job.company_name}</strong>
                 </span>
                 <span>
-                    Location: <strong>{job.location}</strong>
+                    Location: <strong className="text-gray-800 dark:text-dark-text">{job.location}</strong>
                 </span>
                 <span>
-                    Applied: <strong>{job.applied_date}</strong>
+                    Applied: <strong className="text-gray-800 dark:text-dark-text">{job.applied_date}</strong>
                 </span>
                 <span>
-                    Priority: <strong>{job.priority}</strong>
+                    Priority: <strong className="text-gray-800 dark:text-dark-text">{job.priority}</strong>
                 </span>
                 <span>
                     Job Link:{" "}
-                    <a href={job.job_link}
+                    <a
+                        href={job.job_link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-700 hover:underline">
+                        className="text-blue-700 dark:text-accent hover:underline"
+                    >
                         {job.job_link}
                     </a>
                 </span>
