@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../api/axios";
 import TodoList from "../components/ToDoList";
-import GoalBar from "../components/Dashboard/GoalBar";
-import Status from "../components/Dashboard/Status";
-
-import StatCard from "../components/Dashboard/StatsCard";
-import { Briefcase, Archive, Calendar } from "lucide-react";
+import InsightChart from "../components/Dashboard/InsightChart";
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -137,7 +133,7 @@ export default function Dashboard() {
           {/* Insights Placeholder */}
           <div className="bg-white shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
             <h3 className="text-md font-semibold mb-2">Insights</h3>
-            <p className="text-sm text-gray-500">Application activity overview coming soon…</p>
+            <InsightChart stats={stats} />
           </div>
 
         </div>
