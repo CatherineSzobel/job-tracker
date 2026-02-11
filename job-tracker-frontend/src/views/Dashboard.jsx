@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import API from "../api/axios";
 import TodoList from "../components/ToDoList";
+import StatusBadges from "../components/Dashboard/Status/StatusBadges";
+import StatusGrid from "../components/Dashboard/Status/StatusGrid";
+import GoalStats from "../components/Dashboard/Goals/GoalStats";
 import InsightChart from "../components/Dashboard/InsightChart";
 
 export default function Dashboard() {
@@ -56,28 +59,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
 
       {/* Top Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        <StatCard
-          label="Total Applications"
-          value={stats?.total ?? 0}
-          icon={<Briefcase size={20} />}
-          accent="text-indigo-600"
-        />
-
-        <StatCard
-          label="Archived Applications"
-          value={stats?.archived ?? 0}
-          icon={<Archive size={20} />}
-          accent="text-gray-600"
-        />
-
-        <StatCard
-          label="Upcoming Interviews"
-          value={stats?.upcomingInterviews ?? 0}
-          icon={<Calendar size={20} />}
-          accent="text-green-600"
-        />
-      </div>
+      <StatusGrid stats={stats} />
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -92,45 +74,16 @@ export default function Dashboard() {
           </div>
 
           {/* Goals */}
-          <div className="bg-white shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
-            <h2 className="text-lg font-semibold mb-4">Goals</h2>
-            <div className="flex flex-col gap-4">
-              <GoalBar
-                label="Today's Applications"
-                current={stats?.todayApplications ?? 0}
-                goal={dailyGoal}
-                barColor={stats?.todayApplications >= dailyGoal ? "green" : "accent"}
-              />
-              <GoalBar
-                label="This Week's Applications"
-                current={stats?.weekApplications ?? 0}
-                goal={weeklyGoal}
-                barColor={stats?.weekApplications >= weeklyGoal ? "green" : "accent-soft"}
-              />
-            </div>
-          </div>
+          <GoalStats stats={stats} dailyGoal={dailyGoal} weeklyGoal={weeklyGoal} />
         </div>
 
         {/* CENTER COLUMN */}
         <div className="lg:col-span-5 flex flex-col gap-6">
 
           {/* Status Badges */}
-          <div className="bg-white shadow-md rounded-2xl p-6 flex flex-wrap gap-4 justify-between transition-shadow hover:shadow-xl">
-            <div className="flex-1 min-w-30">
-              <Status label="Applied" count={stats.applied ?? 0} total={stats?.total ?? 1} />
-            </div>
-            <div className="flex-1 min-w-30">
-              <Status label="Interview" count={stats.interview ?? 0} total={stats?.total ?? 1} />
-            </div>
-            <div className="flex-1 min-w-30">
-              <Status label="Offer" count={stats.offer ?? 0} total={stats?.total ?? 1} />
-            </div>
-            <div className="flex-1 min-w-30">
-              <Status label="Rejected" count={stats.rejected ?? 0} total={stats?.total ?? 1} />
-            </div>
-          </div>
+          <StatusBadges stats={stats} />
 
-          {/* Insights Placeholder */}
+          {/* Insights */}
           <div className="bg-white shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
             <h3 className="text-md font-semibold mb-2">Insights</h3>
             <InsightChart stats={stats} />
