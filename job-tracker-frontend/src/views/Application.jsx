@@ -69,8 +69,14 @@ export default function Application() {
   };
 
   if (loading) {
-    return <p className="text-center mt-10 text-muted">Loading…</p>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
+        <p className="ml-2 text-gray-600">Loading...</p>
+      </div>
+    );
   }
+
 
   if (!job) {
     return <p className="text-center mt-10 text-muted">Not found</p>;

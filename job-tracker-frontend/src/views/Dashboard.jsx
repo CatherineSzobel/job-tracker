@@ -14,20 +14,47 @@ export default function Dashboard() {
   const dailyGoal = 5;
   const weeklyGoal = 20;
 
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const res = await API.get("/job-applications/stats");
+      console.log("Fetched stats:", res.data.data);
+      setStats(res.data.data);
+      console.log("Fetched stats:", res.data.data);
+    } catch (err) {
+      console.error(err);
+      setStats({
+        total: 0,
+        applied: 0,
+        interview: 0,
+        offer: 0,
+        rejected: 0,
+        archived: 0,
+        todayApplications: 0,
+        weekApplications: 0,
+        upcomingInterviews: 0,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    API.get("/job-applications/stats")
-      .then(res => setStats(res.data.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    fetchStats();
   }, []);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
+        <p className="ml-2 text-gray-600">Loading...</p>
       </div>
     );
   }
+
+  const handleSaveNotes = () => {
+    alert("Notes saved! (This is just a placeholder action.)");
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
@@ -36,21 +63,21 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <StatCard
           label="Total Applications"
-          value={stats?.total || 0}
+          value={stats?.total ?? 0}
           icon={<Briefcase size={20} />}
           accent="text-indigo-600"
         />
 
         <StatCard
           label="Archived Applications"
-          value={stats?.archived || 0}
+          value={stats?.archived ?? 0}
           icon={<Archive size={20} />}
           accent="text-gray-600"
         />
 
         <StatCard
           label="Upcoming Interviews"
-          value={stats?.upcomingInterviews || 0}
+          value={stats?.upcomingInterviews ?? 0}
           icon={<Calendar size={20} />}
           accent="text-green-600"
         />
@@ -74,13 +101,13 @@ export default function Dashboard() {
             <div className="flex flex-col gap-4">
               <GoalBar
                 label="Today's Applications"
-                current={stats?.todayApplications || 0}
+                current={stats?.todayApplications ?? 0}
                 goal={dailyGoal}
                 barColor={stats?.todayApplications >= dailyGoal ? "green" : "accent"}
               />
               <GoalBar
                 label="This Week's Applications"
-                current={stats?.weekApplications || 0}
+                current={stats?.weekApplications ?? 0}
                 goal={weeklyGoal}
                 barColor={stats?.weekApplications >= weeklyGoal ? "green" : "accent-soft"}
               />
@@ -94,19 +121,18 @@ export default function Dashboard() {
           {/* Status Badges */}
           <div className="bg-white shadow-md rounded-2xl p-6 flex flex-wrap gap-4 justify-between transition-shadow hover:shadow-xl">
             <div className="flex-1 min-w-30">
-              <Status label="Applied" count={stats.applied || 0} total={stats?.total || 1} />
+              <Status label="Applied" count={stats.applied ?? 0} total={stats?.total ?? 1} />
             </div>
             <div className="flex-1 min-w-30">
-              <Status label="Interview" count={stats.interview || 0} total={stats?.total || 1} />
+              <Status label="Interview" count={stats.interview ?? 0} total={stats?.total ?? 1} />
             </div>
             <div className="flex-1 min-w-30">
-              <Status label="Offer" count={stats.offer || 0} total={stats?.total || 1} />
+              <Status label="Offer" count={stats.offer ?? 0} total={stats?.total ?? 1} />
             </div>
             <div className="flex-1 min-w-30">
-              <Status label="Rejected" count={stats.rejected || 0} total={stats?.total || 1} />
+              <Status label="Rejected" count={stats.rejected ?? 0} total={stats?.total ?? 1} />
             </div>
           </div>
-
 
           {/* Insights Placeholder */}
           <div className="bg-white shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
@@ -126,6 +152,7 @@ export default function Dashboard() {
               className="w-full h-40 p-2 border rounded-md focus:outline-none focus:ring focus:ring-accent resize-none"
               placeholder="Write your notes..."
             />
+            <button onClick={handleSaveNotes} className="mt-2 px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-dark transition-colors">Save</button>
           </div>
 
         </div>

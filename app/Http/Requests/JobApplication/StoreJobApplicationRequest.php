@@ -26,7 +26,7 @@ class StoreJobApplicationRequest extends FormRequest
             'company_name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'location' => 'nullable|string|max:255',
-            'status' => 'sometimes|in:applied,interviewing,offered,rejected',
+            'status' => 'sometimes|in:applied,interview,offer,rejected',
             'priority' => 'nullable|string|max:50',
             'job_link' => 'nullable|url',
             'description' => 'nullable|string',

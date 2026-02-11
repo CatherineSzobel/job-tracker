@@ -3,7 +3,7 @@ import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
 export default function Register() {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", password_confirmation: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -13,12 +13,21 @@ export default function Register() {
 
     try {
       await API.post("/register", form);
-      navigate("/login");
+      await API.post("/login", {
+        email: form.email,
+        password: form.password,
+      });
+
+      navigate("/");
+      
     } catch (err) {
       setError(
         err.response?.data?.message || "Registration failed. Please try again."
       );
     }
+  };
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   return (
@@ -35,20 +44,41 @@ export default function Register() {
       )}
 
       <input
+        name="name"
         placeholder="Name"
         className="border p-2 mb-2 w-full"
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
+        value={form.name}
+        onChange={handleChange}
+        required
       />
+
       <input
+        name="email"
+        type="email"
         placeholder="Email"
         className="border p-2 mb-2 w-full"
-        onChange={(e) => setForm({ ...form, email: e.target.value })}
+        value={form.email}
+        onChange={handleChange}
+        required
       />
+
       <input
+        name="password"
         type="password"
         placeholder="Password"
         className="border p-2 mb-2 w-full"
-        onChange={(e) => setForm({ ...form, password: e.target.value })}
+        value={form.password}
+        onChange={handleChange}
+        required
+      />
+      <input
+        name="password_confirmation"
+        type="password"
+        placeholder="Confirm Password"
+        className="border p-2 mb-2 w-full"
+        value={form.password_confirmation}
+        onChange={handleChange}
+        required
       />
 
       <button

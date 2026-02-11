@@ -22,7 +22,7 @@ class UpdateJobApplicationRequest extends FormRequest
     public function rules()
     {
         return [
-            'status' => 'sometimes|in:applied,interviewing,offered,rejected',
+            'status' => 'sometimes|in:applied,interview,offer,rejected',
             'is_archived' => 'sometimes|boolean',
             'priority' => 'sometimes|string|max:50',
             'notes' => 'sometimes|nullable|string',

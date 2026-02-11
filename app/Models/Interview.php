@@ -17,6 +17,9 @@ class Interview extends Model
         'location',
         'notes'
     ];
+    protected $casts = [
+        'interview_date' => 'date',
+    ];
 
     public function jobApplication()
     {

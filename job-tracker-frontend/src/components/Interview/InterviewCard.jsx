@@ -8,7 +8,7 @@ export default function InterviewCard({ interview }) {
                     Interview
                 </h3>
                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700 capitalize">
-                    {interview.type || "Interview"}
+                    {interview.type}
                 </span>
             </div>
 

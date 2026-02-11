@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 class AuthController extends Controller
 {
@@ -55,9 +56,9 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout(LoginRequest $request): JsonResponse
+    public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken->delete();
+        $request->user()->currentAccessToken()->delete();
 
         return response()->json([
             'message' => 'Logged out successfully'

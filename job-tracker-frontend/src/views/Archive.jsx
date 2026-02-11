@@ -25,8 +25,14 @@ export default function Archive() {
         setArchivedJobs(prev => prev.filter(job => job.id !== restoredJobId));
     };
 
-    if (loading)
-        return <p className="text-center mt-10 text-secondary-text">Loading archived jobs...</p>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
+        <p className="ml-2 text-gray-600">Loading...</p>
+      </div>
+    );
+  }
 
     return (
         <div className="max-w-6xl mx-auto mt-10 px-4">

@@ -128,10 +128,9 @@ class JobApplicationService
 
         $todayApplications = $jobs->filter(fn($job) => $job->applied_date && $job->applied_date->gte($today))->count();
         $weekApplications = $jobs->filter(fn($job) => $job->applied_date && $job->applied_date->gte($startOfWeek))->count();
-        $upcomingInterviews = $jobs->flatMap(fn($job) => $job->interviews)
-            ->filter(fn($interview) => $interview->scheduled_at->gte($today))
+        $upcomingInterviews = $jobs->flatMap(fn($job) => $job->interviews ?? collect())
+            ->filter(fn($interview) => $interview->scheduled_at && $interview->scheduled_at->gte($today))
             ->count();
-
 
         return [
             'total' => $jobs->count(),

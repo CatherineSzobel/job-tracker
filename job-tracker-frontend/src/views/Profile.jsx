@@ -41,9 +41,13 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="p-6 text-gray-500">Loading profile...</div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
+        <p className="ml-2 text-gray-600">Loading...</p>
+      </div>
     );
   }
+
 
   if (!profile) {
     return (
