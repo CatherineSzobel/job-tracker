@@ -32,8 +32,8 @@ export default function Applications() {
   // Fetch jobs
   useEffect(() => {
     API.get("/job-applications")
-      .then(res => setJobs(res.data))
-      .catch(err => console.error(err))
+      .then((res) => setJobs(res.data))
+      .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -115,7 +115,7 @@ export default function Applications() {
 
     try {
       await API.post("/job-applications/import", formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { "Content-Type": "multipart/form-data" },
       });
       const res = await API.get("/job-applications");
       setJobs(res.data);
