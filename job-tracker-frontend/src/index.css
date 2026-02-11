@@ -1,23 +1,37 @@
 @import "tailwindcss";
-body{
-    @apply bg-gray-100;
-}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-    --color-primary: #0f172a;
-    --color-primary-soft: #1e293b;
-    --color-primary-subtle: #334155;
+  /* Dark mode background (lighter) */
+  --color-dark: #202c3b;        /* main bg, slightly lighter than before */
+  --color-dark-soft: #2a3a4d;   /* for cards / forms */
+  --color-dark-subtle: #3b4b61; /* borders / dividers */
+  --color-dark-text: #e5e5e5;   /* main text in dark mode */
+  --color-dark-muted: #a0aec0;  /* secondary text */
 
-    --color-secondary: #fff7ed;
-    --color-secondary-soft: #fed7aa;
-    --color-secondary-muted: #fdba74;
-    --color-secondary-text: #92400e;
+  /* Light mode */
+  --color-light: #ffffff;
+  --color-light-soft: #f3f4f6;
+  --color-light-muted: #6b7280;
+  --color-light-text: #1f2937;
 
-    --color-accent: #4e68b1;
-    --color-accent-soft: #5f77b8;
-    --color-accent-muted: #8395c8;
+  /* Accent / neutral */
+  --color-accent: #4e68b1;
+  --color-accent-soft: #5f77b8;
+  --color-accent-muted: #8395c8;
 
-    --color-surface: #ffffff;
-    --color-muted: #64748b;
-    --color-border: #e5e7eb;
+  --color-surface: #ffffff;
+  --color-muted: #64748b;
+  --color-border: #e5e7eb;
+}
 
+/* Global background */
+body {
+    @apply bg-light-soft text-light-text;
+}
+
+.dark body {
+    background-color: var(--color-dark);
+    color: var(--color-dark-text);
 }

@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layouts/Layout";
+import AuthLayout from "./components/Layouts/AuthLayout";
 
 // Views
 import Register from "./views/Register";
@@ -14,40 +16,38 @@ import Links from "./views/Links";
 import Settings from "./views/Settings";
 import Application from "./views/Application";
 import Archive from "./views/Archive";
-import Footer from "./components/Footer";
-import Sidebar from "./components/Sidebar";
-import Navbar from "./components/Navbar";
 
 function App() {
   return (
-    <div className="flex min-h-screen bg-surface text-primary transition-colors duration-300">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Navbar />
-        <div className="flex-1 p-6">
-          <Routes>
-            {/* Public routes */}
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
+    <Routes>
 
-            {/* Protected routes */}
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
-            <Route path="/interviews" element={<ProtectedRoute><Interviews /></ProtectedRoute>} />
-            <Route path="/jobs/:id" element={<ProtectedRoute><Application /></ProtectedRoute>} />
-            <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/links" element={<ProtectedRoute><Links /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/archives" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
 
-            {/* Catch-all */}
-            <Route path="*" element={<p className="text-center mt-10">Page not found</p>} />
-          </Routes>
-        </div>
-        <Footer />
-      </div>
-    </div>
+      <Route
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+
+        <Route index element={<Dashboard />} />
+        <Route path="applications" element={<Applications />} />
+        <Route path="interviews" element={<Interviews />} />
+        <Route path="jobs/:id" element={<Application />} />
+        <Route path="calendar" element={<Calendar />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="links" element={<Links />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="archives" element={<Archive />} />
+      </Route>
+
+      <Route path="*" element={<p className="text-center mt-10">Page not found</p>} />
+    </Routes>
   );
 }
 
