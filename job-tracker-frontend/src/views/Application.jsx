@@ -145,7 +145,7 @@ export default function Application() {
               name="status"
               value={job.status}
               onChange={handleChange}
-              className=" bg-transparent text-light-text dark:text-dark-text transition-colors"
+              className=" bg-transparent text-dark dark:text-light dark:bg-dark-subtle transition-colors rounded-2xl"
             >
               <option value="applied">Applied</option>
               <option value="interview">Interview</option>
@@ -164,7 +164,7 @@ export default function Application() {
               name="priority"
               value={job.priority}
               onChange={handleChange}
-              className=" bg-transparent text-light-text dark:text-dark-text transition-colors"
+              className=" bg-transparent text-dark dark:text-light transition-colors dark:bg-dark-subtle rounded-2xl"
             >
               <option value="low">Low</option>
               <option value="medium">Medium</option>
@@ -191,7 +191,7 @@ export default function Application() {
             value={job.notes || ""}
             onChange={handleChange}
             rows={6}
-            className="w-full  rounded-md px-3 py-2 bg-light-soft dark:bg-dark-soft text-light-text dark:text-dark-text focus:ring-2 focus:ring-accent transition-colors"
+            className="w-full  rounded-md px-3 py-2 bg-light-soft text-dark dark:text-light dark:bg-dark-subtle focus:ring-2 focus:ring-accent transition-colors"
             placeholder="Notes about this application…"
           />
         ) : job.notes ? (

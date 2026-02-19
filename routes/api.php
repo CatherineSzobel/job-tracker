@@ -41,8 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/todos', [TodoController::class, 'index']);
     Route::post('/todos', [TodoController::class, 'store']);
-    Route::put('/todos/{id}', [TodoController::class, 'update'])
-        ->whereNumber('id');
+    Route::put('/todos/{todo}', [TodoController::class, 'update'])->whereNumber('todo');
     Route::delete('/todos/{id}', [TodoController::class, 'destroy'])
         ->whereNumber('id');
 

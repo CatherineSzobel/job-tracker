@@ -29,8 +29,11 @@ class TodoController extends Controller
 
     public function update(TodoUpdateRequest $request, Todo $todo): JsonResponse
     {
-        $data = $request->validated();
-        $todo->update($data);
+        if ($todo->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $todo->update($request->validated());
         return response()->json($todo);
     }
 
