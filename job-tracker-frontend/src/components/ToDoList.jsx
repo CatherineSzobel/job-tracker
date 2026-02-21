@@ -88,6 +88,11 @@ export default function TodoList() {
         }
     };
 
+    const sortedTodos = [...todos].sort((a, b) => {
+        if (a.done === b.done) return 0;
+        return a.done ? 1 : -1; 
+    });
+
     if (loading) {
         return <p className="text-sm text-gray-500">Loading todos…</p>;
     }
@@ -104,7 +109,7 @@ export default function TodoList() {
                 <TodoEmptyState />
             ) : (
                 <ul className="flex flex-col gap-2 max-h-52 overflow-y-auto">
-                    {todos.map(todo => (
+                    {sortedTodos.map(todo => (
                         <TodoItem
                             key={todo.id}
                             todo={todo}
