@@ -4,6 +4,7 @@ use App\Http\Controllers\InterviewController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\JobApplicationController;
+use App\Http\Controllers\NotesController;
 use App\Http\Controllers\ProfileLinkController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TodoController;
@@ -44,6 +45,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/todos/{todo}', [TodoController::class, 'update'])->whereNumber('todo');
     Route::delete('/todos/{id}', [TodoController::class, 'destroy'])
         ->whereNumber('id');
+
+    Route::get('/notes', [NotesController::class, 'index']);
+    Route::post('/notes', [NotesController::class, 'store']);
+    Route::put('/notes/{note}', [NotesController::class, 'update'])->whereNumber('note');
+    Route::delete('/notes/{note}', [NotesController::class, 'destroy'])->whereNumber('note');
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
