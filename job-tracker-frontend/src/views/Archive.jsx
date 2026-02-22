@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import ArchivedJobCard from "../components/JobApplications/ArchivedJobCard";
+import PageLoader from "../components/UI/PageLoader";
 
 export default function Archive() {
     const navigate = useNavigate();
@@ -26,12 +27,7 @@ export default function Archive() {
     };
 
     if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <div className="w-12 h-12 border-4 border-light-muted dark:border-dark-muted border-t-accent rounded-full animate-spin"></div>
-                <p className="ml-2 text-light-muted dark:text-dark-muted">Loading...</p>
-            </div>
-        );
+      <PageLoader text="Loading archives..."/>
     }
 
     return (

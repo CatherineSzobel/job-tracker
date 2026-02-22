@@ -10,6 +10,7 @@ import {
   addMonths,
   subMonths
 } from "date-fns";
+import PageLoader from "../components/UI/PageLoader";
 
 export default function Calendar() {
   const [interviews, setInterviews] = useState([]);
@@ -51,12 +52,7 @@ export default function Calendar() {
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
-        <p className="ml-2 text-gray-600">Loading...</p>
-      </div>
-    );
+    return <PageLoader text="Loading Calendar..."/>
   }
 
   return (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
+import PageLoader from "./UI/PageLoader";
 
 export default function Notes() {
     const [notes, setNotes] = useState([]);
@@ -108,7 +109,7 @@ export default function Notes() {
     };
 
     if (loading) {
-        return <p className="text-sm text-gray-500">Loading notes…</p>;
+        return <PageLoader text="Loading notes..." />
     }
 
     return (

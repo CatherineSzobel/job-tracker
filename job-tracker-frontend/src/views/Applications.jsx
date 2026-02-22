@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
+import PageLoader from "../components/UI/PageLoader";
 
 export default function Applications() {
   const fileInputRef = useRef(null);
@@ -76,12 +77,7 @@ export default function Applications() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
-        <p className="ml-2 text-gray-600 dark:text-gray-300">Loading...</p>
-      </div>
-    );
+    return <PageLoader text="Loading Applications..."/>
   }
 
   const filteredJobs = jobs.filter((job) => {

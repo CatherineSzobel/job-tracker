@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import API from "../api/axios";
 import InterviewForm from "../components/Interview/InterviewForm";
 import InterviewList from "../components/Interview/InterviewList";
+import PageLoader from "../components/UI/PageLoader";
 
 export default function Interviews() {
   const [interviews, setInterviews] = useState([]);
@@ -130,12 +131,7 @@ export default function Interviews() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-light-muted dark:border-dark-muted border-t-accent rounded-full animate-spin"></div>
-        <p className="ml-2 text-light-muted dark:text-dark-muted">Loading...</p>
-      </div>
-    );
+    return <PageLoader text="Loading interviews..." />;
   }
 
   return (

@@ -3,6 +3,7 @@ import API from "../api/axios";
 import TodoInput from "./Todo/TodoInput";
 import TodoItem from "./Todo/TodoItem";
 import TodoEmptyState from "./Todo/TodoEmptyState";
+import PageLoader from "./UI/PageLoader";
 
 // utils
 function formatTodoDate(dateString) {
@@ -94,7 +95,7 @@ export default function TodoList() {
     });
 
     if (loading) {
-        return <p className="text-sm text-gray-500">Loading todos…</p>;
+        return <PageLoader text="Loading todos..."/>
     }
 
     return (

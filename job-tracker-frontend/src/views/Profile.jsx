@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
+import PageLoader from "../components/UI/PageLoader";
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -33,12 +34,7 @@ export default function Profile() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="w-12 h-12 border-4 border-gray-300 dark:border-gray-700 border-t-accent rounded-full animate-spin"></div>
-        <p className="ml-2 text-gray-600 dark:text-gray-300">Loading...</p>
-      </div>
-    );
+    return <PageLoader text="Loading profile..."/>
   }
 
   if (!profile) {

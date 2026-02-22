@@ -6,6 +6,7 @@ import StatusGrid from "../components/Dashboard/Status/StatusGrid";
 import GoalStats from "../components/Dashboard/Goals/GoalStats";
 import InsightChart from "../components/Dashboard/InsightChart";
 import Notes from "../components/Notes";
+import PageLoader from "../components/UI/PageLoader";
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -45,10 +46,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-gray-300 border-t-accent rounded-full animate-spin"></div>
-        <p className="ml-2 text-gray-600">Loading...</p>
-      </div>
+     <PageLoader text="Loading dashboard..."/>
     );
   }
 
