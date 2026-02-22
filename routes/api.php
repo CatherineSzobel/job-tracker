@@ -35,10 +35,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber('id');
 
     Route::get('/interviews', [InterviewController::class, 'index']);
-    Route::put('/interviews/{id}', [InterviewController::class, 'update'])
-        ->whereNumber('id');
-    Route::delete('/interviews/{id}', [InterviewController::class, 'destroy'])
-        ->whereNumber('id');
+    Route::put('/interviews/{interview}', [InterviewController::class, 'update'])->whereNumber('interview');
+    Route::delete('/interviews/{interview}', [InterviewController::class, 'destroy'])->whereNumber('interview');
 
     Route::get('/todos', [TodoController::class, 'index']);
     Route::post('/todos', [TodoController::class, 'store']);

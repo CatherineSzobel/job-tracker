@@ -11,36 +11,40 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class InterviewController extends Controller
 {
-    public function index(Request $request): Collection
+    public function index(Request $request): JsonResponse
     {
-        return Interview::with('jobApplication:id,company_name,position')
+        $interview = Interview::with([
+            'job:id,company_name,position'
+        ])
             ->where('user_id', $request->user()->id)
             ->latest()
-            ->get()
-            ->map(fn($i) => [
-                'id' => $i->id,
-                'job_id' => $i->job_application_id,
-                'type' => $i->type,
-                'interview_date' => $i->interview_date,
-                'location' => $i->location,
-                'notes' => $i->notes,
-                'job_title' => "{$i->jobApplication->company_name} - {$i->jobApplication->position}",
-            ]);
+            ->get();
+
+        return response()->json(
+            $interview->load('job:id,company_name,position')
+        );
     }
 
     public function update(InterviewUpdateRequest $request, Interview $interview): JsonResponse
     {
-        $data = $request->validated();
-        $interview->update($data);
+        if ($interview->user_id !== $request->user()->id) {
+            abort(403);
+        }
 
-        return response()->json($interview);
+        $interview->update($request->validated());
+
+        return response()->json($interview->load('job:id,company_name,position'));
     }
 
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        $interview = Interview::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
 
-        Interview::findOrFail($id)->delete();
+        $interview->delete();
+
         return response()->json(['message' => 'Interview deleted successfully']);
     }
 }

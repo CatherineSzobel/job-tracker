@@ -18,12 +18,12 @@ class Interview extends Model
         'notes'
     ];
     protected $casts = [
-        'interview_date' => 'date',
+        'interview_date' => 'datetime',
     ];
 
-    public function jobApplication()
+    public function job()
     {
-        return $this->belongsTo(JobApplication::class);
+        return $this->belongsTo(JobApplication::class, 'job_application_id');
     }
 
     public function user()
