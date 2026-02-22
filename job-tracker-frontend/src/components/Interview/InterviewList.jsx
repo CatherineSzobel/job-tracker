@@ -1,62 +1,62 @@
 export default function InterviewList({ i, startEdit, deleteInterview }) {
-    const isPastInterview = (date) => new Date(date) < new Date();
-    const isPast = isPastInterview(i.interview_date);
+  const isPast = new Date(i.interview_date) < new Date();
 
-    return (
-        <div
-            key={i.id}
-            className="p-4 bg-white dark:bg-gray-800 rounded shadow hover:shadow-md transition relative"
+  return (
+    <div className="relative bg-white dark:bg-dark-soft rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-4 h-full">
+      {/* Job Title */}
+      <h3 className="font-semibold text-lg text-light-text dark:text-dark-text line-clamp-2">
+        {i.job?.company_name} - {i.job?.position}
+      </h3>
+
+      {/* Badges */}
+      <div className="flex flex-wrap gap-2">
+        <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+          {i.type}
+        </span>
+
+        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+          {new Date(i.interview_date).toLocaleString(undefined, {
+            dateStyle: "medium",
+            timeStyle: "short",
+          })}
+        </span>
+
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${isPast
+            ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300"
+            : "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
+            }`}
         >
-            {/* Action Buttons */}
-            <div className="absolute top-3 right-3 flex gap-3 text-sm">
-                <button
-                    onClick={() => startEdit(i)}
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                >
-                    Edit
-                </button>
-                <button
-                    onClick={() => deleteInterview(i.id)}
-                    className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                >
-                    Delete
-                </button>
-            </div>
+          {isPast ? "Past" : "Upcoming"}
+        </span>
+      </div>
 
-            {/* Job Title */}
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200">{i.job_title}</h3>
+      {/* Location */}
+      <p className="text-sm text-muted dark:text-dark-muted">
+        <strong>Location:</strong> {i.location || "—"}
+      </p>
 
-            {/* Interview Info */}
-            <div className="mt-2 flex flex-wrap gap-2 items-center text-sm">
-                <span className="px-2 py-1 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
-                    {i.type}
-                </span>
+      {/* Notes */}
+      {i.notes && (
+        <p className="text-sm text-muted dark:text-dark-muted">
+          <strong>Notes:</strong> {i.notes}
+        </p>
+      )}
 
-                <span className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-                    {new Date(i.interview_date).toLocaleString()}
-                </span>
-
-                <span
-                    className={`px-2 py-1 rounded text-xs ${isPast
-                        ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300"
-                        : "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
-                        }`}
-                >
-                    {isPast ? "Past" : "Upcoming"}
-                </span>
-            </div>
-
-            {/* Location */}
-            <p className="mt-2 text-gray-600 dark:text-gray-300">
-                <strong>Location:</strong> {i.location || "—"}
-            </p>
-
-            {/* Notes */}
-            {i.notes && (
-                <p className="mt-1 text-gray-600 dark:text-gray-300">
-                    <strong>Notes:</strong> {i.notes}
-                </p>
-            )}
-        </div>
-    );
+      <div className="flex justify-end gap-2 mt-auto">
+        <button
+          onClick={() => startEdit(i)}
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 hover:bg-blue-200 dark:hover:bg-blue-700 transition"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => deleteInterview(i.id)}
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-100 hover:bg-red-200 dark:hover:bg-red-700 transition"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  );
 }

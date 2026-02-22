@@ -120,7 +120,7 @@ export default function Applications() {
       console.error("Import failed", err.response || err);
       alert(
         "Import failed: " +
-          (err.response?.data?.message || JSON.stringify(err.response?.data) || err.message)
+        (err.response?.data?.message || JSON.stringify(err.response?.data) || err.message)
       );
     } finally {
       setImporting(false);
@@ -231,7 +231,7 @@ export default function Applications() {
       {filteredJobs.length === 0 ? (
         <p className="text-center text-muted dark:text-dark-muted">No applications found.</p>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
           {filteredJobs.map((job) => (
             <JobCard
               key={job.id}
@@ -244,10 +244,10 @@ export default function Applications() {
 
       {/* MODAL */}
       {showForm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-primary/60">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 px-4">
           <div className="bg-surface dark:bg-dark-soft rounded-xl shadow-xl p-6 w-full max-w-2xl transition-colors">
             <h2 className="text-lg font-semibold mb-4 text-light-text dark:text-dark-text">
-              Add Job Application
+              {newJob.id ? "Edit Job Application" : "Add Job Application"}
             </h2>
             <JobForm
               setShowForm={setShowForm}
