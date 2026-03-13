@@ -22,13 +22,13 @@ export default function TodoItem({ todo, onToggle, onDelete, formatDate }) {
       <div className="flex-1 flex flex-col">
         <span
           className={`font-medium wrap-break-word transition-colors
-            ${todo.done ? "text-dark-muted dark:text-light-subtle" : "text-light dark:text-white"}`}
+            ${todo.done ? "text-light-muted dark:text-light-soft" : "text-dark dark:text-white"}`}
         >
           {todo.text}
         </span>
         <span
           className={`text-xs mt-1 transition-colors 
-            ${todo.done ? "text-light-muted dark:text-dark-subtle" : "text-light-muted dark:text-dark-subtle"}`}
+            ${todo.done ? "text-light-muted dark:text-light-soft" : "text-dark dark:text-white"}`}
         >
           {formatDate(todo.created_at)}
         </span>

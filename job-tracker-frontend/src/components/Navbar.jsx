@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import API from "../api/axios";
 import { Sun, Moon } from "lucide-react";
 
@@ -7,6 +7,7 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     API.get("/user")
@@ -14,7 +15,6 @@ export default function Navbar() {
       .catch(() => setUser(null));
   }, []);
 
-  // Load saved dark mode preference
   useEffect(() => {
     const saved = localStorage.getItem("darkMode") === "true";
     setDarkMode(saved);
@@ -46,6 +46,26 @@ export default function Navbar() {
     e.target.value = "";
   };
 
+  // Map route paths to readable titles
+  const routeTitles = {
+    "/": "Dashboard",
+    "/applications": "Applications",
+    "/interviews": "Interviews",
+    "/calendar": "Calendar",
+    "/profile": "Profile",
+    "/links": "Links",
+    "/settings": "Settings",
+    "/archives": "Archive",
+    "/login" : "Log In",
+    "/register" : "Sign up"
+  };
+
+  // Handle dynamic route segments like /jobs/:id
+  const getTitle = (pathname) => {
+    if (pathname.startsWith("/jobs/")) return "Application";
+    return routeTitles[pathname] || "Page";
+  };
+
   return (
     <header
       className="
@@ -54,10 +74,9 @@ export default function Navbar() {
         dark:bg-gray-900 dark:text-gray-100
       "
     >
-      <h1 className="text-lg font-semibold">Dashboard</h1>
+      <h1 className="text-lg font-semibold">{getTitle(location.pathname)}</h1>
 
       <div className="flex items-center gap-4">
-        {/* Dark mode toggle */}
         <button
           onClick={toggleDarkMode}
           className="
@@ -72,9 +91,7 @@ export default function Navbar() {
 
         {user ? (
           <div className="flex items-center gap-2">
-            <p className="text-sm hidden md:block">
-              Hello, {user.name}
-            </p>
+            <p className="text-sm hidden md:block">Hello, {user.name}</p>
 
             <select
               onChange={handleMenuChange}

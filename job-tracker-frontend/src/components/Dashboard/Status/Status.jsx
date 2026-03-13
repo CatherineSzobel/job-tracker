@@ -2,20 +2,20 @@ export default function Status({ label, count, total }) {
     // Define colors for light and dark mode
     const statusColors = {
         applied: {
-            light: "bg-blue-100 text-blue-700",
-            dark: "bg-blue-800 text-blue-300",
+            light: "bg-blue-200 text-blue-700",
+            dark: "bg-blue-700 text-blue-300",
         },
         interview: {
-            light: "bg-yellow-100 text-yellow-700",
+            light: "bg-yellow-200 text-yellow-700",
             dark: "bg-yellow-800 text-yellow-300",
         },
         offer: {
-            light: "bg-green-100 text-green-700",
+            light: "bg-green-200 text-green-700",
             dark: "bg-green-800 text-green-300",
         },
         rejected: {
-            light: "bg-red-100 text-red-700",
-            dark: "bg-red-800 text-red-300",
+            light: "bg-red-200 text-red-700",
+            dark: "bg-red-700 text-red-300",
         },
     };
 

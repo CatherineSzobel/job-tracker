@@ -133,7 +133,7 @@ export default function Notes() {
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${showAddForm ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                     }`}
             >
-                <div className="flex flex-col gap-3 p-3 bg-white dark:bg-dark-soft border border-gray-200 dark:border-gray-700 rounded-xl mt-2">
+                <div className="flex flex-col gap-3 p-3 text-dark dark:text-light bg-white dark:bg-dark-soft border border-gray-200 dark:border-gray-700 rounded-xl mt-2">
                     <input
                         type="text"
                         placeholder="Note title"
@@ -174,7 +174,7 @@ export default function Notes() {
                             key={note.id}
                             className={`rounded-xl p-4 transition-all duration-200 
               ${note.is_pinned
-                                    ? "bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-700"
+                                    ? "bg-yellow-100 border border-yellow-500 dark:bg-yellow-500/20 dark:border-yellow-700"
                                     : "bg-white dark:bg-dark-soft border border-gray-200 dark:border-gray-700"
                                 } 
               hover:shadow-md`}
