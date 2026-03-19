@@ -29,15 +29,15 @@ class AuthController extends Controller
             'bio' => '',
             'location' => '',
         ]);
-        $token = $user->createToken('auth_token')->plainTextToken;
+
+        Auth::login($user);
 
         return response()->json([
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email
-            ],
-            'token' => $token
+            ]
         ], 201);
     }
 
@@ -48,18 +48,26 @@ class AuthController extends Controller
                 'message' => 'Invalid credentials',
             ], 401);
         }
-        $user = $request->user();
+        $request->session()->regenerate();
+
+        $user = Auth::user();
 
         return response()->json([
-            'user' => $user->only('id', 'name', 'email'),
-            'token' => $user->createToken('auth_token')->plainTextToken,
+            'data' => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+            ]
         ]);
     }
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::guard('web')->logout();
 
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
         return response()->json([
             'message' => 'Logged out successfully'
         ]);
