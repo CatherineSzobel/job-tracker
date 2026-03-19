@@ -1,19 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import API from "../api/axios";
 import { Sun, Moon } from "lucide-react";
+import { useAuthStore } from "../stores/useAuthStore";
 
 export default function Navbar() {
-  const [user, setUser] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
+
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logoutAction);
+
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    API.get("/user")
-      .then((res) => setUser(res.data))
-      .catch(() => setUser(null));
-  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("darkMode") === "true";
@@ -30,16 +27,12 @@ export default function Navbar() {
     });
   };
 
-  const handleMenuChange = (e) => {
+  const handleMenuChange = async (e) => {
     const value = e.target.value;
+
     if (value === "logout") {
-      API.post("/logout")
-        .then(() => {
-          setUser(null);
-          localStorage.removeItem("token");
-          navigate("/login");
-        })
-        .catch(console.error);
+      await logout();
+      navigate("/login");
     } else {
       navigate(`/${value}`);
     }
@@ -56,11 +49,10 @@ export default function Navbar() {
     "/links": "Links",
     "/settings": "Settings",
     "/archives": "Archive",
-    "/login" : "Log In",
-    "/register" : "Sign up"
+    "/login": "Log In",
+    "/register": "Sign up",
   };
 
-  // Handle dynamic route segments like /jobs/:id
   const getTitle = (pathname) => {
     if (pathname.startsWith("/jobs/")) return "Application";
     return routeTitles[pathname] || "Page";

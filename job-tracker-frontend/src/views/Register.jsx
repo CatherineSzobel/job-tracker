@@ -1,6 +1,6 @@
 import { useState } from "react";
-import API from "../api/axios";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuthStore } from "../stores/useAuthStore";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -11,18 +11,14 @@ export default function Register() {
   });
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const register = useAuthStore((state) => state.registerAction);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      await API.post("/register", form);
-      await API.post("/login", {
-        email: form.email,
-        password: form.password,
-      });
-
+      await register(form.name, form.email, form.password);
       navigate("/");
     } catch (err) {
       setError(
@@ -61,12 +57,12 @@ export default function Register() {
           <label className="block text-sm font-medium mb-1">Name</label>
           <input
             name="name"
+            value={form.name}
+            onChange={handleChange}
             placeholder="Jane Doe"
             className="w-full border border-light-muted dark:border-dark-subtle
                        rounded-lg px-3 py-2 focus:outline-none focus:ring-2
-                       focus:ring-accent dark:focus:ring-accent transition-colors"
-            value={form.name}
-            onChange={handleChange}
+                       focus:ring-accent"
             required
           />
         </div>
@@ -76,12 +72,12 @@ export default function Register() {
           <input
             name="email"
             type="email"
+            value={form.email}
+            onChange={handleChange}
             placeholder="you@example.com"
             className="w-full border border-light-muted dark:border-dark-subtle
                        rounded-lg px-3 py-2 focus:outline-none focus:ring-2
-                       focus:ring-accent dark:focus:ring-accent transition-colors"
-            value={form.email}
-            onChange={handleChange}
+                       focus:ring-accent"
             required
           />
         </div>
@@ -91,12 +87,12 @@ export default function Register() {
           <input
             name="password"
             type="password"
+            value={form.password}
+            onChange={handleChange}
             placeholder="••••••••"
             className="w-full border border-light-muted dark:border-dark-subtle
                        rounded-lg px-3 py-2 focus:outline-none focus:ring-2
-                       focus:ring-accent dark:focus:ring-accent transition-colors"
-            value={form.password}
-            onChange={handleChange}
+                       focus:ring-accent"
             required
           />
         </div>
@@ -108,12 +104,12 @@ export default function Register() {
           <input
             name="password_confirmation"
             type="password"
+            value={form.password_confirmation}
+            onChange={handleChange}
             placeholder="••••••••"
             className="w-full border border-light-muted dark:border-dark-subtle
                        rounded-lg px-3 py-2 focus:outline-none focus:ring-2
-                       focus:ring-accent dark:focus:ring-accent transition-colors"
-            value={form.password_confirmation}
-            onChange={handleChange}
+                       focus:ring-accent"
             required
           />
         </div>
@@ -121,7 +117,7 @@ export default function Register() {
         <button
           type="submit"
           className="w-full py-2 rounded-lg font-semibold
-                     bg-accent hover:bg-accent-soft text-white transition-colors"
+                     bg-accent hover:bg-accent-soft text-white"
         >
           Create Account
         </button>
@@ -129,10 +125,7 @@ export default function Register() {
 
       <div className="text-sm text-light-text/70 dark:text-gray-300 text-center mt-6">
         <p>Already have an account?</p>
-        <Link
-          to="/login"
-          className="text-accent font-medium hover:underline"
-        >
+        <Link to="/login" className="text-accent font-medium hover:underline">
           Log in
         </Link>
       </div>

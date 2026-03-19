@@ -1,4 +1,6 @@
 import { Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { useAuthStore } from "./stores/useAuthStore";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layouts/Layout";
@@ -18,6 +20,17 @@ import Application from "./views/Application";
 import Archive from "./views/Archive";
 
 function App() {
+
+  const fetchUser = useAuthStore(state => state.fetchUser)
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+
+  useEffect(() => {
+    // Only verify session if we think we're logged in
+    // Avoids unnecessary 401 on the login page
+    if (isAuthenticated) {
+      fetchUser()
+    }
+  }, [])
   return (
     <Routes>
 
