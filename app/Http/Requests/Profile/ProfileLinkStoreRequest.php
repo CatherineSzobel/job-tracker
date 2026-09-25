@@ -23,7 +23,7 @@ class ProfileLinkStoreRequest extends FormRequest
     {
         return [
             'type' => 'required|string',
-            'url' => 'required|url',
+            'url' => 'required|url:http,https|max:255',
         ];
     }
 }

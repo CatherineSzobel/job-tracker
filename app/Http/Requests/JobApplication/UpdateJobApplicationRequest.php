@@ -27,7 +27,7 @@ class UpdateJobApplicationRequest extends FormRequest
             'priority' => 'sometimes|string|max:50',
             'notes' => 'sometimes|nullable|string',
             'location' => 'sometimes|string|max:255',
-            'job_link' => 'sometimes|nullable|url',
+            'job_link' => 'sometimes|nullable|url:http,https|max:255',
             'company_name' => 'sometimes|string|max:255',
             'position' => 'sometimes|string|max:255',
         ];

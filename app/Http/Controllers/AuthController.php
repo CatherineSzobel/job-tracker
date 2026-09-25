@@ -78,6 +78,8 @@ class AuthController extends Controller
     public function updatePassword(ChangePasswordRequest $request): JsonResponse
     {
         $user = $request->user();
+        abort_if($user->isDemo(), 403, 'The demo account password cannot be changed.');
+
         $validated = $request->validated();
 
         if (!Hash::check($validated['current_password'], $user->password)) {
@@ -98,6 +100,8 @@ class AuthController extends Controller
     public function deleteAccount(DeleteAccountRequest $request): JsonResponse
     {
         $user = $request->user();
+        abort_if($user->isDemo(), 403, 'The demo account cannot be deleted.');
+
         $validated = $request->validated();
 
         if (!Hash::check($validated['password'], $user->password)) {
@@ -106,9 +110,10 @@ class AuthController extends Controller
             ], 422);
         }
 
+        // Log out first: logout() saves a new remember token, which would re-insert a deleted user
+        Auth::guard('web')->logout();
         $user->delete();
 
-        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

@@ -28,7 +28,7 @@ class StoreJobApplicationRequest extends FormRequest
             'location' => 'nullable|string|max:255',
             'status' => 'sometimes|in:applied,interview,offer,rejected',
             'priority' => 'nullable|string|max:50',
-            'job_link' => 'nullable|url',
+            'job_link' => 'nullable|url:http,https|max:255',
             'description' => 'nullable|string',
             'notes' => 'nullable|string',
         ];

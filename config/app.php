@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Demo Account
+    |--------------------------------------------------------------------------
+    |
+    | Shared public account offered on the login page. It can't change its
+    | password or delete itself, so it stays usable for everyone.
+    |
+    */
+
+    'demo_email' => env('DEMO_EMAIL', 'test@example.com'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

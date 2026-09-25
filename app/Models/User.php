@@ -28,6 +28,11 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    public function isDemo(): bool
+    {
+        return $this->email === config('app.demo_email');
+    }
+
     public function jobApplications()
     {
         return $this->hasMany(JobApplication::class);

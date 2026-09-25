@@ -48,7 +48,7 @@ class JobApplicationsImport implements ToModel, WithHeadingRow, WithUpserts, Wit
             'applied_date' => 'nullable|date',
             'location'     => 'nullable|string|max:255',
             'notes'        => 'nullable|string|max:2000',
-            'job_link'     => 'nullable|url|max:2048',
+            'job_link'     => 'nullable|url:http,https|max:255',
         ];
     }
 
