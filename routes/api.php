@@ -55,4 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/profile/links', [ProfileLinkController::class, 'store']);
     Route::put('/profile/links/{link}', [ProfileLinkController::class, 'update']);
     Route::delete('/profile/links/{link}', [ProfileLinkController::class, 'destroy']);
+
+    Route::put('/account/password', [AuthController::class, 'updatePassword']);
+    Route::delete('/account', [AuthController::class, 'deleteAccount']);
 });

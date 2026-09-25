@@ -1,31 +1,12 @@
-import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Sun, Moon } from "lucide-react";
 import { useAuthStore } from "../stores/useAuthStore";
 
 export default function Navbar() {
-  const [darkMode, setDarkMode] = useState(false);
-
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logoutAction);
 
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    const saved = localStorage.getItem("darkMode") === "true";
-    setDarkMode(saved);
-    document.documentElement.classList.toggle("dark", saved);
-  }, []);
-
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => {
-      const next = !prev;
-      localStorage.setItem("darkMode", next);
-      document.documentElement.classList.toggle("dark", next);
-      return next;
-    });
-  };
 
   const handleMenuChange = async (e) => {
     const value = e.target.value;
@@ -69,18 +50,6 @@ export default function Navbar() {
       <h1 className="text-lg font-semibold">{getTitle(location.pathname)}</h1>
 
       <div className="flex items-center gap-4">
-        <button
-          onClick={toggleDarkMode}
-          className="
-            p-2 rounded transition-colors
-            hover:bg-gray-200
-            dark:hover:bg-gray-800
-          "
-          title="Toggle dark mode"
-        >
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-
         {user ? (
           <div className="flex items-center gap-2">
             <p className="text-sm hidden md:block">Hello, {user.name}</p>
