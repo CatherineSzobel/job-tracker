@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\JobApplication\JobApplicationImportRequest;
-use App\Models\JobApplication;
 use App\Services\JobApplicationService;
 
 use Illuminate\Http\Request;
@@ -37,15 +36,16 @@ class JobApplicationController extends Controller
 
     public function update(UpdateJobApplicationRequest $request, int $id): JsonResponse
     {
-        $job = JobApplication::findOrFail($id);
+        $job = $request->user()->jobApplications()->findOrFail($id);
         $updatedJob = $this->jobApplicationService->update($job, $request->validated());
 
         return response()->json(['data' => $updatedJob]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        $this->jobApplicationService->delete($id);
+        $job = $request->user()->jobApplications()->findOrFail($id);
+        $this->jobApplicationService->delete($job);
         return response()->json(['message' => 'JobApplication deleted successfully']);
     }
 
