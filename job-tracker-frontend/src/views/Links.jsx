@@ -1,29 +1,51 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import API from "../api/axios";
+import PageLoader from "../components/UI/PageLoader";
 
 export default function Links() {
   const [links, setLinks] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const addLink = () => {
+  useEffect(() => {
+    API.get("/profile/links")
+      .then((res) => setLinks(res.data.data))
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const addLink = async () => {
     if (!label || !url) return;
 
-    setLinks((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        label,
-        url,
-      },
-    ]);
-
-    setLabel("");
-    setUrl("");
+    setSaving(true);
+    try {
+      const res = await API.post("/profile/links", { type: label, url });
+      setLinks((prev) => [...prev, res.data.data]);
+      setLabel("");
+      setUrl("");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to add link");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const removeLink = (id) => {
-    setLinks((prev) => prev.filter((link) => link.id !== id));
+  const removeLink = async (id) => {
+    try {
+      await API.delete(`/profile/links/${id}`);
+      setLinks((prev) => prev.filter((link) => link.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to remove link");
+    }
   };
+
+  if (loading) {
+    return <PageLoader text="Loading links..." />;
+  }
 
   return (
     <div className="max-w-4xl mx-auto mt-10 px-4">
@@ -53,10 +75,11 @@ export default function Links() {
           />
 
           <button
-            className="w-full md:w-auto px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+            className="w-full md:w-auto px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50"
             onClick={addLink}
+            disabled={saving}
           >
-            Add Link
+            {saving ? "Adding..." : "Add Link"}
           </button>
         </div>
       </div>
@@ -76,7 +99,7 @@ export default function Links() {
           >
             <div>
               <p className="font-medium text-gray-900 dark:text-gray-100">
-                {link.label}
+                {link.type}
               </p>
               <a
                 href={link.url}
