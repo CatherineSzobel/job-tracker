@@ -10,7 +10,7 @@ class ProfileLink extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['label', 'url'];
+    protected $fillable = ['type', 'url'];
 
     public function profile() {
         return $this->belongsTo(Profile::class);

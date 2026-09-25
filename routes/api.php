@@ -52,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
 
+    Route::get('/profile/links', [ProfileLinkController::class, 'index']);
     Route::post('/profile/links', [ProfileLinkController::class, 'store']);
     Route::put('/profile/links/{link}', [ProfileLinkController::class, 'update']);
     Route::delete('/profile/links/{link}', [ProfileLinkController::class, 'destroy']);
