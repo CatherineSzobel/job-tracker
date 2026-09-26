@@ -3,6 +3,8 @@ import API from "../api/axios";
 import InterviewForm from "../components/Interview/InterviewForm";
 import InterviewList from "../components/Interview/InterviewList";
 import PageLoader from "../components/UI/PageLoader";
+import Modal from "../components/UI/Modal";
+import { EMPTY_INTERVIEW } from "../constants/jobs";
 
 export default function Interviews() {
   const [interviews, setInterviews] = useState([]);
@@ -11,13 +13,7 @@ export default function Interviews() {
   const [showForm, setShowForm] = useState(false);
   const [editingInterview, setEditingInterview] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [newInterview, setNewInterview] = useState({
-    job_id: "",
-    type: "",
-    interview_date: "",
-    location: "",
-    notes: "",
-  });
+  const [newInterview, setNewInterview] = useState(EMPTY_INTERVIEW);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,12 +59,11 @@ export default function Interviews() {
           `/job-applications/${newInterview.job_id}/interviews`,
           payload
         );
-        const job = jobs.find((j) => j.id === parseInt(newInterview.job_id));
-        if (!job) throw new Error("Job not found");
+        // Same shape as GET /interviews, which eager-loads `job`
+        const job = jobs.find((j) => j.id === Number(newInterview.job_id));
         const newInt = {
           ...res.data.data,
-          job_id: newInterview.job_id,
-          job_title: `${job.company_name} - ${job.position}`,
+          job: job && { id: job.id, company_name: job.company_name, position: job.position },
         };
         setInterviews((prev) => [newInt, ...prev]);
       }
@@ -97,7 +92,7 @@ export default function Interviews() {
   const startEdit = (interview) => {
     setEditingInterview(interview);
     setNewInterview({
-      job_id: interview.job_id,
+      job_id: interview.job_application_id,
       type: interview.type || "",
       interview_date: formatForInput(interview.interview_date),
       location: interview.location || "",
@@ -121,13 +116,7 @@ export default function Interviews() {
   };
 
   const resetForm = () => {
-    setNewInterview({
-      job_id: "",
-      type: "",
-      interview_date: "",
-      location: "",
-      notes: "",
-    });
+    setNewInterview(EMPTY_INTERVIEW);
     setEditingInterview(null);
     setShowForm(false);
   };
@@ -174,24 +163,18 @@ export default function Interviews() {
 
       {/* Modal Form */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 px-4">
-          <div className="bg-light dark:bg-dark-soft rounded-xl shadow-xl p-6 w-full max-w-2xl transition-colors">
-            <h2 className="text-2xl font-bold mb-4 text-light-text dark:text-dark-text">
-              {editingInterview ? "Edit Interview" : "Add New Interview"}
-            </h2>
-
-            <InterviewForm
-              handleSubmit={handleSubmit}
-              handleChange={handleChange}
-              saving={saving}
-              newInterview={newInterview}
-              jobs={jobs}
-              editingInterview={editingInterview}
-              setShowForm={setShowForm}
-              setEditingInterview={setEditingInterview}
-            />
-          </div>
-        </div>
+        <Modal title={editingInterview ? "Edit Interview" : "Add New Interview"} onClose={resetForm}>
+          <InterviewForm
+            handleSubmit={handleSubmit}
+            handleChange={handleChange}
+            saving={saving}
+            newInterview={newInterview}
+            jobs={jobs}
+            editingInterview={editingInterview}
+            setShowForm={setShowForm}
+            setEditingInterview={setEditingInterview}
+          />
+        </Modal>
       )}
     </div>
   );

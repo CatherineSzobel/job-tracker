@@ -2,49 +2,51 @@
 
 namespace App\Imports;
 
+use App\Enums\JobStatus;
+use App\Enums\Priority;
 use App\Models\JobApplication;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Concerns\{
     ToModel,
     WithHeadingRow,
-    WithUpserts,
     WithValidation,
     SkipsOnFailure,
     SkipsFailures
 };
 
-class JobApplicationsImport implements ToModel, WithHeadingRow, WithUpserts, WithValidation, SkipsOnFailure
+class JobApplicationsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure
 {
     use SkipsFailures;
 
     public function model(array $row)
     {
-
-        $companyName = $row['company'] ?? $row['company_name'];
-        $position = trim($row['position'] ?? '');
-
-        return new JobApplication([
+        // Rows are saved one at a time, so re-importing (or a repeated row) updates the
+        // user's existing job with the same company + position instead of duplicating it
+        $job = JobApplication::firstOrNew([
             'user_id'      => Auth::id(),
-            'company_name' => $companyName,
-            'position'     => $position,
-            'status'       => strtolower($row['status'] ?? 'applied'), // default to applied
-            'priority'     => strtolower($row['priority'] ?? 'medium'), // default to medium
+            'company_name' => $row['company'] ?? $row['company_name'],
+            'position'     => trim($row['position'] ?? ''),
+        ]);
+
+        return $job->fill([
+            'status'       => strtolower($row['status'] ?? JobStatus::Applied->value),
+            'priority'     => strtolower($row['priority'] ?? Priority::Medium->value),
             'applied_date' => $row['applied_date'] ?? now()->format('Y-m-d'), // default today
             'location'     => $row['location'] ?? null,
             'notes'        => $this->sanitizeText($row['notes'] ?? null),
             'job_link'     => $this->sanitizeUrl($row['job_link'] ?? null),
-            'is_archived'  => false,
         ]);
     }
 
     public function rules(): array
     {
         return [
-            'company_name' => 'required_without:company|string',
-            'company'      => 'required_without:company_name|string',
-            'position'     => 'required|string',
-            'status'       => 'nullable|in:applied,interview,offer,rejected',
-            'priority'     => 'nullable|in:low,medium,high',
+            'company_name' => 'required_without:company|string|max:255',
+            'company'      => 'required_without:company_name|string|max:255',
+            'position'     => 'required|string|max:255',
+            'status'       => ['nullable', Rule::enum(JobStatus::class)],
+            'priority'     => ['nullable', Rule::enum(Priority::class)],
             'applied_date' => 'nullable|date',
             'location'     => 'nullable|string|max:255',
             'notes'        => 'nullable|string|max:2000',
@@ -56,18 +58,13 @@ class JobApplicationsImport implements ToModel, WithHeadingRow, WithUpserts, Wit
     {
         return [
             ...$data,
-            'status'   => isset($data['status']) ? strtolower(trim($data['status'])) : 'applied',
-            'priority' => isset($data['priority']) ? strtolower(trim($data['priority'])) : 'medium',
+            'status'   => isset($data['status']) ? strtolower(trim($data['status'])) : JobStatus::Applied->value,
+            'priority' => isset($data['priority']) ? strtolower(trim($data['priority'])) : Priority::Medium->value,
             'applied_date' => $data['applied_date'] ?? now()->format('Y-m-d'),
             'notes'    => $this->nullIfEmpty($data['notes'] ?? null),
             'location' => $this->nullIfEmpty($data['location'] ?? null),
             'job_link' => $this->nullIfEmpty($data['job_link'] ?? null),
         ];
-    }
-
-    public function uniqueBy()
-    {
-        return ['user_id', 'company_name', 'position'];
     }
 
     private function nullIfEmpty($value)

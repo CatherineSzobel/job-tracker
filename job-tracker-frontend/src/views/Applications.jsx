@@ -4,6 +4,8 @@ import API from "../api/axios";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
 import PageLoader from "../components/UI/PageLoader";
+import Modal from "../components/UI/Modal";
+import { EMPTY_JOB, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
 
 export default function Applications() {
   const fileInputRef = useRef(null);
@@ -20,15 +22,7 @@ export default function Applications() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
 
-  const [newJob, setNewJob] = useState({
-    position: "",
-    company_name: "",
-    location: "",
-    status: "applied",
-    priority: "medium",
-    notes: "",
-    job_link: "",
-  });
+  const [newJob, setNewJob] = useState(EMPTY_JOB);
 
   // Fetch jobs
   useEffect(() => {
@@ -59,15 +53,7 @@ export default function Applications() {
       const res = await API.post("/job-applications", newJob);
       setJobs([res.data.data, ...jobs]);
       setShowForm(false);
-      setNewJob({
-        position: "",
-        company_name: "",
-        location: "",
-        status: "applied",
-        priority: "medium",
-        notes: "",
-        job_link: "",
-      });
+      setNewJob(EMPTY_JOB);
     } catch (err) {
       console.error(err);
       alert("Failed to add job application");
@@ -88,10 +74,7 @@ export default function Applications() {
 
   const exportJobs = async () => {
     try {
-      const res = await API.get("/job-applications/export", {
-        responseType: "blob",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const res = await API.get("/job-applications/export", { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -99,6 +82,7 @@ export default function Applications() {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Export failed", err);
     }
@@ -110,12 +94,17 @@ export default function Applications() {
     formData.append("file", file);
 
     try {
-      await API.post("/job-applications/import", formData, {
+      const { data } = await API.post("/job-applications/import", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const res = await API.get("/job-applications");
       setJobs(res.data);
-      alert("Import successful");
+
+      // Invalid rows are skipped by the server and listed in `failures`
+      const skipped = (data.failures ?? []).map(
+        (f) => `Row ${f.row} (${f.attribute}): ${f.errors.join(", ")}`
+      );
+      alert(skipped.length ? `${data.message}\n\n${skipped.join("\n")}` : data.message);
     } catch (err) {
       console.error("Import failed", err.response || err);
       alert(
@@ -182,7 +171,7 @@ export default function Applications() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv,.xlsx,.xls"
+              accept=".xlsx,.xls"
               className="hidden"
               onChange={(e) => {
                 if (e.target.files.length > 0) {
@@ -204,10 +193,9 @@ export default function Applications() {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="all">All</option>
-              <option value="applied">Applied</option>
-              <option value="interview">Interview</option>
-              <option value="offer">Offer</option>
-              <option value="rejected">Rejected</option>
+              {JOB_STATUSES.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </select>
           </div>
 
@@ -219,9 +207,9 @@ export default function Applications() {
               onChange={(e) => setPriorityFilter(e.target.value)}
             >
               <option value="all">All</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              {PRIORITIES.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -236,7 +224,7 @@ export default function Applications() {
             <JobCard
               key={job.id}
               job={job}
-              onArchive={(id) => setJobs((prev) => prev.filter((j) => j.id !== id))}
+              onRemove={(id) => setJobs((prev) => prev.filter((j) => j.id !== id))}
             />
           ))}
         </div>
@@ -244,21 +232,15 @@ export default function Applications() {
 
       {/* MODAL */}
       {showForm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 px-4">
-          <div className="bg-surface dark:bg-dark-soft rounded-xl shadow-xl p-6 w-full max-w-2xl transition-colors">
-            <h2 className="text-lg font-semibold mb-4 text-light-text dark:text-dark-text">
-              {newJob.id ? "Edit Job Application" : "Add Job Application"}
-            </h2>
-            <JobForm
-              setShowForm={setShowForm}
-              newJob={newJob}
-              setNewJob={setNewJob}
-              saving={saving}
-              handleSubmit={handleSubmit}
-              handleChange={handleChange}
-            />
-          </div>
-        </div>
+        <Modal title="Add Job Application" onClose={() => setShowForm(false)}>
+          <JobForm
+            setShowForm={setShowForm}
+            newJob={newJob}
+            saving={saving}
+            handleSubmit={handleSubmit}
+            handleChange={handleChange}
+          />
+        </Modal>
       )}
     </div>
   );

@@ -18,7 +18,7 @@ export default function Register() {
     setError("");
 
     try {
-      await register(form.name, form.email, form.password);
+      await register(form.name, form.email, form.password, form.password_confirmation);
       navigate("/");
     } catch (err) {
       setError(

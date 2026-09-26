@@ -5,12 +5,16 @@ import {
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
+  getISODay,
   isSameDay,
   parseISO,
   addMonths,
   subMonths
 } from "date-fns";
 import PageLoader from "../components/UI/PageLoader";
+import Modal from "../components/UI/Modal";
+
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function Calendar() {
   const [interviews, setInterviews] = useState([]);
@@ -20,17 +24,9 @@ export default function Calendar() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    API.get("/job-applications")
-      .then(res => {
-        const all = res.data.flatMap(job =>
-          (job.interviews || []).map(i => ({
-            ...i,
-            job_position: job.position,
-            job_company: job.company_name,
-          }))
-        );
-        setInterviews(all);
-      })
+    // All of the user's interviews, including ones on archived jobs
+    API.get("/interviews")
+      .then(res => setInterviews(res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
@@ -39,6 +35,8 @@ export default function Calendar() {
     start: startOfMonth(currentMonth),
     end: endOfMonth(currentMonth)
   });
+  // Empty cells before day 1 so it lands under its weekday (Monday = 1)
+  const leadingBlanks = getISODay(days[0]) - 1;
 
   const getInterviewsForDay = (day) =>
     interviews.filter(i => isSameDay(parseISO(i.interview_date), day));
@@ -84,13 +82,23 @@ export default function Calendar() {
 
       {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-3">
+        {WEEKDAYS.map(name => (
+          <div key={name} className="text-center text-sm font-semibold text-primary-text dark:text-light-text">
+            {name}
+          </div>
+        ))}
+
+        {Array.from({ length: leadingBlanks }, (_, i) => (
+          <div key={`blank-${i}`} aria-hidden="true" />
+        ))}
+
         {days.map(day => {
           const dayInterviews = getInterviewsForDay(day);
           const isToday = isSameDay(day, new Date());
 
           return (
             <div
-              key={day}
+              key={day.toISOString()}
               onClick={() => handleDayClick(day)}
               className={`border rounded-lg p-3 h-28 cursor-pointer flex flex-col justify-between transition 
                 ${isToday ? "border-accent bg-accent-soft" : "border-border hover:bg-surface-soft"}`
@@ -112,12 +120,11 @@ export default function Calendar() {
 
       {/* Modal */}
       {showModal && selectedDay && (
-        <div className="fixed inset-0 bg-primary/60 bg-opacity-40 flex items-center justify-center z-50 px-4">
-          <div className="bg-light dark:bg-dark p-6 rounded-2xl shadow-xl w-full max-w-md transition-colors">
-            <h2 className="text-2xl font-bold mb-4 text-dark dark:text-light">
-              Interviews on {format(selectedDay, "MMMM d, yyyy")}
-            </h2>
-
+        <Modal
+          title={`Interviews on ${format(selectedDay, "MMMM d, yyyy")}`}
+          onClose={() => setShowModal(false)}
+          maxWidth="max-w-md"
+        >
             {getInterviewsForDay(selectedDay).length === 0 ? (
               <p className="text-secondary-text dark:text-dark-muted">No interviews scheduled.</p>
             ) : (
@@ -127,8 +134,8 @@ export default function Calendar() {
                     key={i.id}
                     className="border border-border dark:border-dark-subtle rounded-lg p-3 bg-surface dark:bg-dark-subtle shadow-sm hover:shadow-md transition"
                   >
-                    <p className="font-semibold text-accent">{i.job_position}</p>
-                    <p className="text-sm text-dark-soft dark:text-dark-muted">{i.job_company}</p>
+                    <p className="font-semibold text-accent">{i.job?.position}</p>
+                    <p className="text-sm text-dark-soft dark:text-dark-muted">{i.job?.company_name}</p>
                     <p className="text-sm text-dark dark:text-light">Type: {i.type}</p>
                     <p className="text-sm text-dark dark:text-light">Location: {i.location}</p>
                   </div>
@@ -144,8 +151,7 @@ export default function Calendar() {
                 Close
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

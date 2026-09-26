@@ -32,7 +32,7 @@ export const useAuthStore = create(
             },
 
             // Safely registers a new user and logs them in immediately
-            registerAction: async (name, email, password) => {
+            registerAction: async (name, email, password, passwordConfirmation) => {
                 set({ isLoading: true, error: null })
                 try {
                     await API.get('/sanctum/csrf-cookie', { baseURL: '' })
@@ -40,7 +40,7 @@ export const useAuthStore = create(
                         name,
                         email,
                         password,
-                        password_confirmation: password,
+                        password_confirmation: passwordConfirmation,
                     })
 
                     await get().fetchUser()

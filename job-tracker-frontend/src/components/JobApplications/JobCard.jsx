@@ -1,35 +1,15 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
+import { PRIORITY_CLASSES, STATUS_COLORS } from "../../constants/jobs";
 
-export default function JobCard({ job, onArchive }) {
-  if (!job) return null;
-
+// onRemove(id) is called after the job is archived or deleted so the parent can drop it
+export default function JobCard({ job, onRemove }) {
   const navigate = useNavigate();
-  const [localJob, setLocalJob] = useState(job);
-
-  //@TODO - seperate them into a different file so it is unified for dashboard and this
-  // Priority colors
-  const priorityColors = {
-    low: "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300",
-    medium: "bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300",
-    high: "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300",
-  };
-
-  // Status colors
-  const statusColorsHex = {
-    applied: "#3b82f6",
-    interview: "#facc15",
-    offer: "#22c55e",
-    rejected: "#ef4444",
-    archived: "#06b6d4",
-  };
 
   const handleArchive = async () => {
     try {
-      const res = await API.put(`/job-applications/${localJob.id}`, { is_archived: true });
-      setLocalJob(res.data.data || res.data);
-      if (onArchive) onArchive(localJob.id);
+      await API.put(`/job-applications/${job.id}`, { is_archived: true });
+      onRemove?.(job.id);
     } catch (err) {
       console.error(err);
       alert("Failed to archive job");
@@ -39,21 +19,11 @@ export default function JobCard({ job, onArchive }) {
   const deleteJob = async () => {
     if (!window.confirm("Delete this job application?")) return;
     try {
-      await API.delete(`/job-applications/${localJob.id}`);
-      window.location.reload();
+      await API.delete(`/job-applications/${job.id}`);
+      onRemove?.(job.id);
     } catch (err) {
       console.error(err);
       alert("Failed to delete job");
-    }
-  };
-
-  const updateStatus = async (newStatus) => {
-    try {
-      await API.put(`/job-applications/${localJob.id}`, { status: newStatus });
-      setLocalJob(prev => ({ ...prev, status: newStatus }));
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update status");
     }
   };
 
@@ -85,11 +55,11 @@ export default function JobCard({ job, onArchive }) {
         <div className="flex gap-2 mt-2">
           <span
             className="px-2 py-1 text-xs rounded-full text-white truncate"
-            style={{ backgroundColor: statusColorsHex[localJob.status] }}
+            style={{ backgroundColor: STATUS_COLORS[job.status] }}
           >
-            {localJob.status}
+            {job.status}
           </span>
-          <span className={`px-2 py-1 text-xs rounded-full truncate ${priorityColors[job.priority]}`}>
+          <span className={`px-2 py-1 text-xs rounded-full truncate ${PRIORITY_CLASSES[job.priority]}`}>
             {job.priority}
           </span>
         </div>
@@ -98,18 +68,20 @@ export default function JobCard({ job, onArchive }) {
       <div className="mt-4 flex flex-col gap-2 text-sm text-muted dark:text-dark-muted">
         <span><strong>Applied:</strong> {job.applied_date}</span>
         <span><strong>Location:</strong> {job.location}</span>
-        <span className="flex items-center gap-1">
-          <strong>Application:</strong>
-          <a
-            href={job.job_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 dark:text-accent hover:underline font-medium truncate"
-            title={job.job_link}
-          >
-            View Posting →
-          </a>
-        </span>
+        {job.job_link && (
+          <span className="flex items-center gap-1">
+            <strong>Application:</strong>
+            <a
+              href={job.job_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 dark:text-accent hover:underline font-medium truncate"
+              title={job.job_link}
+            >
+              View Posting →
+            </a>
+          </span>
+        )}
         <span>
           <strong>Notes:</strong>{" "}
           {job.notes ? job.notes : <span className="text-gray-400 dark:text-gray-500">—</span>}

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\JobStatus;
 use App\Models\JobApplication;
 use App\Imports\JobApplicationsImport;
 use App\Exports\JobApplicationsExport;
@@ -9,7 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Http\UploadedFile;
 use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Validators\ValidationException;
+use Maatwebsite\Excel\Validators\Failure;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -65,21 +66,17 @@ class JobApplicationService
         }
 
         $import = new JobApplicationsImport;
+        Excel::import($import, $file);
 
-        try {
-            Excel::import($import, $file);
-        } catch (ValidationException $e) {
-            $failures = array_map(fn($f) => [
-                'row' => $f->row(),
-                'attribute' => $f->attribute(),
-                'errors' => $f->errors(),
-                'values' => $f->values(),
-            ], $e->failures());
+        // Invalid rows are skipped (SkipsOnFailure) and collected on the import, not thrown
+        $failures = $import->failures()->map(fn (Failure $f) => [
+            'row' => $f->row(),
+            'attribute' => $f->attribute(),
+            'errors' => $f->errors(),
+            'values' => $f->values(),
+        ])->values()->all();
 
-            return ['failures' => $failures];
-        }
-
-        return ['failures' => []];
+        return ['failures' => $failures];
     }
 
     /**
@@ -129,16 +126,17 @@ class JobApplicationService
         $todayApplications = $jobs->filter(fn($job) => $job->applied_date && $job->applied_date->gte($today))->count();
         $weekApplications = $jobs->filter(fn($job) => $job->applied_date && $job->applied_date->gte($startOfWeek))->count();
         $upcomingInterviews = $jobs->flatMap(fn($job) => $job->interviews ?? collect())
-            ->filter(fn($interview) => $interview->scheduled_at && $interview->scheduled_at->gte($today))
+            ->filter(fn($interview) => $interview->interview_date && $interview->interview_date->gte($today))
             ->count();
+
+        // One count per status: applied, interview, offer, rejected
+        $statusCounts = collect(JobStatus::values())
+            ->mapWithKeys(fn (string $status) => [$status => $jobs->where('status', $status)->count()]);
 
         return [
             'total' => $jobs->count(),
             'archived' => $jobs->where('is_archived', true)->count(),
-            'applied' => $jobs->where('status', 'applied')->count(),
-            'interview' => $jobs->where('status', 'interview')->count(),
-            'offer' => $jobs->where('status', 'offer')->count(),
-            'rejected' => $jobs->where('status', 'rejected')->count(),
+            ...$statusCounts,
             'todayApplications' => $todayApplications,
             'weekApplications' => $weekApplications,
             'upcomingInterviews' => $upcomingInterviews,

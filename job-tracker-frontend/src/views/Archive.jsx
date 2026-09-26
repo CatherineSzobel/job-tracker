@@ -27,7 +27,7 @@ export default function Archive() {
     };
 
     if (loading) {
-      <PageLoader text="Loading archives..."/>
+      return <PageLoader text="Loading archives..."/>
     }
 
     return (
