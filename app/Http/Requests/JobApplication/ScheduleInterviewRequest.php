@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\JobApplication;
 
+use App\Enums\InterviewType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ScheduleInterviewRequest extends FormRequest
 {
@@ -23,7 +25,7 @@ class ScheduleInterviewRequest extends FormRequest
     {
         return [
             'interview_date' => 'required|date',
-            'type' => 'sometimes|in:phone,online,onsite',
+            'type' => ['sometimes', Rule::enum(InterviewType::class)],
             'location' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
         ];

@@ -44,6 +44,11 @@ class NotesController extends Controller
             'is_pinned' => 'boolean',
         ]);
 
+        // Empty input arrives as null, but the column is NOT NULL (same as store)
+        if (array_key_exists('content', $data)) {
+            $data['content'] ??= '';
+        }
+
         $note->update($data);
 
         return response()->json($note);

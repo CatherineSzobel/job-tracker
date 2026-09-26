@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Interview;
 
+use App\Enums\InterviewType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class InterviewUpdateRequest extends FormRequest
 {
@@ -23,8 +25,8 @@ class InterviewUpdateRequest extends FormRequest
     {
         return [
             'interview_date' => 'sometimes|date',
-            'type' => 'sometimes|string',
-            'location' => 'sometimes|string',
+            'type' => ['sometimes', Rule::enum(InterviewType::class)],
+            'location' => 'sometimes|nullable|string|max:255',
             'notes' => 'sometimes|string|nullable',
         ];
     }

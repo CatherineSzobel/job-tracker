@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\JobApplication;
 
+use App\Enums\JobStatus;
+use App\Enums\Priority;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateJobApplicationRequest extends FormRequest
 {
@@ -22,11 +25,11 @@ class UpdateJobApplicationRequest extends FormRequest
     public function rules()
     {
         return [
-            'status' => 'sometimes|in:applied,interview,offer,rejected',
+            'status' => ['sometimes', Rule::enum(JobStatus::class)],
             'is_archived' => 'sometimes|boolean',
-            'priority' => 'sometimes|string|max:50',
+            'priority' => ['sometimes', Rule::enum(Priority::class)],
             'notes' => 'sometimes|nullable|string',
-            'location' => 'sometimes|string|max:255',
+            'location' => 'sometimes|nullable|string|max:255',
             'job_link' => 'sometimes|nullable|url:http,https|max:255',
             'company_name' => 'sometimes|string|max:255',
             'position' => 'sometimes|string|max:255',

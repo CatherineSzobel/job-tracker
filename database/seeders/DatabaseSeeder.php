@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,14 +15,18 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        // Demo account offered on the login page (see config/app.php demo_email)
         $user = User::factory()->create([
             'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => Hash::make('secret123'),
+            'email' => config('app.demo_email'),
+            'password' => 'secret123',
         ]);
 
         $user->profile()->create([
             'name' => $user->name,
+            'title' => 'Software Engineer',
+            'bio' => 'This is a test user for seeding job applications.',
+            'location' => 'San Francisco, CA',
         ]);
 
         $this->call([

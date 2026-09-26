@@ -2,41 +2,33 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\JobApplication;
+use App\Enums\InterviewType;
+use App\Enums\JobStatus;
+use App\Enums\Priority;
 use App\Models\Interview;
+use App\Models\JobApplication;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class JobApplicationSeeder extends Seeder
 {
     public function run()
     {
         $faker = \Faker\Factory::create();
-        $user = User::updateOrCreate(
-            ['email' => 'test@example.com'], // find by email
-            [
-                'name' => 'Test User',
-                'password' => bcrypt('secret123')
-            ]
-        );
 
-        $user->profile()->create([
-            'user_id' => $user->id,
-            'name' => $user->name,
-            'title' => 'Software Engineer',
-            'bio' => 'This is a test user for seeding job applications.',
-            'location' => 'San Francisco, CA',
-        ]);
+        // The demo user and profile are created in DatabaseSeeder
+        $user = User::where('email', config('app.demo_email'))->firstOrFail();
 
         // Each user has 20–30 job applications
-        for ($i = 0; $i < rand(20, 30); $i++) {
+        $jobCount = rand(20, 30);
+        for ($i = 0; $i < $jobCount; $i++) {
             $job = JobApplication::create([
                 'user_id' => $user->id,
                 'company_name' => $faker->company,
                 'position' => $faker->jobTitle,
                 'location' => $faker->city,
-                'status' => $faker->randomElement(['applied', 'interview', 'offer', 'rejected']),
-                'priority' => $faker->randomElement(['low', 'medium', 'high']),
+                'status' => $faker->randomElement(JobStatus::values()),
+                'priority' => $faker->randomElement(Priority::values()),
                 'applied_date' => $faker->dateTimeBetween('-3 months', 'now'),
                 'job_link' => $faker->url,
                 'notes' => $faker->sentence,
@@ -44,12 +36,13 @@ class JobApplicationSeeder extends Seeder
             ]);
 
             // Add 0–2 interviews per job
-            for ($k = 0; $k < rand(0, 2); $k++) {
+            $interviewCount = rand(0, 2);
+            for ($k = 0; $k < $interviewCount; $k++) {
                 Interview::create([
                     'user_id' => $user->id,
                     'job_application_id' => $job->id,
                     'interview_date' => $faker->dateTimeBetween('now', '+2 months'),
-                    'type' => $faker->randomElement(['phone', 'online', 'onsite']),
+                    'type' => $faker->randomElement(InterviewType::values()),
                     'location' => $faker->city,
                     'notes' => $faker->sentence,
                 ]);

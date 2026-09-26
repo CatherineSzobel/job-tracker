@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import API from "../api/axios";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   Home,
   ClipboardList,
@@ -13,7 +12,6 @@ import {
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
 
 
@@ -97,30 +95,6 @@ export default function Sidebar() {
                 {link.name}
               </Link>
             ))}
-            {user ? (
-              <select
-                onChange={handleMenuChange}
-                defaultValue=""
-                className="text-sm rounded border p-1 bg-light text-light-text border-light-muted hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent dark:bg-dark dark:text-dark-text border-dark-subtle dark:hover:border-accent dark:focus:ring-accent mt-2 transition-colors"
-              >
-                <option value="" disabled>
-                  Menu
-                </option>
-                <option value="profile">Profile</option>
-                <option value="links">Links</option>
-                <option value="settings">Settings</option>
-                <option value="logout">Logout</option>
-              </select>
-            ) : (
-              <div className="flex flex-col gap-2 mt-2">
-                <Link to="/register" className="hover:text-accent dark:hover:text-accent-soft">
-                  Register
-                </Link>
-                <Link to="/login" className="hover:text-accent dark:hover:text-accent-soft">
-                  Login
-                </Link>
-              </div>
-            )}
           </div>
         )}
       </div>

@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Http\Requests\JobApplication;
+
 use App\Enums\JobStatus;
-use Illuminate\Validation\Rules\Enum;
+use App\Enums\Priority;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreJobApplicationRequest extends FormRequest
 {
@@ -26,18 +28,10 @@ class StoreJobApplicationRequest extends FormRequest
             'company_name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'location' => 'nullable|string|max:255',
-            'status' => 'sometimes|in:applied,interview,offer,rejected',
-            'priority' => 'nullable|string|max:50',
+            'status' => ['sometimes', Rule::enum(JobStatus::class)],
+            'priority' => ['sometimes', Rule::enum(Priority::class)],
             'job_link' => 'nullable|url:http,https|max:255',
-            'description' => 'nullable|string',
             'notes' => 'nullable|string',
         ];
-    }
-
-    protected function prepareForValidation()
-    {
-        $this->merge([
-            'applied_date' => now()->toDateString(),
-        ]);
     }
 }
