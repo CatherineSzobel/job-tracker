@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import InterviewCard from "../components/Interview/InterviewCard";
+import PageLoader from "../components/UI/PageLoader";
+import { JOB_STATUSES, PRIORITIES } from "../constants/jobs";
 
 export default function Application() {
   const navigate = useNavigate();
@@ -69,12 +71,7 @@ export default function Application() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="w-12 h-12   rounded-full animate-spin"></div>
-        <p className="ml-2 text-light-muted dark:text-dark-muted">Loading...</p>
-      </div>
-    );
+    return <PageLoader text="Loading application..." />;
   }
 
   if (!job) {
@@ -147,10 +144,9 @@ export default function Application() {
               onChange={handleChange}
               className=" bg-transparent text-dark dark:text-light dark:bg-dark-subtle transition-colors rounded-2xl"
             >
-              <option value="applied">Applied</option>
-              <option value="interview">Interview</option>
-              <option value="offer">Offer</option>
-              <option value="rejected">Rejected</option>
+              {JOB_STATUSES.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </select>
           ) : (
             <span className="capitalize text-light-muted dark:text-dark-muted">{job.status}</span>
@@ -166,9 +162,9 @@ export default function Application() {
               onChange={handleChange}
               className=" bg-transparent text-dark dark:text-light transition-colors dark:bg-dark-subtle rounded-2xl"
             >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
+              {PRIORITIES.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </select>
           ) : (
             <span className="capitalize text-light-muted dark:text-dark-muted">{job.priority}</span>

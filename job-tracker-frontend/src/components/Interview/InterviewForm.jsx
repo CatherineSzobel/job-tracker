@@ -1,3 +1,5 @@
+import { INTERVIEW_TYPES } from "../../constants/jobs";
+
 export default function InterviewForm({
     handleSubmit,
     handleChange,
@@ -51,9 +53,9 @@ export default function InterviewForm({
                         required
                     >
                         <option value="">Select Type</option>
-                        <option value="phone">Phone</option>
-                        <option value="online">Online</option>
-                        <option value="onsite">On-site</option>
+                        {INTERVIEW_TYPES.map(({ value, label }) => (
+                            <option key={value} value={value}>{label}</option>
+                        ))}
                     </select>
                 </div>
 

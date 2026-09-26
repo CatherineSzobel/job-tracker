@@ -1,4 +1,6 @@
-export default function JobForm({ setShowForm, newJob, setNewJob, saving, handleSubmit, handleChange }) {
+import { JOB_STATUSES, PRIORITIES } from "../../constants/jobs";
+
+export default function JobForm({ setShowForm, newJob, saving, handleSubmit, handleChange }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -59,9 +61,9 @@ export default function JobForm({ setShowForm, newJob, setNewJob, saving, handle
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 dark:border-dark-subtle rounded-lg bg-light dark:bg-dark-subtle text-light-text dark:text-dark-text focus:ring-2 focus:ring-accent focus:outline-none transition-colors"
           >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
+            {PRIORITIES.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
           </select>
         </div>
 
@@ -75,10 +77,9 @@ export default function JobForm({ setShowForm, newJob, setNewJob, saving, handle
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 dark:border-dark-subtle rounded-lg bg-light dark:bg-dark-subtle text-light-text dark:text-dark-text focus:ring-2 focus:ring-accent focus:outline-none transition-colors"
           >
-            <option value="applied">Applied</option>
-            <option value="interview">Interview</option>
-            <option value="offer">Offer</option>
-            <option value="rejected">Rejected</option>
+            {JOB_STATUSES.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
           </select>
         </div>
       </div>
@@ -117,7 +118,7 @@ export default function JobForm({ setShowForm, newJob, setNewJob, saving, handle
           disabled={saving}
           className="bg-accent hover:bg-accent-soft text-white dark:text-dark-text py-2 px-6 rounded-lg transition-colors"
         >
-          {saving ? "Saving..." : newJob.id ? "Update Application" : "Add Application"}
+          {saving ? "Saving..." : "Add Application"}
         </button>
         <button
           type="button"

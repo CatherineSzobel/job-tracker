@@ -21,11 +21,10 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'password' => $validated['password'], // hashed by the model's 'hashed' cast
         ]);
 
         $user->profile()->create([
-            'user_id' => $user->id,
             'name' => $user->name,
             'title' => '',
             'bio' => '',
@@ -89,7 +88,7 @@ class AuthController extends Controller
         }
 
         $user->update([
-            'password' => Hash::make($validated['password']),
+            'password' => $validated['password'], // hashed by the model's 'hashed' cast
         ]);
 
         return response()->json([

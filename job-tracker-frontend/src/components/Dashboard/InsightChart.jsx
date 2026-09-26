@@ -1,13 +1,14 @@
-import React from "react";
 import ReactECharts from "echarts-for-react";
+import { JOB_STATUSES, STATUS_COLORS } from "../../constants/jobs";
 
 export default function InsightChart({ stats }) {
   const data = [
-    { value: stats.applied, name: "Applied", itemStyle: { color: "#3b82f6" } },     // Blue
-    { value: stats.interview, name: "Interview", itemStyle: { color: "#facc15" } }, // Yellow
-    { value: stats.offer, name: "Offer", itemStyle: { color: "#22c55e" } },         // Green
-    { value: stats.rejected, name: "Rejected", itemStyle: { color: "#ef4444" } },   // Red
-    { value: stats.archived, name: "Archived", itemStyle: { color: "#06b6d4" } },   // Teal
+    ...JOB_STATUSES.map(({ value, label }) => ({
+      value: stats[value],
+      name: label,
+      itemStyle: { color: STATUS_COLORS[value] },
+    })),
+    { value: stats.archived, name: "Archived", itemStyle: { color: STATUS_COLORS.archived } },
   ];
 
   const option = {

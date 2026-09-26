@@ -2,27 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Interview\InterviewUpdateRequest;
 use App\Models\Interview;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class InterviewController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $interview = Interview::with([
-            'job:id,company_name,position'
-        ])
+        $interviews = Interview::with('job:id,company_name,position')
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get();
 
-        return response()->json(
-            $interview->load('job:id,company_name,position')
-        );
+        return response()->json($interviews);
     }
 
     public function update(InterviewUpdateRequest $request, Interview $interview): JsonResponse

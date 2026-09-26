@@ -19,9 +19,7 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const res = await API.get("/job-applications/stats");
-      console.log("Fetched stats:", res.data.data);
       setStats(res.data.data);
-      console.log("Fetched stats:", res.data.data);
     } catch (err) {
       console.error(err);
       setStats({
@@ -49,10 +47,6 @@ export default function Dashboard() {
      <PageLoader text="Loading dashboard..."/>
     );
   }
-
-  const handleSaveNotes = () => {
-    alert("Notes saved! (This is just a placeholder action.)");
-  };
 
   return (
     <div className="min-h-screen bg-light p-4 sm:p-6 lg:p-8 dark:bg-dark transition-colors rounded-2xl">
