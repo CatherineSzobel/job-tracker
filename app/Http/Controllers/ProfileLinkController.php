@@ -5,21 +5,16 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Profile\ProfileLinkStoreRequest;
 use App\Http\Requests\Profile\ProfileLinkUpdateRequest;
 use App\Models\ProfileLink;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 
 class ProfileLinkController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $profile = $request->user()->profile;
-
-        if (!$profile) {
-            return response()->json(['data' => []]);
-        }
-
         return response()->json([
-            'data' => $profile->links,
+            'data' => $request->user()->profile?->links ?? [],
         ]);
     }
 
@@ -27,41 +22,27 @@ class ProfileLinkController extends Controller
     {
         $profile = $request->user()->profile;
 
-        if (!$profile) {
+        if (! $profile) {
             return response()->json(['message' => 'Profile not found'], 404);
         }
 
-        $data = $request->validated();
-        $link = $profile->links()->create($data);
+        $link = $profile->links()->create($request->validated());
 
-        return response()->json([
-            'data' => $link,
-        ], 201);
+        return response()->json(['data' => $link], 201);
     }
 
     public function update(ProfileLinkUpdateRequest $request, ProfileLink $link): JsonResponse
     {
-        $profile = $request->user()->profile;
+        Gate::authorize('update', $link);
 
-        if ($link->profile_id !== $profile->id) {
-            abort(403);
-        }
+        $link->update($request->validated());
 
-        $data = $request->validated();
-        $link->update($data);
-
-        return response()->json([
-            'data' => $link,
-        ]);
+        return response()->json(['data' => $link]);
     }
 
-    public function destroy(Request $request, ProfileLink $link): JsonResponse
+    public function destroy(ProfileLink $link): JsonResponse
     {
-        $profile = $request->user()->profile;
-
-        if ($link->profile_id !== $profile->id) {
-            abort(403);
-        }
+        Gate::authorize('delete', $link);
 
         $link->delete();
 

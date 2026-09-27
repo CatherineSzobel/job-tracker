@@ -3,28 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\JobApplication\JobApplicationImportRequest;
-use App\Services\JobApplicationService;
-
-use Illuminate\Http\Request;
 use App\Http\Requests\JobApplication\ScheduleInterviewRequest;
 use App\Http\Requests\JobApplication\StoreJobApplicationRequest;
 use App\Http\Requests\JobApplication\UpdateJobApplicationRequest;
-
-
+use App\Models\JobApplication;
+use App\Services\JobApplicationService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 class JobApplicationController extends Controller
 {
     public function __construct(private JobApplicationService $jobApplicationService) {}
+
     public function index(Request $request): JsonResponse
     {
         $filters = $request->only(['archived', 'status', 'priority', 'applied_date']);
         $jobs = $this->jobApplicationService->filter($request->user(), $filters);
+
         return response()->json($jobs);
     }
 
-    public function store(StoreJobApplicationRequest $request)
+    public function store(StoreJobApplicationRequest $request): JsonResponse
     {
         $job = $this->jobApplicationService->create(
             $request->validated(),
@@ -34,53 +35,40 @@ class JobApplicationController extends Controller
         return response()->json(['success' => true, 'data' => $job], 201);
     }
 
-    public function update(UpdateJobApplicationRequest $request, int $id): JsonResponse
+    public function show(JobApplication $jobApplication): JsonResponse
     {
-        $job = $request->user()->jobApplications()->findOrFail($id);
-        $updatedJob = $this->jobApplicationService->update($job, $request->validated());
+        Gate::authorize('view', $jobApplication);
+
+        return response()->json([
+            'success' => true,
+            'data' => $jobApplication->load('interviews'),
+        ]);
+    }
+
+    public function update(UpdateJobApplicationRequest $request, JobApplication $jobApplication): JsonResponse
+    {
+        Gate::authorize('update', $jobApplication);
+
+        $updatedJob = $this->jobApplicationService->update($jobApplication, $request->validated());
 
         return response()->json(['data' => $updatedJob]);
     }
 
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(JobApplication $jobApplication): JsonResponse
     {
-        $job = $request->user()->jobApplications()->findOrFail($id);
-        $this->jobApplicationService->delete($job);
+        Gate::authorize('delete', $jobApplication);
+
+        $this->jobApplicationService->delete($jobApplication);
+
         return response()->json(['message' => 'JobApplication deleted successfully']);
     }
 
-    public function show(Request $request, int $id): JsonResponse
+    public function scheduleInterview(ScheduleInterviewRequest $request, JobApplication $jobApplication): JsonResponse
     {
-        $job = $request->user()
-            ->jobApplications()
-            ->with(['interviews'])
-            ->find($id);
+        Gate::authorize('update', $jobApplication);
 
-        if (!$job) {
-            return response()->json([
-                'success' => false,
-                'message' => 'JobApplication not found'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $job
-        ]);
-    }
-
-    public function scheduleInterview(ScheduleInterviewRequest $request, int $id)
-    {
-        $job = $request->user()->jobApplications()->find($id);
-
-        if (!$job) {
-            return response()->json([
-                'success' => false,
-                'message' => 'JobApplication not found'
-            ], 404);
-        }
         $interview = $this->jobApplicationService->scheduleInterview(
-            $job,
+            $jobApplication,
             $request->validated(),
             $request->user()
         );
@@ -95,22 +83,19 @@ class JobApplicationController extends Controller
 
     public function import(JobApplicationImportRequest $request): JsonResponse
     {
-        $validated = $request->validated();
-        $file = $validated['file'];
+        $result = $this->jobApplicationService->importExcel($request->validated('file'));
 
-        $result = $this->jobApplicationService->importExcel($file);
-
-        if (!empty($result['failures'])) {
+        if (! empty($result['failures'])) {
             return response()->json([
                 'success' => true,
                 'failures' => $result['failures'],
-                'message' => 'Import completed with some rows skipped due to validation errors.'
+                'message' => 'Import completed with some rows skipped due to validation errors.',
             ]);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Import successful'
+            'message' => 'Import successful',
         ]);
     }
 

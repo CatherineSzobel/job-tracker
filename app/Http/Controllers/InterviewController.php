@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Interview\InterviewUpdateRequest;
 use App\Models\Interview;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 
 class InterviewController extends Controller
 {
@@ -21,21 +22,16 @@ class InterviewController extends Controller
 
     public function update(InterviewUpdateRequest $request, Interview $interview): JsonResponse
     {
-        if ($interview->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        Gate::authorize('update', $interview);
 
         $interview->update($request->validated());
 
         return response()->json($interview->load('job:id,company_name,position'));
     }
 
-
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(Interview $interview): JsonResponse
     {
-        $interview = Interview::where('id', $id)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+        Gate::authorize('delete', $interview);
 
         $interview->delete();
 

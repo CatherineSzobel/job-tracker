@@ -1,14 +1,14 @@
 <?php
 
-use App\Http\Controllers\InterviewController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\NotesController;
-use App\Http\Controllers\ProfileLinkController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProfileLinkController;
 use App\Http\Controllers\TodoController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::middleware('throttle:auth')->group(function () {
@@ -20,44 +20,25 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return response()->json($request->user() ?? null);
 });
 
-// Protected routes
+// Protected routes. Single-record routes use route model binding;
+// ownership is checked by the model's policy (app/Policies), which answers 404.
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/job-applications', [JobApplicationController::class, 'index']);
+    // Registered before the resource so they aren't read as a {job_application} id
     Route::get('/job-applications/stats', [JobApplicationController::class, 'stats']);
-    Route::post('/job-applications', [JobApplicationController::class, 'store']);
     Route::get('/job-applications/export', [JobApplicationController::class, 'export']);
     Route::post('/job-applications/import', [JobApplicationController::class, 'import']);
-    Route::get('/job-applications/{id}', [JobApplicationController::class, 'show'])
-        ->whereNumber('id');
-    Route::put('/job-applications/{id}', [JobApplicationController::class, 'update'])
-        ->whereNumber('id');
-    Route::delete('/job-applications/{id}', [JobApplicationController::class, 'destroy'])
-        ->whereNumber('id');
-    Route::post('/job-applications/{id}/interviews', [JobApplicationController::class, 'scheduleInterview'])
-        ->whereNumber('id');
+    Route::apiResource('job-applications', JobApplicationController::class);
+    Route::post('/job-applications/{job_application}/interviews', [JobApplicationController::class, 'scheduleInterview']);
 
-    Route::get('/interviews', [InterviewController::class, 'index']);
-    Route::put('/interviews/{interview}', [InterviewController::class, 'update'])->whereNumber('interview');
-    Route::delete('/interviews/{interview}', [InterviewController::class, 'destroy'])->whereNumber('interview');
-
-    Route::get('/todos', [TodoController::class, 'index']);
-    Route::post('/todos', [TodoController::class, 'store']);
-    Route::put('/todos/{todo}', [TodoController::class, 'update'])->whereNumber('todo');
-    Route::delete('/todos/{id}', [TodoController::class, 'destroy'])
-        ->whereNumber('id');
-
-    Route::get('/notes', [NotesController::class, 'index']);
-    Route::post('/notes', [NotesController::class, 'store']);
-    Route::put('/notes/{note}', [NotesController::class, 'update'])->whereNumber('note');
-    Route::delete('/notes/{note}', [NotesController::class, 'destroy'])->whereNumber('note');
+    Route::apiResource('interviews', InterviewController::class)->only(['index', 'update', 'destroy']);
+    Route::apiResource('todos', TodoController::class)->except('show');
+    Route::apiResource('notes', NotesController::class)->except('show');
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
-
-    Route::get('/profile/links', [ProfileLinkController::class, 'index']);
-    Route::post('/profile/links', [ProfileLinkController::class, 'store']);
-    Route::put('/profile/links/{link}', [ProfileLinkController::class, 'update']);
-    Route::delete('/profile/links/{link}', [ProfileLinkController::class, 'destroy']);
+    Route::apiResource('profile/links', ProfileLinkController::class)
+        ->except('show')
+        ->parameters(['links' => 'link']);
 
     Route::put('/account/password', [AuthController::class, 'updatePassword']);
     Route::delete('/account', [AuthController::class, 'deleteAccount']);
