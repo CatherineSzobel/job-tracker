@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Interview extends Model
 {
@@ -15,18 +16,22 @@ class Interview extends Model
         'interview_date',
         'type',
         'location',
-        'notes'
-    ];
-    protected $casts = [
-        'interview_date' => 'datetime',
+        'notes',
     ];
 
-    public function job()
+    protected function casts(): array
+    {
+        return [
+            'interview_date' => 'datetime',
+        ];
+    }
+
+    public function job(): BelongsTo
     {
         return $this->belongsTo(JobApplication::class, 'job_application_id');
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

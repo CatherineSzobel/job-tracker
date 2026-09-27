@@ -3,14 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\JobApplication;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable; // <-- HasApiTokens must be included
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -23,31 +24,35 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
 
     public function isDemo(): bool
     {
         return $this->email === config('app.demo_email');
     }
 
-    public function jobApplications()
+    public function jobApplications(): HasMany
     {
         return $this->hasMany(JobApplication::class);
     }
 
-    public function profile()
+    public function profile(): HasOne
     {
         return $this->hasOne(Profile::class);
     }
 
-    public function todos()
+    public function todos(): HasMany
     {
         return $this->hasMany(Todo::class);
     }
-    public function notes()
+
+    public function notes(): HasMany
     {
         return $this->hasMany(Note::class);
     }

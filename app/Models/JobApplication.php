@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JobApplication extends Model
 {
@@ -16,19 +18,23 @@ class JobApplication extends Model
         'applied_date',
         'job_link',
         'notes',
-        'is_archived'
+        'is_archived',
     ];
-    protected $casts = [
-        'applied_date' => 'date:Y-m-d',
-        'is_archived' => 'boolean',
-    ];
-    
-    public function user()
+
+    protected function casts(): array
+    {
+        return [
+            'applied_date' => 'date:Y-m-d',
+            'is_archived' => 'boolean',
+        ];
+    }
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function interviews()
+    public function interviews(): HasMany
     {
         return $this->hasMany(Interview::class);
     }
