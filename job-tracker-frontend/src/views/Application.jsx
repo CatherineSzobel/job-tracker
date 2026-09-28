@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import InterviewCard from "../components/Interview/InterviewCard";
+import InterviewForm from "../components/Interview/InterviewForm";
+import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
-import { JOB_STATUSES, PRIORITIES } from "../constants/jobs";
+import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
 
 export default function Application() {
   const navigate = useNavigate();
@@ -14,6 +16,10 @@ export default function Application() {
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // "+ Add interview" form (null while closed)
+  const [newInterview, setNewInterview] = useState(null);
+  const [savingInterview, setSavingInterview] = useState(false);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -55,6 +61,22 @@ export default function Application() {
       alert("Failed to save changes");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const addInterview = async (e) => {
+    e.preventDefault();
+    setSavingInterview(true);
+    try {
+      const { job_id, ...payload } = newInterview;
+      const res = await API.post(`/job-applications/${job_id}/interviews`, payload);
+      setJob((prev) => ({ ...prev, interviews: [...(prev.interviews ?? []), res.data.data] }));
+      setNewInterview(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add interview. Make sure all fields are valid.");
+    } finally {
+      setSavingInterview(false);
     }
   };
 
@@ -204,7 +226,7 @@ export default function Application() {
 
           <button
             className="text-sm text-accent dark:text-accent hover:text-accent-soft dark:hover:text-accent-soft transition-colors"
-            onClick={() => alert("Add Interview")}
+            onClick={() => setNewInterview({ ...EMPTY_INTERVIEW, job_id: job.id })}
           >
             + Add interview
           </button>
@@ -220,6 +242,20 @@ export default function Application() {
           <p className="text-light-muted dark:text-dark-muted text-sm">No interviews scheduled.</p>
         )}
       </div>
+
+      {newInterview && (
+        <Modal title="Add Interview" onClose={() => setNewInterview(null)}>
+          <InterviewForm
+            handleSubmit={addInterview}
+            handleChange={(e) => setNewInterview((prev) => ({ ...prev, [e.target.name]: e.target.value }))}
+            saving={savingInterview}
+            newInterview={newInterview}
+            jobs={[job]}
+            lockJob
+            onCancel={() => setNewInterview(null)}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

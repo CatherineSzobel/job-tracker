@@ -171,8 +171,7 @@ export default function Interviews() {
             newInterview={newInterview}
             jobs={jobs}
             editingInterview={editingInterview}
-            setShowForm={setShowForm}
-            setEditingInterview={setEditingInterview}
+            onCancel={resetForm}
           />
         </Modal>
       )}

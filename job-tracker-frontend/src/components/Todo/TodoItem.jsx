@@ -1,4 +1,4 @@
-import { Calendar, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 export default function TodoItem({ todo, onToggle, onDelete, formatDate }) {
   return (
@@ -34,21 +34,13 @@ export default function TodoItem({ todo, onToggle, onDelete, formatDate }) {
         </span>
       </div>
 
-      {/* Action icons */}
-      <div className="flex flex-col items-center gap-2">
-        <button
-          onClick={() => alert("Calendar integration coming soon!")}
-          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 p-1 rounded-full transition-colors"
-        >
-          <Calendar size={16} />
-        </button>
-        <button
-          onClick={() => onDelete(todo.id)}
-          className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 p-1 rounded-full transition-colors"
-        >
-          <Trash2 size={16} />
-        </button>
-      </div>
+      <button
+        onClick={() => onDelete(todo.id)}
+        aria-label="Delete todo"
+        className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 p-1 rounded-full transition-colors"
+      >
+        <Trash2 size={16} />
+      </button>
     </li>
   );
 }

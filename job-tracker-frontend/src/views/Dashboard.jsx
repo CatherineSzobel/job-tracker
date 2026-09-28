@@ -78,7 +78,7 @@ export default function Dashboard() {
 
           {/* Insights */}
           <div className="bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
-            <h3 className="text-md font-semibold mb-2 text-light-text dark:text-white">Insights</h3>
+            <h3 className="text-md font-semibold mb-2 text-light-text dark:text-white">Applications Breakdown</h3>
             <InsightChart stats={stats} />
           </div>
 

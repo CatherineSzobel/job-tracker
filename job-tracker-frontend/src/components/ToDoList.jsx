@@ -89,7 +89,7 @@ export default function TodoList() {
     });
 
     if (loading) {
-        return <PageLoader text="Loading todos..."/>
+        return <PageLoader text="Loading todos..." compact />
     }
 
     return (

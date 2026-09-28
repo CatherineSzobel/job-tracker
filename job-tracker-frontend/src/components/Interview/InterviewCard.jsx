@@ -1,6 +1,8 @@
 export default function InterviewCard({ interview }) {
+  const date = new Date(interview.interview_date);
+
   return (
-    <div className="bg-light-soft dark:bg-dark-soft rounded-2xl shadow-sm border border-light-border dark:border-dark-subtle p-5 flex flex-col gap-4 transition-colors">
+    <div className="bg-light-soft dark:bg-dark-soft rounded-2xl shadow-sm border border-border dark:border-dark-subtle p-5 flex flex-col gap-4 transition-colors">
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -12,13 +14,13 @@ export default function InterviewCard({ interview }) {
         </span>
       </div>
 
-      {/* Main info */}
+      {/* Main info: e.g. "Tuesday, September 29, 2026" and "10:00 AM" in the browser's locale */}
       <div className="flex flex-col gap-1">
         <p className="text-base font-semibold text-light-text dark:text-dark-text">
-          {interview.interview_date}
+          {date.toLocaleDateString(undefined, { dateStyle: "full" })}
         </p>
         <p className="text-sm text-light-muted dark:text-dark-muted">
-          {interview.interview_time}
+          {date.toLocaleTimeString(undefined, { timeStyle: "short" })}
         </p>
       </div>
 

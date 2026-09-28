@@ -1,7 +1,16 @@
 import ReactECharts from "echarts-for-react";
 import { JOB_STATUSES, STATUS_COLORS } from "../../constants/jobs";
+import { useThemeStore } from "../../stores/useThemeStore";
 
+// ECharts draws SVG attributes, which can't use CSS variables, so read the theme tokens' actual values
+const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+// The chart only: the surrounding card and heading are in Dashboard
 export default function InsightChart({ stats }) {
+  const darkMode = useThemeStore((state) => state.darkMode); // re-render with the new colors on toggle
+  const textColor = cssVar(darkMode ? "--color-dark-text" : "--color-light-text");
+  const cardColor = cssVar(darkMode ? "--color-dark-soft" : "--color-light-soft");
+
   const data = [
     ...JOB_STATUSES.map(({ value, label }) => ({
       value: stats[value],
@@ -16,9 +25,6 @@ export default function InsightChart({ stats }) {
     tooltip: {
       trigger: "item",
       formatter: "{b}: {c} ({d}%)",
-      textStyle: {
-        color: "var(--color-white-text)", 
-      },
     },
     legend: {
       orient: "horizontal",
@@ -27,18 +33,18 @@ export default function InsightChart({ stats }) {
       itemGap: 20,
       textStyle: {
         fontSize: 12,
-        color: "var(--color-white-text)",
+        color: textColor,
       },
     },
     series: [
       {
         name: "Applications",
         type: "pie",
-        radius: ["35%", "65%"], 
+        radius: ["35%", "65%"],
         avoidLabelOverlap: true,
         itemStyle: {
           borderRadius: 5,
-          borderColor: "var(--color-dark-soft)",
+          borderColor: cardColor, // gaps between slices match the card background
           borderWidth: 2,
         },
         label: {
@@ -46,7 +52,7 @@ export default function InsightChart({ stats }) {
           position: "outside",
           formatter: "{b}: {c} ({d}%)",
           fontSize: 12,
-          color: "var(--color-white-text)",
+          color: textColor,
         },
         emphasis: {
           label: {
@@ -59,22 +65,16 @@ export default function InsightChart({ stats }) {
           length: 10,
           length2: 10,
         },
-        data: data,
+        data,
       },
     ],
   };
 
   return (
-    <div className="bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-4 sm:p-6 lg:p-6 transition-colors hover:shadow-xl">
-      <h3 className="text-md font-semibold mb-4 text-light-text dark:text-dark-text">
-        Applications Breakdown
-      </h3>
-      <ReactECharts
-        option={option}
-        style={{ width: "100%", minHeight: 250 }}
-        className="w-full h-full"
-        opts={{ renderer: "svg" }}
-      />
-    </div>
+    <ReactECharts
+      option={option}
+      style={{ width: "100%", minHeight: 250 }}
+      opts={{ renderer: "svg" }}
+    />
   );
 }

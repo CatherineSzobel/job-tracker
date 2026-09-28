@@ -109,7 +109,7 @@ export default function Notes() {
     };
 
     if (loading) {
-        return <PageLoader text="Loading notes..." />
+        return <PageLoader text="Loading notes..." compact />
     }
 
     return (
