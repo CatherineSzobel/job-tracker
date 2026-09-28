@@ -188,7 +188,7 @@ export default function Applications() {
           <div>
             <label className="block mb-1 text-light-text dark:text-dark-text">Status</label>
             <select
-              className="border rounded-lg px-3 py-1 text-light-text dark:text-dark-text border-secondary-muted dark:border-dark-subtle bg-surface dark:bg-dark-soft transition-colors"
+              className="border rounded-lg px-3 py-1 text-light-text dark:text-dark-text border-light-muted dark:border-dark-subtle bg-surface dark:bg-dark-soft transition-colors"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -202,7 +202,7 @@ export default function Applications() {
           <div>
             <label className="block mb-1 text-light-text dark:text-dark-text">Priority</label>
             <select
-              className="border rounded-lg px-3 py-1 text-light-text dark:text-dark-text border-secondary-muted dark:border-dark-subtle bg-surface dark:bg-dark-soft transition-colors"
+              className="border rounded-lg px-3 py-1 text-light-text dark:text-dark-text border-light-muted dark:border-dark-subtle bg-surface dark:bg-dark-soft transition-colors"
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
             >

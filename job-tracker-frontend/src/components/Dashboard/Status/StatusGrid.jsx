@@ -32,7 +32,6 @@ export default function StatusGrid({ stats }) {
           value={stats?.[valueKey] ?? 0}
           icon={icon}
           accent={accent}
-          className="bg-light-soft dark:bg-dark-soft text-light-text dark:text-white transition-colors"
         />
       ))}
     </div>

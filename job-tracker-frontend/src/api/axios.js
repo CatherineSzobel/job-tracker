@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { useAuthStore } from '../stores/useAuthStore'
 
 const API = axios.create({
   baseURL: '/api',
@@ -12,8 +13,9 @@ const API = axios.create({
 API.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Session expired: forget the user, ProtectedRoute then redirects to /login
     if (error.response?.status === 401) {
-      window.location.href = '/login'
+      useAuthStore.getState().clearSession()
     }
     return Promise.reject(error)
   }

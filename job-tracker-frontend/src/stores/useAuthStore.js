@@ -11,6 +11,8 @@ export const useAuthStore = create(
             isAuthenticated: false,
             isLoading: false,
             error: null,
+            // False until the server has confirmed (or rejected) the persisted session
+            sessionChecked: false,
 
             // Actions
             loginAction: async (email, password) => {
@@ -61,16 +63,29 @@ export const useAuthStore = create(
                 } catch (err) {
                     console.error(err)
                 } finally {
-                    set({
-                        user: null,
-                        isAuthenticated: false,
-                        isLoading: false,
-                        error: null,
-                    })
+                    get().clearSession()
                 }
             },
 
-            // Called on app load to check if session is still valid
+            // Forget the user locally, e.g. when the server says the session has expired
+            clearSession: () => set({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null,
+                sessionChecked: true,
+            }),
+
+            // Called on app load: only ask the server if we think we're logged in
+            // (avoids an unnecessary 401 on the login page)
+            checkSession: async () => {
+                if (get().isAuthenticated) {
+                    await get().fetchUser()
+                } else {
+                    set({ sessionChecked: true })
+                }
+            },
+
             fetchUser: async () => {
                 set({ isLoading: true })
                 try {
@@ -79,13 +94,10 @@ export const useAuthStore = create(
                         user: res.data.data,
                         isAuthenticated: true,
                         isLoading: false,
+                        sessionChecked: true,
                     })
                 } catch {
-                    set({
-                        user: null,
-                        isAuthenticated: false,
-                        isLoading: false,
-                    })
+                    get().clearSession()
                 }
             },
 

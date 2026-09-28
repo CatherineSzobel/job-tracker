@@ -11,6 +11,7 @@ export default function ArchivedJobCard({ job, onRestore }) {
             if (onRestore) onRestore(job.id);
         } catch (err) {
             console.error(err);
+            alert("Failed to restore job");
         }
     };
 
@@ -44,17 +45,19 @@ export default function ArchivedJobCard({ job, onRestore }) {
                 <span>
                     Priority: <strong className="text-gray-800 dark:text-dark-text">{job.priority}</strong>
                 </span>
-                <span>
-                    Job Link:{" "}
-                    <a
-                        href={job.job_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-700 dark:text-accent hover:underline"
-                    >
-                        {job.job_link}
-                    </a>
-                </span>
+                {job.job_link && (
+                    <span>
+                        Job Link:{" "}
+                        <a
+                            href={job.job_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 dark:text-accent hover:underline"
+                        >
+                            {job.job_link}
+                        </a>
+                    </span>
+                )}
             </div>
         </div>
     );

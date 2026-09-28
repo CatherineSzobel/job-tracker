@@ -21,16 +21,11 @@ import Archive from "./views/Archive";
 
 function App() {
 
-  const fetchUser = useAuthStore(state => state.fetchUser)
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+  const checkSession = useAuthStore(state => state.checkSession)
 
   useEffect(() => {
-    // Only verify session if we think we're logged in
-    // Avoids unnecessary 401 on the login page
-    if (isAuthenticated) {
-      fetchUser()
-    }
-  }, [])
+    checkSession()
+  }, [checkSession])
   return (
     <Routes>
 
