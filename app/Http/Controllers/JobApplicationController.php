@@ -6,10 +6,14 @@ use App\Http\Requests\JobApplication\JobApplicationImportRequest;
 use App\Http\Requests\JobApplication\ScheduleInterviewRequest;
 use App\Http\Requests\JobApplication\StoreJobApplicationRequest;
 use App\Http\Requests\JobApplication\UpdateJobApplicationRequest;
+use App\Http\Resources\InterviewResource;
+use App\Http\Resources\JobApplicationResource;
 use App\Models\JobApplication;
 use App\Services\JobApplicationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -17,53 +21,52 @@ class JobApplicationController extends Controller
 {
     public function __construct(private JobApplicationService $jobApplicationService) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->only(['archived', 'status', 'priority', 'applied_date']);
-        $jobs = $this->jobApplicationService->filter($request->user(), $filters);
 
-        return response()->json($jobs);
+        return JobApplicationResource::collection(
+            $this->jobApplicationService->filter($request->user(), $filters)
+        );
     }
 
-    public function store(StoreJobApplicationRequest $request): JsonResponse
+    public function store(StoreJobApplicationRequest $request): JobApplicationResource
     {
         $job = $this->jobApplicationService->create(
             $request->validated(),
             $request->user()
         );
 
-        return response()->json(['success' => true, 'data' => $job], 201);
+        return new JobApplicationResource($job);
     }
 
-    public function show(JobApplication $jobApplication): JsonResponse
+    public function show(JobApplication $jobApplication): JobApplicationResource
     {
         Gate::authorize('view', $jobApplication);
 
-        return response()->json([
-            'success' => true,
-            'data' => $jobApplication->load('interviews'),
-        ]);
+        return new JobApplicationResource($jobApplication->load('interviews'));
     }
 
-    public function update(UpdateJobApplicationRequest $request, JobApplication $jobApplication): JsonResponse
+    public function update(UpdateJobApplicationRequest $request, JobApplication $jobApplication): JobApplicationResource
     {
         Gate::authorize('update', $jobApplication);
 
         $updatedJob = $this->jobApplicationService->update($jobApplication, $request->validated());
 
-        return response()->json(['data' => $updatedJob]);
+        // Include interviews so the detail page keeps showing them after a save
+        return new JobApplicationResource($updatedJob->load('interviews'));
     }
 
-    public function destroy(JobApplication $jobApplication): JsonResponse
+    public function destroy(JobApplication $jobApplication): Response
     {
         Gate::authorize('delete', $jobApplication);
 
         $this->jobApplicationService->delete($jobApplication);
 
-        return response()->json(['message' => 'JobApplication deleted successfully']);
+        return response()->noContent();
     }
 
-    public function scheduleInterview(ScheduleInterviewRequest $request, JobApplication $jobApplication): JsonResponse
+    public function scheduleInterview(ScheduleInterviewRequest $request, JobApplication $jobApplication): InterviewResource
     {
         Gate::authorize('update', $jobApplication);
 
@@ -73,7 +76,7 @@ class JobApplicationController extends Controller
             $request->user()
         );
 
-        return response()->json(['success' => true, 'data' => $interview], 201);
+        return new InterviewResource($interview);
     }
 
     public function export(): BinaryFileResponse
@@ -87,16 +90,12 @@ class JobApplicationController extends Controller
 
         if (! empty($result['failures'])) {
             return response()->json([
-                'success' => true,
-                'failures' => $result['failures'],
                 'message' => 'Import completed with some rows skipped due to validation errors.',
+                'failures' => $result['failures'],
             ]);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Import successful',
-        ]);
+        return response()->json(['message' => 'Import successful']);
     }
 
     public function stats(Request $request): JsonResponse

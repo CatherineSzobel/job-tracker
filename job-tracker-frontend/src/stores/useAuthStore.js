@@ -76,7 +76,7 @@ export const useAuthStore = create(
                 try {
                     const res = await API.get('/user')
                     set({
-                        user: res.data,
+                        user: res.data.data,
                         isAuthenticated: true,
                         isLoading: false,
                     })

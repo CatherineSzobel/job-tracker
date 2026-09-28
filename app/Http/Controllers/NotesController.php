@@ -3,19 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Note\NoteRequest;
+use App\Http\Resources\NoteResource;
 use App\Models\Note;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 class NotesController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
-        return response()->json($request->user()->notes()->latest()->get());
+        return NoteResource::collection($request->user()->notes()->latest()->get());
     }
 
-    public function store(NoteRequest $request): JsonResponse
+    public function store(NoteRequest $request): NoteResource
     {
         $note = $request->user()->notes()->create([
             'content' => '',
@@ -23,24 +25,24 @@ class NotesController extends Controller
             ...$request->validated(),
         ]);
 
-        return response()->json($note);
+        return new NoteResource($note);
     }
 
-    public function update(NoteRequest $request, Note $note): JsonResponse
+    public function update(NoteRequest $request, Note $note): NoteResource
     {
         Gate::authorize('update', $note);
 
         $note->update($request->validated());
 
-        return response()->json($note);
+        return new NoteResource($note);
     }
 
-    public function destroy(Note $note): JsonResponse
+    public function destroy(Note $note): Response
     {
         Gate::authorize('delete', $note);
 
         $note->delete();
 
-        return response()->json(['message' => 'Note deleted successfully']);
+        return response()->noContent();
     }
 }

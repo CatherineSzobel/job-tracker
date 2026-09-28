@@ -6,6 +6,7 @@ use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\DeleteAccountRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 // Session (cookie) auth for the SPA, so the 'web' guard is named explicitly throughout
 class AuthController extends Controller
 {
-    public function register(RegisterRequest $request): JsonResponse
+    public function register(RegisterRequest $request): UserResource
     {
         // User and profile are created together or not at all
         $user = DB::transaction(function () use ($request) {
@@ -33,20 +34,16 @@ class AuthController extends Controller
 
         Auth::guard('web')->login($user);
 
-        return response()->json([
-            'user' => $user->only('id', 'name', 'email'),
-        ], 201);
+        return new UserResource($user); // 201, as the user was just created
     }
 
     // Credentials check and failed-attempt rate limiting happen in LoginRequest::authenticate()
-    public function login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request): UserResource
     {
         $request->authenticate();
         $request->session()->regenerate();
 
-        return response()->json([
-            'user' => Auth::guard('web')->user()->only('id', 'name', 'email'),
-        ]);
+        return new UserResource(Auth::guard('web')->user());
     }
 
     public function logout(Request $request): JsonResponse

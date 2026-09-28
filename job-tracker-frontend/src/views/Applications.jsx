@@ -27,7 +27,7 @@ export default function Applications() {
   // Fetch jobs
   useEffect(() => {
     API.get("/job-applications")
-      .then((res) => setJobs(res.data))
+      .then((res) => setJobs(res.data.data))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, []);
@@ -98,7 +98,7 @@ export default function Applications() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const res = await API.get("/job-applications");
-      setJobs(res.data);
+      setJobs(res.data.data);
 
       // Invalid rows are skipped by the server and listed in `failures`
       const skipped = (data.failures ?? []).map(

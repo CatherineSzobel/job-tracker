@@ -19,7 +19,7 @@ export default function Notes() {
         setLoading(true);
         try {
             const res = await API.get("/notes");
-            setNotes(res.data);
+            setNotes(res.data.data);
         } catch (err) {
             console.error(err);
         } finally {
@@ -58,7 +58,7 @@ export default function Notes() {
                 is_pinned: false,
             });
 
-            setNotes((prev) => [...prev, res.data]);
+            setNotes((prev) => [...prev, res.data.data]);
             setNewNote({ title: "", content: "" });
             setShowAddForm(false); // collapse after adding
         } catch (err) {
@@ -83,7 +83,7 @@ export default function Notes() {
         try {
             const res = await API.put(`/notes/${id}`, editingNote);
             setNotes((prev) =>
-                prev.map((n) => (n.id === id ? res.data : n))
+                prev.map((n) => (n.id === id ? res.data.data : n))
             );
             setEditingId(null);
         } catch (err) {
@@ -100,7 +100,7 @@ export default function Notes() {
             });
 
             setNotes((prev) =>
-                prev.map((n) => (n.id === note.id ? res.data : n))
+                prev.map((n) => (n.id === note.id ? res.data.data : n))
             );
         } catch (err) {
             console.error(err);

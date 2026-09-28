@@ -30,8 +30,8 @@ class LoginTest extends TestCase
     {
         $this->login()
             ->assertOk()
-            ->assertJsonPath('user.email', $this->user->email)
-            ->assertJsonMissingPath('user.password');
+            ->assertJsonPath('data.email', $this->user->email)
+            ->assertJsonMissingPath('data.password');
 
         $this->assertAuthenticatedAs($this->user, 'web');
     }

@@ -26,7 +26,7 @@ export default function Calendar() {
   useEffect(() => {
     // All of the user's interviews, including ones on archived jobs
     API.get("/interviews")
-      .then(res => setInterviews(res.data))
+      .then(res => setInterviews(res.data.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);

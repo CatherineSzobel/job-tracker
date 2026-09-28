@@ -22,8 +22,8 @@ export default function Interviews() {
           API.get("/job-applications"),
           API.get("/interviews"),
         ]);
-        setJobs(jobsRes.data || []);
-        setInterviews(interviewsRes.data || []);
+        setJobs(jobsRes.data.data);
+        setInterviews(interviewsRes.data.data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -52,7 +52,7 @@ export default function Interviews() {
       if (editingInterview) {
         const res = await API.put(`/interviews/${editingInterview.id}`, payload);
         setInterviews((prev) =>
-          prev.map((i) => (i.id === editingInterview.id ? { ...i, ...res.data } : i))
+          prev.map((i) => (i.id === editingInterview.id ? { ...i, ...res.data.data } : i))
         );
       } else {
         const res = await API.post(

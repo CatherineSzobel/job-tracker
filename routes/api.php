@@ -7,6 +7,7 @@ use App\Http\Controllers\NotesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileLinkController;
 use App\Http\Controllers\TodoController;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -14,9 +15,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 Route::post('/login', [AuthController::class, 'login']); // failed attempts are limited in LoginRequest
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return response()->json($request->user() ?? null);
-});
+Route::middleware('auth:sanctum')->get('/user', fn (Request $request) => new UserResource($request->user()));
 
 // Protected routes. Single-record routes use route model binding;
 // ownership is checked by the model's policy (app/Policies), which answers 404.

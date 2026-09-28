@@ -53,7 +53,7 @@ class OwnershipTest extends TestCase
 
         $this->actingAs($owner)
             ->deleteJson("/api/job-applications/{$job->id}")
-            ->assertOk();
+            ->assertNoContent();
         $this->assertModelMissing($job);
     }
 
@@ -136,9 +136,9 @@ class OwnershipTest extends TestCase
         $this->putJson("/api/notes/{$note->id}", ['title' => 'Renamed'])->assertOk();
         $this->putJson("/api/profile/links/{$link->id}", ['type' => 'GitLab', 'url' => 'https://gitlab.com/owner'])->assertOk();
 
-        $this->deleteJson("/api/interviews/{$interview->id}")->assertOk();
-        $this->deleteJson("/api/notes/{$note->id}")->assertOk();
-        $this->deleteJson("/api/profile/links/{$link->id}")->assertOk();
+        $this->deleteJson("/api/interviews/{$interview->id}")->assertNoContent();
+        $this->deleteJson("/api/notes/{$note->id}")->assertNoContent();
+        $this->deleteJson("/api/profile/links/{$link->id}")->assertNoContent();
         $this->assertModelMissing($interview);
         $this->assertModelMissing($note);
         $this->assertModelMissing($link);
@@ -151,7 +151,7 @@ class OwnershipTest extends TestCase
 
         $this->actingAs($owner)
             ->deleteJson("/api/todos/{$todo->id}")
-            ->assertOk();
+            ->assertNoContent();
 
         $this->assertModelMissing($todo);
     }

@@ -2,30 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\ProfileUpdateRequest;
+use App\Http\Resources\ProfileResource;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ProfileController extends Controller
 {
-    public function show(Request $request): JsonResponse
+    public function show(Request $request): ProfileResource|JsonResponse
     {
-        $profile = $request->user()
-            ->profile()
-            ->with('links')
-            ->first();
+        $profile = $request->user()->profile()->with('links')->first();
 
-        return response()->json(['data' => $profile]);
+        return $profile
+            ? new ProfileResource($profile)
+            : response()->json(['data' => null]);
     }
 
-    public function update(ProfileUpdateRequest $request): JsonResponse
+    public function update(ProfileUpdateRequest $request): ProfileResource
     {
         $profile = $request->user()->profile;
+        $profile->update($request->validated());
 
-        $data = $request->validated();
-        $profile->update($data);
-
-        return response()->json(['data' => $profile->load('links')]);
+        return new ProfileResource($profile->load('links'));
     }
 }

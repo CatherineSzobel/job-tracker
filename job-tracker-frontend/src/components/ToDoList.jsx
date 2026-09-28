@@ -31,13 +31,7 @@ export default function TodoList() {
 
     useEffect(() => {
         API.get("/todos")
-            .then(res => {
-                const todosArray = Array.isArray(res.data)
-                    ? res.data
-                    : res.data.data;
-
-                setTodos(todosArray ?? []);
-            })
+            .then(res => setTodos(res.data.data))
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
     }, []);
@@ -50,7 +44,7 @@ export default function TodoList() {
                 text: newTodo,
             });
 
-            setTodos(prev => [res.data, ...prev]);
+            setTodos(prev => [res.data.data, ...prev]);
             setNewTodo("");
         } catch (err) {
             console.error("Failed to add todo:", err.response?.data || err.message);

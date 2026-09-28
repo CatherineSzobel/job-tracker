@@ -12,7 +12,7 @@ export default function Archive() {
     useEffect(() => {
         API.get("/job-applications", { params: { archived: true } })
             .then(res => {
-                setArchivedJobs(res.data);
+                setArchivedJobs(res.data.data);
             })
             .catch(err => {
                 console.error(err);
