@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\InterviewType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,6 +24,7 @@ class Interview extends Model
     {
         return [
             'interview_date' => 'datetime',
+            'type' => InterviewType::class,
         ];
     }
 

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\JobStatus;
+use App\Enums\Priority;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -24,6 +26,8 @@ class JobApplication extends Model
     protected function casts(): array
     {
         return [
+            'status' => JobStatus::class,
+            'priority' => Priority::class,
             'applied_date' => 'date:Y-m-d',
             'is_archived' => 'boolean',
         ];

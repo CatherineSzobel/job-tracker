@@ -47,8 +47,8 @@ class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadi
         return [
             $job->company_name,
             $job->position,
-            $job->status,
-            $job->priority,
+            $job->status?->value,
+            $job->priority?->value,
             $job->applied_date?->format('Y-m-d'),
             $job->location,
             $this->cleanText($job->notes),

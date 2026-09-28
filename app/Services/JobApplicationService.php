@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Enums\JobStatus;
 use App\Exports\JobApplicationsExport;
 use App\Imports\JobApplicationsImport;
+use App\Models\Interview;
 use App\Models\JobApplication;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -117,30 +119,29 @@ class JobApplicationService
         return $query->get();
     }
 
-    public function getStatsForUser($user): array
+    /**
+     * Dashboard counts for a user's jobs (archived included), counted in the database.
+     *
+     * @return array{total: int, archived: int, applied: int, interview: int, offer: int, rejected: int, todayApplications: int, weekApplications: int, upcomingInterviews: int}
+     */
+    public function getStatsForUser(User $user): array
     {
-        $jobs = $user->jobApplications()->with('interviews')->get();
-
         $today = Carbon::today();
-        $startOfWeek = Carbon::now()->startOfWeek();
-
-        $todayApplications = $jobs->filter(fn ($job) => $job->applied_date && $job->applied_date->gte($today))->count();
-        $weekApplications = $jobs->filter(fn ($job) => $job->applied_date && $job->applied_date->gte($startOfWeek))->count();
-        $upcomingInterviews = $jobs->flatMap(fn ($job) => $job->interviews ?? collect())
-            ->filter(fn ($interview) => $interview->interview_date && $interview->interview_date->gte($today))
-            ->count();
+        $jobs = $user->jobApplications();
 
         // One count per status: applied, interview, offer, rejected
-        $statusCounts = collect(JobStatus::values())
-            ->mapWithKeys(fn (string $status) => [$status => $jobs->where('status', $status)->count()]);
+        $statusCounts = collect(JobStatus::cases())
+            ->mapWithKeys(fn (JobStatus $status) => [$status->value => $jobs->clone()->where('status', $status)->count()]);
 
         return [
             'total' => $jobs->count(),
-            'archived' => $jobs->where('is_archived', true)->count(),
+            'archived' => $jobs->clone()->where('is_archived', true)->count(),
             ...$statusCounts,
-            'todayApplications' => $todayApplications,
-            'weekApplications' => $weekApplications,
-            'upcomingInterviews' => $upcomingInterviews,
+            'todayApplications' => $jobs->clone()->whereDate('applied_date', '>=', $today)->count(),
+            'weekApplications' => $jobs->clone()->whereDate('applied_date', '>=', $today->copy()->startOfWeek())->count(),
+            'upcomingInterviews' => Interview::whereHas('job', fn ($query) => $query->whereBelongsTo($user))
+                ->where('interview_date', '>=', $today)
+                ->count(),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\JobStatus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -69,7 +70,7 @@ class BrokenFeaturesTest extends TestCase
         $this->actingAs($user)->postJson('/api/job-applications/import', ['file' => $this->xlsx($rows)])->assertOk();
 
         $this->assertSame(1, $user->jobApplications()->count());
-        $this->assertSame('interview', $user->jobApplications()->first()->status);
+        $this->assertSame(JobStatus::Interview, $user->jobApplications()->first()->status);
     }
 
     public function test_import_does_not_touch_other_users_jobs(): void
@@ -83,7 +84,7 @@ class BrokenFeaturesTest extends TestCase
             ])])
             ->assertOk();
 
-        $this->assertSame('offer', $theirs->fresh()->status);
+        $this->assertSame(JobStatus::Offer, $theirs->fresh()->status);
     }
 
     public function test_register_requires_matching_password_confirmation(): void
