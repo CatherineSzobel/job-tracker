@@ -26,8 +26,8 @@ class AppServiceProvider extends ServiceProvider
         // Rules for new passwords (register + change password)
         Password::defaults(fn () => Password::min(8));
 
-        // Login and register: 5 attempts per minute per email + IP
-        RateLimiter::for('auth', function (Request $request) {
+        // Register: 5 attempts per minute per email + IP (login limits failed attempts in LoginRequest)
+        RateLimiter::for('register', function (Request $request) {
             return Limit::perMinute(5)->by(strtolower((string) $request->input('email')).'|'.$request->ip());
         });
     }

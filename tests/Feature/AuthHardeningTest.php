@@ -10,17 +10,7 @@ class AuthHardeningTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_login_is_rate_limited(): void
-    {
-        $user = User::factory()->create();
-        $credentials = ['email' => $user->email, 'password' => 'wrong-password'];
-
-        for ($i = 0; $i < 5; $i++) {
-            $this->postJson('/api/login', $credentials)->assertUnauthorized();
-        }
-
-        $this->postJson('/api/login', $credentials)->assertTooManyRequests();
-    }
+    // Login rate limiting is covered in LoginTest
 
     public function test_register_is_rate_limited(): void
     {

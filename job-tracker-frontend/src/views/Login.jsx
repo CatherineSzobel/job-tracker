@@ -16,8 +16,9 @@ export default function Login() {
     try {
       await loginAction(form.email, form.password);
       navigate("/");
-    } catch {
-      setError("Login failed. Check your credentials.");
+    } catch (err) {
+      // e.g. "These credentials do not match our records." or the lockout countdown
+      setError(err.response?.data?.message || "Login failed. Check your credentials.");
     }
   };
 
@@ -30,8 +31,8 @@ export default function Login() {
     try {
       await loginAction(demoEmail, demoPassword);
       navigate("/");
-    } catch {
-      setError("Demo login failed");
+    } catch (err) {
+      setError(err.response?.data?.message || "Demo login failed");
     }
   };
 

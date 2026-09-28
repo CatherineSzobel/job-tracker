@@ -38,18 +38,14 @@ class AuthController extends Controller
         ], 201);
     }
 
+    // Credentials check and failed-attempt rate limiting happen in LoginRequest::authenticate()
     public function login(LoginRequest $request): JsonResponse
     {
-        if (! Auth::guard('web')->attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'message' => 'Invalid credentials',
-            ], 401);
-        }
-
+        $request->authenticate();
         $request->session()->regenerate();
 
         return response()->json([
-            'data' => Auth::guard('web')->user()->only('id', 'name', 'email'),
+            'user' => Auth::guard('web')->user()->only('id', 'name', 'email'),
         ]);
     }
 
