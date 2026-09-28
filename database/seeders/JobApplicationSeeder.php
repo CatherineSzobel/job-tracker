@@ -32,7 +32,7 @@ class JobApplicationSeeder extends Seeder
                 'applied_date' => $faker->dateTimeBetween('-3 months', 'now'),
                 'job_link' => $faker->url,
                 'notes' => $faker->sentence,
-                'is_archived' => false
+                'is_archived' => false,
             ]);
 
             // Add 0–2 interviews per job

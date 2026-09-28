@@ -22,7 +22,7 @@ class TodoUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'done' => 'sometimes|boolean'
+            'done' => 'sometimes|boolean',
         ];
     }
 }

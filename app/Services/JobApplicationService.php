@@ -3,12 +3,12 @@
 namespace App\Services;
 
 use App\Enums\JobStatus;
-use App\Models\JobApplication;
-use App\Imports\JobApplicationsImport;
 use App\Exports\JobApplicationsExport;
+use App\Imports\JobApplicationsImport;
+use App\Models\JobApplication;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Validators\Failure;
 use RuntimeException;
@@ -32,6 +32,7 @@ class JobApplicationService
     public function update(JobApplication $job, array $data): JobApplication
     {
         $job->update($data);
+
         return $job;
     }
 
@@ -59,7 +60,7 @@ class JobApplicationService
     public function importExcel(UploadedFile $file): array
     {
         $ext = strtolower($file->getClientOriginalExtension());
-        if (in_array($ext, ['xlsx', 'xls']) && !class_exists('ZipArchive')) {
+        if (in_array($ext, ['xlsx', 'xls']) && ! class_exists('ZipArchive')) {
             throw new RuntimeException(
                 'PHP zip extension is required to import Excel files. Please enable ext-zip.'
             );
@@ -94,22 +95,22 @@ class JobApplicationService
     {
         $query = $user->jobApplications()->with('interviews');
 
-        if (!array_key_exists('archived', $filters)) {
+        if (! array_key_exists('archived', $filters)) {
             $query->where('is_archived', false);
         } else {
             $archived = filter_var($filters['archived'], FILTER_VALIDATE_BOOLEAN);
             $query->where('is_archived', $archived);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['priority'])) {
+        if (! empty($filters['priority'])) {
             $query->where('priority', $filters['priority']);
         }
 
-        if (!empty($filters['applied_date'])) {
+        if (! empty($filters['applied_date'])) {
             $query->whereDate('applied_date', $filters['applied_date']);
         }
 
@@ -123,10 +124,10 @@ class JobApplicationService
         $today = Carbon::today();
         $startOfWeek = Carbon::now()->startOfWeek();
 
-        $todayApplications = $jobs->filter(fn($job) => $job->applied_date && $job->applied_date->gte($today))->count();
-        $weekApplications = $jobs->filter(fn($job) => $job->applied_date && $job->applied_date->gte($startOfWeek))->count();
-        $upcomingInterviews = $jobs->flatMap(fn($job) => $job->interviews ?? collect())
-            ->filter(fn($interview) => $interview->interview_date && $interview->interview_date->gte($today))
+        $todayApplications = $jobs->filter(fn ($job) => $job->applied_date && $job->applied_date->gte($today))->count();
+        $weekApplications = $jobs->filter(fn ($job) => $job->applied_date && $job->applied_date->gte($startOfWeek))->count();
+        $upcomingInterviews = $jobs->flatMap(fn ($job) => $job->interviews ?? collect())
+            ->filter(fn ($interview) => $interview->interview_date && $interview->interview_date->gte($today))
             ->count();
 
         // One count per status: applied, interview, offer, rejected

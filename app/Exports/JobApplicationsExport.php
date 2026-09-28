@@ -3,18 +3,12 @@
 namespace App\Exports;
 
 use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Concerns\{
-    FromCollection,
-    WithHeadings,
-    WithMapping,
-    ShouldAutoSize
-};
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class JobApplicationsExport implements
-    FromCollection,
-    WithHeadings,
-    WithMapping,
-    ShouldAutoSize
+class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
 {
     public function collection()
     {
@@ -64,7 +58,7 @@ class JobApplicationsExport implements
 
     private function cleanText(?string $value): ?string
     {
-        if (!$value) {
+        if (! $value) {
             return null;
         }
 
