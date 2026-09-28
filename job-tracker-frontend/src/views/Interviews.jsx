@@ -126,10 +126,10 @@ export default function Interviews() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 px-4 transition-colors">
+    <div className="max-w-6xl mx-auto mt-4 sm:mt-10 sm:px-4 transition-colors">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold text-light-text dark:text-dark-text">
+        <h1 className="text-2xl sm:text-3xl font-bold text-light-text dark:text-dark-text">
           Interviews Schedule ({interviews.length})
         </h1>
         <button

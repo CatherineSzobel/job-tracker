@@ -101,11 +101,11 @@ export default function Application() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10 bg-light dark:bg-dark-soft rounded-2xl transition-colors">
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-10 bg-light dark:bg-dark-soft rounded-2xl transition-colors">
 
-      {/* HEADER */}
-      <div className="bg-light-soft dark:bg-dark rounded-2xl p-6 mb-4 flex justify-between items-start transition-colors">
-        <div>
+      {/* HEADER: title above the buttons on phones, side by side from sm */}
+      <div className="bg-light-soft dark:bg-dark rounded-2xl p-4 sm:p-6 mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 transition-colors">
+        <div className="min-w-0 break-words">
           {editing ? (
             <input
               name="position"
@@ -129,7 +129,7 @@ export default function Application() {
           )}
         </div>
 
-        <div className="flex gap-3 mt-2">
+        <div className="flex gap-3 sm:mt-2 shrink-0">
           {editing && (
             <button
               className="text-sm text-light-muted dark:text-dark-muted hover:text-accent dark:hover:text-accent transition-colors"
@@ -156,7 +156,7 @@ export default function Application() {
       </div>
 
       {/* META ROW */}
-      <div className="bg-light-soft dark:bg-dark-soft  rounded-xl p-4 mb-6 flex flex-wrap gap-8 text-sm transition-colors">
+      <div className="bg-light-soft dark:bg-dark-soft  rounded-xl p-4 mb-6 flex flex-wrap gap-4 sm:gap-8 text-sm transition-colors">
         <div>
           <span className="block text-light-muted dark:text-dark-muted">Status</span>
           {editing ? (

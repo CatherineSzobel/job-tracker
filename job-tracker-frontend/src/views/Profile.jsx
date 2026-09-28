@@ -46,7 +46,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto mt-10 px-4">
+    <div className="max-w-3xl mx-auto mt-4 sm:mt-10 sm:px-4">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Profile</h1>

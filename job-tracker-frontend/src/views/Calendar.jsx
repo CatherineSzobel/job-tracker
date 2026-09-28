@@ -54,36 +54,40 @@ export default function Calendar() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 p-4 rounded-2xl shadow-lg bg-light dark:bg-dark transition-colors">
-      <h1 className="text-3xl font-bold mb-6 bg-accent text-surface rounded-lg p-2">
+    <div className="max-w-6xl mx-auto mt-4 sm:mt-10 p-3 sm:p-4 rounded-2xl shadow-lg bg-light dark:bg-dark transition-colors">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 bg-accent text-surface rounded-lg p-2">
         Interview Calendar
       </h1>
 
       {/* Navigation */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center gap-2 mb-4 sm:mb-6">
         <button
           onClick={prevMonth}
-          className="px-4 py-2 bg-accent-soft text-surface rounded-lg hover:bg-accent transition"
+          aria-label="Previous month"
+          className="px-3 sm:px-4 py-2 bg-accent-soft text-surface rounded-lg hover:bg-accent transition"
         >
-          Previous
+          <span className="sm:hidden">‹</span>
+          <span className="hidden sm:inline">Previous</span>
         </button>
 
-        <h2 className="text-xl font-semibold text-primary-text dark:text-light-text">
+        <h2 className="text-lg sm:text-xl font-semibold text-center text-primary-text dark:text-light-text">
           {format(currentMonth, "MMMM yyyy")}
         </h2>
 
         <button
           onClick={nextMonth}
-          className="px-4 py-2 bg-accent-soft text-surface rounded-lg hover:bg-accent transition"
+          aria-label="Next month"
+          className="px-3 sm:px-4 py-2 bg-accent-soft text-surface rounded-lg hover:bg-accent transition"
         >
-          Next
+          <span className="sm:hidden">›</span>
+          <span className="hidden sm:inline">Next</span>
         </button>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-3">
+      {/* Calendar Grid: tighter cells on phones */}
+      <div className="grid grid-cols-7 gap-1 sm:gap-3">
         {WEEKDAYS.map(name => (
-          <div key={name} className="text-center text-sm font-semibold text-primary-text dark:text-light-text">
+          <div key={name} className="text-center text-xs sm:text-sm font-semibold text-primary-text dark:text-light-text">
             {name}
           </div>
         ))}
@@ -100,17 +104,23 @@ export default function Calendar() {
             <div
               key={day.toISOString()}
               onClick={() => handleDayClick(day)}
-              className={`border rounded-lg p-3 h-28 cursor-pointer flex flex-col justify-between transition 
+              className={`border rounded-lg p-1 sm:p-3 h-14 sm:h-28 cursor-pointer flex flex-col justify-between transition
                 ${isToday ? "border-accent bg-accent-soft" : "border-border hover:bg-surface-soft"}`
               }
             >
-              <div className={`font-semibold ${isToday ? "text-secondary" : "text-primary-text"}`}>
+              <div className={`text-sm sm:text-base font-semibold ${isToday ? "text-secondary" : "text-primary-text"}`}>
                 {format(day, "d")}
               </div>
 
               {dayInterviews.length > 0 && (
-                <div className={`mt-2 text-sm font-medium ${isToday ? "text-secondary" : "text-primary-text"}`}>
-                  {dayInterviews.length} interview{dayInterviews.length > 1 ? "s" : ""}
+                <div className={`text-xs sm:text-sm font-medium ${isToday ? "text-secondary" : "text-primary-text"}`}>
+                  {/* Phones: just the count; wider screens: "2 interviews" */}
+                  <span className="sm:hidden inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-accent text-surface">
+                    {dayInterviews.length}
+                  </span>
+                  <span className="hidden sm:inline">
+                    {dayInterviews.length} interview{dayInterviews.length > 1 ? "s" : ""}
+                  </span>
                 </div>
               )}
             </div>

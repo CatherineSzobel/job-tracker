@@ -48,7 +48,7 @@ export default function Links() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 px-4">
+    <div className="max-w-4xl mx-auto mt-4 sm:mt-10 sm:px-4">
       {/* Header */}
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
         Links

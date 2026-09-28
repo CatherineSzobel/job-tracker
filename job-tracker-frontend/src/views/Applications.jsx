@@ -117,9 +117,9 @@ export default function Applications() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
+    <div className="max-w-5xl mx-auto sm:px-4 py-4 sm:py-10">
       {/* HEADER */}
-      <div className="rounded-2xl p-6 mb-6 bg-surface dark:bg-dark-soft shadow-md border border-border dark:border-dark-subtle transition-colors">
+      <div className="rounded-2xl p-4 sm:p-6 mb-6 bg-surface dark:bg-dark-soft shadow-md border border-border dark:border-dark-subtle transition-colors">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-light-text dark:text-dark-text">
             Job Applications
@@ -184,7 +184,7 @@ export default function Applications() {
         </div>
 
         {/* FILTER BAR */}
-        <div className="rounded-xl p-4 mb-6 flex gap-6 text-sm">
+        <div className="rounded-xl pt-4 sm:p-4 mb-2 sm:mb-6 flex flex-wrap gap-4 sm:gap-6 text-sm">
           <div>
             <label className="block mb-1 text-light-text dark:text-dark-text">Status</label>
             <select

@@ -88,7 +88,7 @@ export default function Dashboard() {
         <div className="lg:col-span-3 flex flex-col gap-6 h-full">
 
           {/* Notes */}
-          <div className="bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 sticky top-6 min-h-162.5 flex flex-col transition-shadow hover:shadow-xl">
+          <div className="bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 lg:sticky lg:top-6 lg:min-h-162.5 flex flex-col transition-shadow hover:shadow-xl">
             <Notes />
           </div>
 

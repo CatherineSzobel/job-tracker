@@ -71,8 +71,10 @@ export default function Sidebar() {
             Job Tracker
           </Link>
           <button
-            className="text-xl"
+            className="text-xl px-2"
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
           >
             {menuOpen ? "✕" : "☰"}
           </button>

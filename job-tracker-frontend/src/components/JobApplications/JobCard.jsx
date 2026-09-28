@@ -46,7 +46,7 @@ export default function JobCard({ job, onRemove }) {
       <div className="flex flex-col gap-1">
         <h2
           onClick={() => navigate(`/jobs/${job.id}`)}
-          className="text-lg font-semibold line-clamp-2 cursor-pointer text-light-text dark:text-dark-text hover:text-accent transition-colors"
+          className="text-lg font-semibold line-clamp-2 pr-20 cursor-pointer text-light-text dark:text-dark-text hover:text-accent transition-colors"
         >
           {job.position}
         </h2>

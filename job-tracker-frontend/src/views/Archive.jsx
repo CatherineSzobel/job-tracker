@@ -31,10 +31,10 @@ export default function Archive() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto mt-10 px-4 transition-colors">
+        <div className="max-w-6xl mx-auto mt-4 sm:mt-10 sm:px-4 transition-colors">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold text-light-text dark:text-dark-text">Archive</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-light-text dark:text-dark-text">Archive</h1>
                 <button
                     className="bg-accent hover:bg-accent-soft dark:bg-accent hover:bg-primary dark:hover:bg-accent-soft text-surface px-5 py-2 rounded-lg transition shadow"
                     onClick={() => navigate("/applications")}
