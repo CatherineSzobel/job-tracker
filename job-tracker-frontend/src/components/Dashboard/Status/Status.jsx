@@ -12,7 +12,7 @@ export default function Status({ status, label, count, total }) {
             </span>
 
             {/* Progress Bar */}
-            <div className="h-2 bg-light-muted dark:bg-dark-subtle rounded mt-1">
+            <div className="h-2 bg-border dark:bg-dark-subtle rounded mt-1">
                 <div
                     className={`h-2 rounded ${colors}`}
                     style={{ width: `${percentage}%` }}

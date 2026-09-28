@@ -6,19 +6,19 @@ const statCards = [
     label: "Total Applications",
     valueKey: "total",
     icon: <Briefcase size={20} />,
-    accent: "text-blue-600",
+    accent: "text-blue-600 dark:text-blue-400",
   },
   {
     label: "Archived Applications",
     valueKey: "archived",
     icon: <Archive size={20} />,
-    accent: "text-red-600",
+    accent: "text-red-600 dark:text-red-400",
   },
   {
     label: "Upcoming Interviews",
     valueKey: "upcomingInterviews",
     icon: <Calendar size={20} />,
-    accent: "text-green-600",
+    accent: "text-green-600 dark:text-green-400",
   },
 ];
 

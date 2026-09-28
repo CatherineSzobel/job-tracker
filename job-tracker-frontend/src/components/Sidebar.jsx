@@ -38,7 +38,7 @@ export default function Sidebar() {
             </Link>
           )}
           <button
-            className="p-1 rounded hover:bg-light-muted dark:hover:bg-dark-subtle transition-colors"
+            className="p-1 rounded hover:bg-border dark:hover:bg-dark-subtle transition-colors"
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}

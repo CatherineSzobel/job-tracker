@@ -16,7 +16,7 @@ export default function StatsCard({
 
             {icon && (
                 <div
-                    className={`w-10 h-10 flex items-center justify-center rounded-xl bg-light-muted dark:bg-dark-subtle ${accent}`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-xl bg-light dark:bg-dark-subtle ${accent}`}
                 >
                     {icon}
                 </div>

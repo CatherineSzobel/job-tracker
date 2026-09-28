@@ -5,7 +5,7 @@ export default function TodoItem({ todo, onToggle, onDelete, formatDate }) {
     <li
       className={`flex items-center gap-3 px-4 py-3 border rounded-lg transition-all hover:shadow-sm
         ${todo.done
-          ? "line-through text-light-muted dark:text-dark-subtle bg-light-soft dark:bg-dark-subtle border-light-muted dark:border-dark-subtle opacity-80"
+          ? "line-through text-light-muted dark:text-dark-muted bg-light-soft dark:bg-dark-subtle border-light-muted dark:border-dark-subtle opacity-80"
           : "bg-light dark:bg-dark border-light-muted dark:border-dark-subtle hover:bg-light-soft dark:hover:bg-dark-soft text-light-text dark:text-white"
         }`}
     >

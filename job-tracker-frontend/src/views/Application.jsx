@@ -111,7 +111,7 @@ export default function Application() {
               name="position"
               value={job.position}
               onChange={handleChange}
-              className="text-2xl font-semibold w-full px-3 py-1 rounded-2xl   bg-light dark:bg-dark-text text-light-text dark:text-dark transition-colors"
+              className="text-2xl font-semibold w-full px-3 py-1 rounded-2xl   bg-light dark:bg-dark-subtle text-light-text dark:text-dark-text transition-colors"
             />
           ) : (
             <h1 className="text-2xl font-semibold rounded-2xl text-light-text dark:text-dark-text">{job.position}</h1>

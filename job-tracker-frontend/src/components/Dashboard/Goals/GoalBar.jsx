@@ -24,7 +24,7 @@ export default function GoalBar({
       </div>
 
       {/* Progress Bar */}
-      <div className="h-3 bg-dark-soft dark:bg-light rounded-full overflow-hidden">
+      <div className="h-3 bg-border dark:bg-dark-subtle rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ease-out
             ${isComplete ? "bg-green-500 dark:bg-green-400" : color}`}
