@@ -116,7 +116,7 @@ export default function Notes() {
         <div className="flex flex-col gap-4">
             {/* Header */}
             <div className="flex justify-between items-center">
-                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <h2 className="text-sm font-semibold text-light-text dark:text-dark-muted">
                     Notes
                 </h2>
 
@@ -133,7 +133,7 @@ export default function Notes() {
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${showAddForm ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                     }`}
             >
-                <div className="flex flex-col gap-3 p-3 text-dark dark:text-light bg-white dark:bg-dark-soft border border-gray-200 dark:border-gray-700 rounded-xl mt-2">
+                <div className="flex flex-col gap-3 p-3 text-dark dark:text-light bg-light dark:bg-dark-soft border border-border dark:border-dark-subtle rounded-xl mt-2">
                     <input
                         type="text"
                         placeholder="Note title"
@@ -164,7 +164,7 @@ export default function Notes() {
 
             {/* Notes List */}
             {notes.length === 0 ? (
-                <div className="text-center text-gray-400 text-sm py-6">
+                <div className="text-center text-light-muted text-sm py-6">
                     📝 No notes yet
                 </div>
             ) : (
@@ -175,7 +175,7 @@ export default function Notes() {
                             className={`rounded-xl p-4 transition-all duration-200 
               ${note.is_pinned
                                     ? "bg-yellow-100 border border-yellow-500 dark:bg-yellow-500/20 dark:border-yellow-700"
-                                    : "bg-white dark:bg-dark-soft border border-gray-200 dark:border-gray-700"
+                                    : "bg-light dark:bg-dark-soft border border-border dark:border-dark-subtle"
                                 } 
               hover:shadow-md`}
                         >
@@ -195,7 +195,7 @@ export default function Notes() {
                                         />
                                     ) : (
                                         <>
-                                            <strong className="text-sm font-semibold text-gray-800 dark:text-white">
+                                            <strong className="text-sm font-semibold text-light-text dark:text-white">
                                                 {note.title}
                                             </strong>
 
@@ -210,7 +210,7 @@ export default function Notes() {
 
                                 <div className="flex gap-1 shrink-0">
                                     <button
-                                        className="text-xs px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition"
+                                        className="text-xs px-2 py-1 rounded-md bg-light-soft hover:bg-border dark:bg-dark-subtle dark:hover:bg-dark-subtle/80 transition"
                                         onClick={() => togglePinned(note)}
                                     >
                                         {note.is_pinned ? "Unpin" : "Pin"}
@@ -225,7 +225,7 @@ export default function Notes() {
                                         </button>
                                     ) : (
                                         <button
-                                            className="text-xs px-2 py-1 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition"
+                                            className="text-xs px-2 py-1 rounded-md bg-accent text-white hover:bg-accent-soft transition"
                                             onClick={() => {
                                                 setEditingId(note.id);
                                                 setEditingNote({
@@ -262,10 +262,10 @@ export default function Notes() {
                                     />
                                 ) : (
                                     <>
-                                        <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
+                                        <p className="text-sm text-light-muted dark:text-dark-muted whitespace-pre-wrap">
                                             {note.content}
                                         </p>
-                                        <p className="text-xs text-gray-400">
+                                        <p className="text-xs text-light-muted">
                                             {formatDate(note.created_at)}
                                         </p>
                                     </>

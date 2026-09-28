@@ -1,26 +1,18 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  Home,
-  ClipboardList,
-  Briefcase,
-  Calendar,
-  Menu,
-  ChevronLeft,
-} from "lucide-react";
+import { Menu, ChevronLeft } from "lucide-react";
+import { NAV_LINKS } from "../constants/navigation";
+
+const linkClasses = (isActive) =>
+  `rounded transition-colors ${isActive
+    ? "bg-accent text-surface"
+    : "hover:bg-light-soft hover:text-light-text dark:hover:bg-dark-soft dark:hover:text-dark-text"
+  }`;
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
-
-
-  const links = [
-    { name: "Dashboard", to: "/", icon: <Home size={20} /> },
-    { name: "Applications", to: "/applications", icon: <Briefcase size={20} /> },
-    { name: "Interviews", to: "/interviews", icon: <ClipboardList size={20} /> },
-    { name: "Calendar", to: "/calendar", icon: <Calendar size={20} /> },
-  ];
 
   return (
     <div className="flex">
@@ -40,6 +32,7 @@ export default function Sidebar() {
           <button
             className="p-1 rounded hover:bg-border dark:hover:bg-dark-subtle transition-colors"
             onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
           </button>
@@ -47,20 +40,20 @@ export default function Sidebar() {
 
         {/* Links */}
         <nav className="flex-1 flex flex-col gap-2">
-          {links.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className={`flex items-center gap-2 p-2 rounded transition-colors
-                ${location.pathname === link.to
-                  ? "bg-accent text-surface"
-                  : "hover:bg-light-soft hover:text-light-text dark:hover:bg-dark-soft dark:hover:text-dark-text"
-                }`}
-            >
-              {link.icon}
-              {!collapsed && link.name}
-            </Link>
-          ))}
+          {NAV_LINKS.map(({ to, label, icon }) => {
+            const Icon = icon;
+            return (
+              <Link
+                key={to}
+                to={to}
+                title={collapsed ? label : undefined}
+                className={`flex items-center gap-2 p-2 ${linkClasses(location.pathname === to)}`}
+              >
+                <Icon size={20} />
+                {!collapsed && label}
+              </Link>
+            );
+          })}
         </nav>
       </aside>
 
@@ -82,22 +75,18 @@ export default function Sidebar() {
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <div className="flex flex-col p-4 gap-2 bg-light-soft dark:bg-dark-soft transition-colors">
-            {links.map((link) => (
+          <nav className="flex flex-col p-4 gap-2 bg-light-soft dark:bg-dark-soft transition-colors">
+            {NAV_LINKS.map(({ to, label }) => (
               <Link
-                key={link.to}
-                to={link.to}
-                className={`p-2 rounded transition-colors
-                  ${location.pathname === link.to
-                    ? "bg-accent text-surface"
-                    : "hover:bg-light-soft hover:text-light-text dark:hover:bg-dark-soft dark:hover:text-dark-text"
-                  }`}
+                key={to}
+                to={to}
+                className={`p-2 ${linkClasses(location.pathname === to)}`}
                 onClick={() => setMenuOpen(false)}
               >
-                {link.name}
+                {label}
               </Link>
             ))}
-          </div>
+          </nav>
         )}
       </div>
     </div>

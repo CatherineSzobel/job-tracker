@@ -16,11 +16,11 @@ export default function ArchivedJobCard({ job, onRestore }) {
     };
 
     return (
-        <div className="relative bg-white dark:bg-dark-soft rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+        <div className="relative bg-light dark:bg-dark-soft rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
             <div className="flex justify-between items-start mb-2">
                 <h2
                     onClick={() => navigate(`/jobs/${job.id}`)}
-                    className="font-semibold text-gray-800 dark:text-dark-text hover:underline cursor-pointer truncate max-w-[70%]"
+                    className="font-semibold text-light-text dark:text-dark-text hover:underline cursor-pointer truncate max-w-[70%]"
                 >
                     {job.position}
                 </h2>
@@ -32,18 +32,18 @@ export default function ArchivedJobCard({ job, onRestore }) {
                 </button>
             </div>
 
-            <div className="flex flex-col text-gray-600 dark:text-dark-muted gap-0.5 text-xs">
+            <div className="flex flex-col text-light-muted dark:text-dark-muted gap-0.5 text-xs">
                 <span>
-                    Company: <strong className="text-gray-800 dark:text-dark-text">{job.company_name}</strong>
+                    Company: <strong className="text-light-text dark:text-dark-text">{job.company_name}</strong>
                 </span>
                 <span>
-                    Location: <strong className="text-gray-800 dark:text-dark-text">{job.location}</strong>
+                    Location: <strong className="text-light-text dark:text-dark-text">{job.location}</strong>
                 </span>
                 <span>
-                    Applied: <strong className="text-gray-800 dark:text-dark-text">{job.applied_date}</strong>
+                    Applied: <strong className="text-light-text dark:text-dark-text">{job.applied_date}</strong>
                 </span>
                 <span>
-                    Priority: <strong className="text-gray-800 dark:text-dark-text">{job.priority}</strong>
+                    Priority: <strong className="text-light-text dark:text-dark-text">{job.priority}</strong>
                 </span>
                 {job.job_link && (
                     <span>
@@ -52,7 +52,7 @@ export default function ArchivedJobCard({ job, onRestore }) {
                             href={job.job_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-700 dark:text-accent hover:underline"
+                            className="text-accent dark:text-accent-muted hover:underline"
                         >
                             {job.job_link}
                         </a>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/useAuthStore";
 
 export default function Login() {
@@ -39,16 +39,16 @@ export default function Login() {
   return (
     <div className="w-full max-w-md rounded-2xl shadow-xl p-8 bg-light dark:bg-dark-soft text-light-text dark:text-white transition-colors">
       <h2 className="text-2xl font-bold text-center mb-2">Welcome back 👋</h2>
-      <p className="text-sm text-light-text/70 dark:text-gray-300 text-center mb-6">
+      <p className="text-sm text-light-text/70 dark:text-dark-muted text-center mb-6">
         Log in to continue tracking your job applications
       </p>
 
-      <div className="bg-accent hover:bg-accent-soft text-light border  border-dark dark:border-light rounded-xl p-3 flex items-center justify-between mb-4">
+      <div className="bg-accent text-light border border-dark dark:border-light rounded-xl p-3 flex items-center justify-between mb-4">
         <div>
-          <div className="text-xs font-bold text-brand-700">👀 Just browsing?</div>
-          <div className="text-xs text-brand-500 mt-0.5">Log in instantly with our demo account</div>
+          <div className="text-xs font-bold">👀 Just browsing?</div>
+          <div className="text-xs mt-0.5 opacity-90">Log in instantly with our demo account</div>
         </div>
-        <button type="button" onClick={demoLogin} className="btn-primary text-xs px-3 py-1.5">
+        <button type="button" onClick={demoLogin} className="shrink-0 rounded-lg bg-light text-accent hover:bg-light-soft font-semibold text-xs px-3 py-1.5 transition-colors">
           Use Demo
         </button>
       </div>
@@ -61,25 +61,25 @@ export default function Login() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
+          <label className="input-label">Email</label>
           <input
             type="email"
             placeholder="you@example.com"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full border border-light-muted dark:border-dark-subtle rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="input-field"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
+          <label className="input-label">Password</label>
           <input
             type="password"
             placeholder="••••••••"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="w-full border border-light-muted dark:border-dark-subtle rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="input-field"
             required
           />
         </div>
@@ -89,11 +89,11 @@ export default function Login() {
         </button>
       </form>
 
-      <p className="text-sm mt-6 text-light-text/70 dark:text-gray-300 text-center">
+      <p className="text-sm mt-6 text-light-text/70 dark:text-dark-muted text-center">
         Don’t have an account?{" "}
-        <a href="/register" className="font-medium text-accent hover:underline">
+        <Link to="/register" className="font-medium text-accent hover:underline">
           Sign up
-        </a>
+        </Link>
       </p>
     </div>
   );

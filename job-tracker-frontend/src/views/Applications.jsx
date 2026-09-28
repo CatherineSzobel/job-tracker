@@ -139,7 +139,7 @@ export default function Applications() {
             {/* Dropdown */}
             <button
               onClick={() => setShowMenu((s) => !s)}
-              className="w-9 h-9 flex items-center justify-center font-extrabold hover:border rounded-lg text-blue-400 dark:text-blue-300 transition-colors"
+              className="w-9 h-9 flex items-center justify-center font-extrabold hover:border rounded-lg text-accent dark:text-accent-muted transition-colors"
             >
               ⋮
             </button>

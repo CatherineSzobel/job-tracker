@@ -49,15 +49,15 @@ export default function Profile() {
     <div className="max-w-3xl mx-auto mt-4 sm:mt-10 sm:px-4">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Profile</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <h1 className="text-3xl font-bold text-light-text dark:text-dark-text">Profile</h1>
+          <p className="text-sm text-light-muted dark:text-dark-muted">
             Manage your personal information and bio.
           </p>
         </div>
 
         {!editing && (
           <button
-            className="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+            className="px-5 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition"
             onClick={() => setEditing(true)}
           >
             Edit Profile
@@ -65,14 +65,14 @@ export default function Profile() {
         )}
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 p-6 space-y-6 transition-colors">
+      <div className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-6 transition-colors">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="input-label">
               Name
             </label>
             <input
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="input-field"
               disabled={!editing}
               value={profile.name ?? ""}
               onChange={(e) => updateField("name", e.target.value)}
@@ -81,11 +81,11 @@ export default function Profile() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="input-label">
               Title
             </label>
             <input
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="input-field"
               disabled={!editing}
               value={profile.title ?? ""}
               onChange={(e) => updateField("title", e.target.value)}
@@ -94,11 +94,11 @@ export default function Profile() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="input-label">
               Location
             </label>
             <input
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="input-field"
               disabled={!editing}
               value={profile.location ?? ""}
               onChange={(e) => updateField("location", e.target.value)}
@@ -108,11 +108,11 @@ export default function Profile() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="input-label">
             Bio
           </label>
           <textarea
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition resize-none"
+            className="input-field resize-none"
             disabled={!editing}
             value={profile.bio ?? ""}
             onChange={(e) => updateField("bio", e.target.value)}
@@ -122,16 +122,16 @@ export default function Profile() {
         </div>
 
         {editing && (
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border dark:border-dark-subtle">
             <button
-              className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+              className="px-4 py-2 rounded-lg bg-border dark:bg-dark-subtle text-light-text dark:text-dark-muted hover:bg-light-muted/25 dark:hover:bg-dark-subtle/80 transition"
               onClick={() => setEditing(false)}
               disabled={saving}
             >
               Cancel
             </button>
             <button
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+              className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition"
               onClick={saveProfile}
               disabled={saving}
             >

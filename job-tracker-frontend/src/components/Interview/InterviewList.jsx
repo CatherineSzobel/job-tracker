@@ -2,7 +2,7 @@ export default function InterviewList({ i, startEdit, deleteInterview }) {
   const isPast = new Date(i.interview_date) < new Date();
 
   return (
-    <div className="relative bg-white dark:bg-dark-soft rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-4 h-full">
+    <div className="relative bg-light dark:bg-dark-soft rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-4 h-full">
       {/* Job Title */}
       <h3 className="font-semibold text-lg text-light-text dark:text-dark-text line-clamp-2">
         {i.job?.company_name} - {i.job?.position}
@@ -14,7 +14,7 @@ export default function InterviewList({ i, startEdit, deleteInterview }) {
           {i.type}
         </span>
 
-        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+        <span className="px-3 py-1 rounded-full text-xs font-medium bg-light-soft dark:bg-dark-subtle text-light-text dark:text-dark-text">
           {new Date(i.interview_date).toLocaleString(undefined, {
             dateStyle: "medium",
             timeStyle: "short",

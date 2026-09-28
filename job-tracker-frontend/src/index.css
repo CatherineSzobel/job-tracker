@@ -31,6 +31,15 @@
     --color-border: #e5e7eb;
 }
 
+/* Form controls (input, select, textarea) and their labels */
+@utility input-field {
+    @apply w-full px-4 py-2 rounded-lg border border-border dark:border-dark-subtle bg-light dark:bg-dark-subtle text-light-text dark:text-dark-text focus:ring-2 focus:ring-accent focus:outline-none transition-colors;
+}
+
+@utility input-label {
+    @apply block text-sm font-medium mb-1 text-light-text dark:text-dark-text;
+}
+
 /* Global background */
 body {
     @apply bg-light-soft text-light-text;

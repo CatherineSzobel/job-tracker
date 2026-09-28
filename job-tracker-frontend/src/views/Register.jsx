@@ -42,7 +42,7 @@ export default function Register() {
       <h2 className="text-2xl font-bold text-center mb-2">
         Create your account 🚀
       </h2>
-      <p className="text-sm text-light-text/70 dark:text-gray-300 text-center mb-6">
+      <p className="text-sm text-light-text/70 dark:text-dark-muted text-center mb-6">
         Start tracking your job applications in one place
       </p>
 
@@ -54,51 +54,45 @@ export default function Register() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Name</label>
+          <label className="input-label">Name</label>
           <input
             name="name"
             value={form.name}
             onChange={handleChange}
             placeholder="Jane Doe"
-            className="w-full border border-light-muted dark:border-dark-subtle
-                       rounded-lg px-3 py-2 focus:outline-none focus:ring-2
-                       focus:ring-accent"
+            className="input-field"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
+          <label className="input-label">Email</label>
           <input
             name="email"
             type="email"
             value={form.email}
             onChange={handleChange}
             placeholder="you@example.com"
-            className="w-full border border-light-muted dark:border-dark-subtle
-                       rounded-lg px-3 py-2 focus:outline-none focus:ring-2
-                       focus:ring-accent"
+            className="input-field"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
+          <label className="input-label">Password</label>
           <input
             name="password"
             type="password"
             value={form.password}
             onChange={handleChange}
             placeholder="••••••••"
-            className="w-full border border-light-muted dark:border-dark-subtle
-                       rounded-lg px-3 py-2 focus:outline-none focus:ring-2
-                       focus:ring-accent"
+            className="input-field"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="input-label">
             Confirm Password
           </label>
           <input
@@ -107,9 +101,7 @@ export default function Register() {
             value={form.password_confirmation}
             onChange={handleChange}
             placeholder="••••••••"
-            className="w-full border border-light-muted dark:border-dark-subtle
-                       rounded-lg px-3 py-2 focus:outline-none focus:ring-2
-                       focus:ring-accent"
+            className="input-field"
             required
           />
         </div>
@@ -123,7 +115,7 @@ export default function Register() {
         </button>
       </form>
 
-      <div className="text-sm text-light-text/70 dark:text-gray-300 text-center mt-6">
+      <div className="text-sm text-light-text/70 dark:text-dark-muted text-center mt-6">
         <p>Already have an account?</p>
         <Link to="/login" className="text-accent font-medium hover:underline">
           Log in

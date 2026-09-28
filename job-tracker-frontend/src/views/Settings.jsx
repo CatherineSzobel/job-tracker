@@ -62,15 +62,15 @@ export default function Settings() {
   return (
     <div className="max-w-3xl mx-auto mt-4 sm:mt-10 sm:px-4 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="text-3xl font-bold text-light-text dark:text-dark-text">Settings</h1>
+        <p className="text-sm text-light-muted dark:text-dark-muted">
           Manage your account, appearance, and account deletion.
         </p>
       </div>
 
       {/* Account & security */}
-      <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 p-6 space-y-4 transition-colors">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-4 transition-colors">
+        <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">
           Account &amp; security
         </h2>
 
@@ -87,12 +87,12 @@ export default function Settings() {
 
         <form onSubmit={submitPasswordChange} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="input-label">
               Current password
             </label>
             <input
               type="password"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="input-field"
               value={passwordForm.current_password}
               onChange={(e) =>
                 setPasswordForm((prev) => ({ ...prev, current_password: e.target.value }))
@@ -102,12 +102,12 @@ export default function Settings() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="input-label">
               New password
             </label>
             <input
               type="password"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="input-field"
               value={passwordForm.password}
               onChange={(e) =>
                 setPasswordForm((prev) => ({ ...prev, password: e.target.value }))
@@ -118,12 +118,12 @@ export default function Settings() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="input-label">
               Confirm new password
             </label>
             <input
               type="password"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="input-field"
               value={passwordForm.password_confirmation}
               onChange={(e) =>
                 setPasswordForm((prev) => ({ ...prev, password_confirmation: e.target.value }))
@@ -136,7 +136,7 @@ export default function Settings() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
               disabled={savingPassword}
             >
               {savingPassword ? "Updating..." : "Update password"}
@@ -146,22 +146,22 @@ export default function Settings() {
       </section>
 
       {/* Appearance */}
-      <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 p-6 transition-colors">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 transition-colors">
+        <h2 className="text-lg font-semibold text-light-text dark:text-dark-text mb-4">
           Appearance
         </h2>
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-gray-900 dark:text-gray-100">Dark mode</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="font-medium text-light-text dark:text-dark-text">Dark mode</p>
+            <p className="text-sm text-light-muted dark:text-dark-muted">
               Switch between light and dark themes.
             </p>
           </div>
 
           <button
             onClick={toggleDarkMode}
-            className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+            className="p-2 rounded-lg border border-border dark:border-dark-subtle hover:bg-light-soft dark:hover:bg-dark-subtle transition"
             title="Toggle dark mode"
           >
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
@@ -170,12 +170,12 @@ export default function Settings() {
       </section>
 
       {/* Danger zone */}
-      <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-red-300 dark:border-red-800 p-6 space-y-4 transition-colors">
+      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-red-300 dark:border-red-800 p-6 space-y-4 transition-colors">
         <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">Danger zone</h2>
 
         {!confirmingDelete ? (
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-light-muted dark:text-dark-muted">
               Permanently delete your account and all associated data. This cannot be undone.
             </p>
             <button
@@ -187,7 +187,7 @@ export default function Settings() {
           </div>
         ) : (
           <form onSubmit={submitDeleteAccount} className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-light-muted dark:text-dark-muted">
               This will permanently delete your account, profile, links, job applications,
               interviews, notes, and to-dos. Enter your password to confirm.
             </p>
@@ -201,7 +201,7 @@ export default function Settings() {
             <input
               type="password"
               placeholder="Your password"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500 outline-none transition"
+              className="input-field focus:ring-red-500"
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
               required
@@ -210,7 +210,7 @@ export default function Settings() {
             <div className="flex justify-end gap-3">
               <button
                 type="button"
-                className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                className="px-4 py-2 rounded-lg bg-border dark:bg-dark-subtle text-light-text dark:text-dark-muted hover:bg-light-muted/25 dark:hover:bg-dark-subtle/80 transition"
                 onClick={() => {
                   setConfirmingDelete(false);
                   setDeletePassword("");

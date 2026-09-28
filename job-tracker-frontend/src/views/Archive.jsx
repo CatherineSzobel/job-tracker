@@ -36,7 +36,7 @@ export default function Archive() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <h1 className="text-2xl sm:text-3xl font-bold text-light-text dark:text-dark-text">Archive</h1>
                 <button
-                    className="bg-accent hover:bg-accent-soft dark:bg-accent hover:bg-primary dark:hover:bg-accent-soft text-surface px-5 py-2 rounded-lg transition shadow"
+                    className="bg-accent hover:bg-accent-soft dark:bg-accent dark:hover:bg-accent-soft text-surface px-5 py-2 rounded-lg transition shadow"
                     onClick={() => navigate("/applications")}
                 >
                     Applications

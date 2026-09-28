@@ -6,7 +6,7 @@ const statCards = [
     label: "Total Applications",
     valueKey: "total",
     icon: <Briefcase size={20} />,
-    accent: "text-blue-600 dark:text-blue-400",
+    accent: "text-accent dark:text-accent-muted",
   },
   {
     label: "Archived Applications",

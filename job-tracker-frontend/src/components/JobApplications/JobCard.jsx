@@ -75,7 +75,7 @@ export default function JobCard({ job, onRemove }) {
               href={job.job_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 dark:text-accent hover:underline font-medium truncate"
+              className="text-accent dark:text-accent hover:underline font-medium truncate"
               title={job.job_link}
             >
               View Posting →
@@ -84,7 +84,7 @@ export default function JobCard({ job, onRemove }) {
         )}
         <span>
           <strong>Notes:</strong>{" "}
-          {job.notes ? job.notes : <span className="text-gray-400 dark:text-gray-500">—</span>}
+          {job.notes ? job.notes : <span className="text-light-muted dark:text-dark-muted">—</span>}
         </span>
       </div>
 
