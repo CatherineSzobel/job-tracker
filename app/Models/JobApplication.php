@@ -6,6 +6,7 @@ use App\Enums\JobStatus;
 use App\Enums\Priority;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JobApplication extends Model
@@ -41,5 +42,10 @@ class JobApplication extends Model
     public function interviews(): HasMany
     {
         return $this->hasMany(Interview::class);
+    }
+
+    public function documents(): BelongsToMany
+    {
+        return $this->belongsToMany(Document::class)->withPivot('attached_at');
     }
 }
