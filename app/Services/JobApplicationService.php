@@ -21,7 +21,7 @@ class JobApplicationService
     /**
      * Create a new job application for a user
      */
-    public function create(array $data, $user): JobApplication
+    public function create(array $data, User $user): JobApplication
     {
         $data['applied_date'] = now()->toDateString();
 
@@ -49,7 +49,7 @@ class JobApplicationService
     /**
      * Schedule an interview for a job application
      */
-    public function scheduleInterview(JobApplication $job, array $data, $user)
+    public function scheduleInterview(JobApplication $job, array $data, User $user): Interview
     {
         return $job->interviews()->create(array_merge($data, [
             'user_id' => $user->id,
@@ -93,7 +93,7 @@ class JobApplicationService
     /**
      * Filter job applications for a user
      */
-    public function filter($user, array $filters = []): Collection
+    public function filter(User $user, array $filters = []): Collection
     {
         $query = $user->jobApplications()->with('interviews');
 
