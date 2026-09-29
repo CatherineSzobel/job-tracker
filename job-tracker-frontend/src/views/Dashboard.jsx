@@ -7,13 +7,16 @@ import GoalStats from "../components/Dashboard/Goals/GoalStats";
 import InsightChart from "../components/Dashboard/InsightChart";
 import Notes from "../components/Notes";
 import PageLoader from "../components/UI/PageLoader";
+import { useAuthStore } from "../stores/useAuthStore";
+import { DEFAULT_GOALS } from "../constants/jobs";
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const dailyGoal = 5;
-  const weeklyGoal = 20;
+  const user = useAuthStore((state) => state.user);
+  const dailyGoal = user?.daily_goal ?? DEFAULT_GOALS.daily_goal;
+  const weeklyGoal = user?.weekly_goal ?? DEFAULT_GOALS.weekly_goal;
 
   const fetchStats = async () => {
     setLoading(true);

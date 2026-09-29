@@ -64,3 +64,6 @@ export const PRIORITY_CLASSES = {
   medium: "bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300",
   high: "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300",
 };
+
+// Mirrors the column defaults on users (daily_goal, weekly_goal)
+export const DEFAULT_GOALS = { daily_goal: 5, weekly_goal: 20 };

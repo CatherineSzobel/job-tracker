@@ -6,6 +6,7 @@ use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\DeleteAccountRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\UpdateGoalsRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -68,6 +69,13 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Password updated successfully',
         ]);
+    }
+
+    public function updateGoals(UpdateGoalsRequest $request): UserResource
+    {
+        $request->user()->update($request->validated());
+
+        return new UserResource($request->user());
     }
 
     // Demo-account and password checks happen in DeleteAccountRequest

@@ -4,6 +4,7 @@ import { Sun, Moon } from "lucide-react";
 import API from "../api/axios";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useThemeStore } from "../stores/useThemeStore";
+import { DEFAULT_GOALS } from "../constants/jobs";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -17,6 +18,16 @@ export default function Settings() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
+
+  // Goals
+  const user = useAuthStore((state) => state.user);
+  const [goalsForm, setGoalsForm] = useState({
+    daily_goal: user?.daily_goal ?? DEFAULT_GOALS.daily_goal,
+    weekly_goal: user?.weekly_goal ?? DEFAULT_GOALS.weekly_goal,
+  });
+  const [goalsError, setGoalsError] = useState("");
+  const [goalsSuccess, setGoalsSuccess] = useState("");
+  const [savingGoals, setSavingGoals] = useState(false);
 
   // Appearance
   const darkMode = useThemeStore((state) => state.darkMode);
@@ -44,6 +55,26 @@ export default function Settings() {
     }
   };
 
+  const submitGoals = async (e) => {
+    e.preventDefault();
+    setGoalsError("");
+    setGoalsSuccess("");
+    setSavingGoals(true);
+    try {
+      const res = await API.put("/account/goals", {
+        daily_goal: Number(goalsForm.daily_goal),
+        weekly_goal: Number(goalsForm.weekly_goal),
+      });
+      // The dashboard reads the goals from the stored user
+      useAuthStore.setState({ user: res.data.data });
+      setGoalsSuccess("Goals updated.");
+    } catch (err) {
+      setGoalsError(err.response?.data?.message || "Failed to update goals");
+    } finally {
+      setSavingGoals(false);
+    }
+  };
+
   const submitDeleteAccount = async (e) => {
     e.preventDefault();
     setDeleteError("");
@@ -64,7 +95,7 @@ export default function Settings() {
       <div>
         <h1 className="text-3xl font-bold text-light-text dark:text-dark-text">Settings</h1>
         <p className="text-sm text-light-muted dark:text-dark-muted">
-          Manage your account, appearance, and account deletion.
+          Manage your account, goals, appearance, and account deletion.
         </p>
       </div>
 
@@ -140,6 +171,71 @@ export default function Settings() {
               disabled={savingPassword}
             >
               {savingPassword ? "Updating..." : "Update password"}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {/* Goals */}
+      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-4 transition-colors">
+        <div>
+          <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">Goals</h2>
+          <p className="text-sm text-light-muted dark:text-dark-muted">
+            How many applications you aim to send. Shown on the dashboard.
+          </p>
+        </div>
+
+        {goalsError && (
+          <div className="text-red-700 bg-red-100 border border-red-300 p-3 rounded-lg text-sm">
+            {goalsError}
+          </div>
+        )}
+        {goalsSuccess && (
+          <div className="text-green-700 bg-green-100 border border-green-300 p-3 rounded-lg text-sm">
+            {goalsSuccess}
+          </div>
+        )}
+
+        <form onSubmit={submitGoals} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="daily_goal" className="input-label">Per day</label>
+              <input
+                id="daily_goal"
+                type="number"
+                min={1}
+                max={100}
+                step={1}
+                className="input-field"
+                value={goalsForm.daily_goal}
+                onChange={(e) => setGoalsForm((prev) => ({ ...prev, daily_goal: e.target.value }))}
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="weekly_goal" className="input-label">Per week</label>
+              <input
+                id="weekly_goal"
+                type="number"
+                min={goalsForm.daily_goal || 1}
+                max={500}
+                step={1}
+                className="input-field"
+                value={goalsForm.weekly_goal}
+                onChange={(e) => setGoalsForm((prev) => ({ ...prev, weekly_goal: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+              disabled={savingGoals}
+            >
+              {savingGoals ? "Saving..." : "Save goals"}
             </button>
           </div>
         </form>

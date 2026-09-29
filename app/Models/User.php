@@ -17,6 +17,18 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'daily_goal',
+        'weekly_goal',
+    ];
+
+    /**
+     * Same defaults as the columns, so a just-created user already has them.
+     *
+     * @var array<string, int>
+     */
+    protected $attributes = [
+        'daily_goal' => 5,
+        'weekly_goal' => 20,
     ];
 
     protected $hidden = [
@@ -29,6 +41,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'daily_goal' => 'integer',
+            'weekly_goal' => 'integer',
         ];
     }
 

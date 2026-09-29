@@ -38,5 +38,6 @@ Route::middleware('auth:sanctum')->group(function () {
         ->parameters(['links' => 'link']);
 
     Route::put('/account/password', [AuthController::class, 'updatePassword']);
+    Route::put('/account/goals', [AuthController::class, 'updateGoals']);
     Route::delete('/account', [AuthController::class, 'deleteAccount']);
 });

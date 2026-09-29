@@ -67,7 +67,7 @@ class ApiResponseShapeTest extends TestCase
     {
         $response = $this->getJson('/api/user')
             ->assertOk()
-            ->assertExactJsonStructure(['data' => ['id', 'name', 'email']]);
+            ->assertExactJsonStructure(['data' => ['id', 'name', 'email', 'daily_goal', 'weekly_goal']]);
 
         $this->assertHidden($response, 'data');
     }
