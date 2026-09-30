@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axios";
+import AttachedDocuments from "../components/Documents/AttachedDocuments";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
 import Modal from "../components/UI/Modal";
@@ -46,7 +47,8 @@ export default function Application() {
   };
 
   const cancelEditing = () => {
-    setJob(originalJob);
+    // Documents are saved on their own, so Cancel must not revert them
+    setJob({ ...originalJob, documents: job.documents });
     setEditing(false);
   };
 
@@ -218,6 +220,13 @@ export default function Application() {
           <p className="text-light-muted dark:text-dark-muted text-sm">No notes yet.</p>
         )}
       </div>
+
+      {/* DOCUMENTS */}
+      <AttachedDocuments
+        jobId={job.id}
+        documents={job.documents ?? []}
+        onChange={(documents) => setJob((prev) => ({ ...prev, documents }))}
+      />
 
       {/* INTERVIEWS */}
       <div className="bg-light-soft dark:bg-dark-soft rounded-xl p-6 transition-colors">
