@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ArchiveTodosAction;
 use App\Enums\JobStatus;
 use App\Exports\JobApplicationsExport;
 use App\Imports\JobApplicationsImport;
@@ -11,6 +12,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Validators\Failure;
 use RuntimeException;
@@ -29,13 +31,23 @@ class JobApplicationService
     }
 
     /**
-     * Update an existing job application
+     * Update an existing job application. Archiving it also deletes its open to-dos when
+     * $deleteOpenTodos is true, or when it's null and the owner's setting is "delete".
      */
-    public function update(JobApplication $job, array $data): JobApplication
+    public function update(JobApplication $job, array $data, ?bool $deleteOpenTodos = null): JobApplication
     {
-        $job->update($data);
+        return DB::transaction(function () use ($job, $data, $deleteOpenTodos) {
+            // Only active → archived counts: the job page re-sends is_archived: true on every save
+            $isBeingArchived = ! $job->is_archived && (bool) ($data['is_archived'] ?? false);
 
-        return $job;
+            $job->update($data);
+
+            if ($isBeingArchived && ($deleteOpenTodos ?? $job->user->archive_todos === ArchiveTodosAction::Delete)) {
+                $job->todos()->where('done', false)->delete();
+            }
+
+            return $job;
+        });
     }
 
     /**
@@ -95,7 +107,7 @@ class JobApplicationService
      */
     public function filter(User $user, array $filters = []): Collection
     {
-        $query = $user->jobApplications()->with('interviews');
+        $query = $user->jobApplications()->with('interviews')->withCount(JobApplication::openTodosCount());
 
         if (! array_key_exists('archived', $filters)) {
             $query->where('is_archived', false);

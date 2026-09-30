@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\JobStatus;
 use App\Enums\Priority;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -46,5 +47,15 @@ class JobApplication extends Model
     public function todos(): HasMany
     {
         return $this->hasMany(Todo::class);
+    }
+
+    /**
+     * For withCount()/loadCount(): the number of the application's to-dos that aren't done, as open_todos_count.
+     *
+     * @return array<string, \Closure(Builder): Builder>
+     */
+    public static function openTodosCount(): array
+    {
+        return ['todos as open_todos_count' => fn (Builder $query) => $query->where('done', false)];
     }
 }
