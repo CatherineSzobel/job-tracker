@@ -44,7 +44,7 @@ class JobApplicationController extends Controller
     {
         Gate::authorize('view', $jobApplication);
 
-        return new JobApplicationResource($jobApplication->load('interviews'));
+        return new JobApplicationResource($jobApplication->load(['interviews', 'documents']));
     }
 
     public function update(UpdateJobApplicationRequest $request, JobApplication $jobApplication): JobApplicationResource
@@ -53,8 +53,8 @@ class JobApplicationController extends Controller
 
         $updatedJob = $this->jobApplicationService->update($jobApplication, $request->validated());
 
-        // Include interviews so the detail page keeps showing them after a save
-        return new JobApplicationResource($updatedJob->load('interviews'));
+        // Include interviews and documents so the detail page keeps showing them after a save
+        return new JobApplicationResource($updatedJob->load(['interviews', 'documents']));
     }
 
     public function destroy(JobApplication $jobApplication): Response

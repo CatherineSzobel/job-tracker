@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Document;
 use App\Models\Interview;
 use App\Models\JobApplication;
 use App\Models\Note;
@@ -27,6 +28,8 @@ class ApiResponseShapeTest extends TestCase
     private const NOTE = ['id', 'title', 'content', 'is_pinned', 'created_at'];
 
     private const LINK = ['id', 'type', 'url'];
+
+    private const DOCUMENT = ['id', 'kind', 'category', 'name', 'url', 'original_filename', 'mime_type', 'size', 'archived_at', 'created_at'];
 
     private User $user;
 
@@ -58,7 +61,7 @@ class ApiResponseShapeTest extends TestCase
 
     private function assertHidden($response, string $prefix): void
     {
-        foreach (['user_id', 'profile_id', 'updated_at', 'success', 'password'] as $field) {
+        foreach (['user_id', 'profile_id', 'updated_at', 'success', 'password', 'path'] as $field) {
             $response->assertJsonMissingPath("{$prefix}.{$field}");
         }
     }
@@ -78,7 +81,8 @@ class ApiResponseShapeTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW]]]])
             ->assertJsonPath('data.0.applied_date', '2026-09-01')
-            ->assertJsonPath('data.0.is_archived', false);
+            ->assertJsonPath('data.0.is_archived', false)
+            ->assertJsonMissingPath('data.0.documents');
         $this->assertHidden($list, 'data.0');
 
         $this->postJson('/api/job-applications', ['company_name' => 'Globex', 'position' => 'Designer'])
@@ -88,7 +92,7 @@ class ApiResponseShapeTest extends TestCase
 
         $this->getJson("/api/job-applications/{$this->job->id}")
             ->assertOk()
-            ->assertJsonStructure(['data' => [...self::JOB, 'interviews' => [self::INTERVIEW]]])
+            ->assertJsonStructure(['data' => [...self::JOB, 'interviews' => [self::INTERVIEW], 'documents' => []]])
             ->assertJsonMissingPath('success');
 
         $this->putJson("/api/job-applications/{$this->job->id}", ['status' => 'offer'])
@@ -139,6 +143,31 @@ class ApiResponseShapeTest extends TestCase
             ->assertExactJsonStructure(['data' => self::NOTE])
             ->assertJsonPath('data.is_pinned', true);
         $this->deleteJson("/api/notes/{$this->note->id}")->assertNoContent();
+    }
+
+    public function test_documents(): void
+    {
+        $document = Document::factory()->for($this->user)->create();
+        $this->job->documents()->attach($document, ['attached_at' => now()]);
+        $listed = [...self::DOCUMENT, 'applications_count'];
+
+        $list = $this->getJson('/api/documents')->assertOk()->assertExactJsonStructure(['data' => [$listed]]);
+        $this->assertHidden($list, 'data.0');
+        $this->postJson('/api/documents', ['kind' => 'link', 'name' => 'Site', 'category' => 'website', 'url' => 'https://jane.dev'])
+            ->assertCreated()
+            ->assertExactJsonStructure(['data' => $listed]);
+        $this->patchJson("/api/documents/{$document->id}", ['name' => 'Renamed'])
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => $listed]);
+        $this->putJson("/api/job-applications/{$this->job->id}/documents", ['document_ids' => [$document->id]])
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => [[...self::DOCUMENT, 'attached_at']]]);
+        $this->deleteJson("/api/documents/{$document->id}")
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => $listed]);
+        $this->postJson("/api/documents/{$document->id}/restore")
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => $listed]);
     }
 
     public function test_profile_and_links(): void

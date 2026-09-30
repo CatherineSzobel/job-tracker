@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\NotesController;
@@ -26,10 +27,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/job-applications/import', [JobApplicationController::class, 'import']);
     Route::apiResource('job-applications', JobApplicationController::class);
     Route::post('/job-applications/{job_application}/interviews', [JobApplicationController::class, 'scheduleInterview']);
+    Route::put('/job-applications/{job_application}/documents', [DocumentController::class, 'syncForApplication']);
 
     Route::apiResource('interviews', InterviewController::class)->only(['index', 'update', 'destroy']);
     Route::apiResource('todos', TodoController::class)->except('show');
     Route::apiResource('notes', NotesController::class)->except('show');
+    Route::get('/documents/{document}/download', [DocumentController::class, 'download']);
+    Route::post('/documents/{document}/restore', [DocumentController::class, 'restore']);
+    Route::apiResource('documents', DocumentController::class)->except('show');
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
