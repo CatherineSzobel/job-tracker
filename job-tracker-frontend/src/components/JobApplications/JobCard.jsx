@@ -1,19 +1,63 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import { PRIORITY_CLASSES, STATUS_COLORS } from "../../constants/jobs";
+import { useSettingsStore } from "../../stores/useSettingsStore";
+import { useToastStore } from "../../stores/useToastStore";
+import ArchiveTodosPrompt from "./ArchiveTodosPrompt";
 
 // onRemove(id) is called after the job is archived or deleted so the parent can drop it
 export default function JobCard({ job, onRemove }) {
   const navigate = useNavigate();
+  const loadSettings = useSettingsStore((state) => state.loadSettings);
+  const updateSettings = useSettingsStore((state) => state.updateSettings);
+  const showToast = useToastStore((state) => state.showToast);
+  const [askingAboutTodos, setAskingAboutTodos] = useState(false);
 
-  const handleArchive = async () => {
+  // deleteOpenTodos: the user's answer, or undefined to let the server follow their setting
+  const archive = async (deleteOpenTodos) => {
     try {
-      await API.put(`/job-applications/${job.id}`, { is_archived: true });
+      await API.put(`/job-applications/${job.id}`, {
+        is_archived: true,
+        ...(deleteOpenTodos === undefined ? {} : { delete_open_todos: deleteOpenTodos }),
+      });
       onRemove?.(job.id);
     } catch (err) {
       console.error(err);
-      alert("Failed to archive job");
+      showToast("Failed to archive job");
     }
+  };
+
+  const handleArchive = async () => {
+    if (job.open_todos_count > 0) {
+      try {
+        const settings = await loadSettings();
+        if (settings.archive_todos === "ask") {
+          setAskingAboutTodos(true);
+          return;
+        }
+      } catch (err) {
+        // Can't read the setting: ask rather than guess
+        console.error(err);
+        setAskingAboutTodos(true);
+        return;
+      }
+    }
+    archive();
+  };
+
+  const answerTodosPrompt = async (deleteOpenTodos, remember) => {
+    setAskingAboutTodos(false);
+    if (remember) {
+      try {
+        await updateSettings({ archive_todos: deleteOpenTodos ? "delete" : "keep" });
+      } catch (err) {
+        // Archive anyway; only remembering the choice failed
+        console.error(err);
+        showToast("Couldn't remember your choice; you can set it in Settings");
+      }
+    }
+    archive(deleteOpenTodos);
   };
 
   const deleteJob = async () => {
@@ -23,7 +67,7 @@ export default function JobCard({ job, onRemove }) {
       onRemove?.(job.id);
     } catch (err) {
       console.error(err);
-      alert("Failed to delete job");
+      showToast("Failed to delete job");
     }
   };
 
@@ -102,6 +146,14 @@ export default function JobCard({ job, onRemove }) {
           Delete
         </button>
       </div>
+
+      {askingAboutTodos && (
+        <ArchiveTodosPrompt
+          openTodosCount={job.open_todos_count}
+          onConfirm={answerTodosPrompt}
+          onCancel={() => setAskingAboutTodos(false)}
+        />
+      )}
     </div>
   );
 }

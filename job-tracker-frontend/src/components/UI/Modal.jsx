@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 // Centered dialog over a dimmed backdrop. Escape and backdrop clicks call onClose.
 export default function Modal({ title, onClose, maxWidth = "max-w-2xl", children }) {
@@ -10,7 +11,8 @@ export default function Modal({ title, onClose, maxWidth = "max-w-2xl", children
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  return (
+  // On <body>, so a transformed ancestor (e.g. a card's hover lift) can't trap the fixed overlay
+  return createPortal(
     <div
       className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 p-3 sm:p-4"
       onClick={onClose}
@@ -26,6 +28,7 @@ export default function Modal({ title, onClose, maxWidth = "max-w-2xl", children
         <h2 className="text-xl font-semibold mb-4 text-light-text dark:text-dark-text">{title}</h2>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
