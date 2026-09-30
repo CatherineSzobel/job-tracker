@@ -42,4 +42,9 @@ class JobApplication extends Model
     {
         return $this->hasMany(Interview::class);
     }
+
+    public function todos(): HasMany
+    {
+        return $this->hasMany(Todo::class);
+    }
 }

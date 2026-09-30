@@ -22,7 +22,7 @@ class ApiResponseShapeTest extends TestCase
 
     private const INTERVIEW = ['id', 'job_application_id', 'interview_date', 'type', 'location', 'notes'];
 
-    private const TODO = ['id', 'text', 'done', 'created_at'];
+    private const TODO = ['id', 'text', 'done', 'due_date', 'job_application', 'created_at'];
 
     private const NOTE = ['id', 'title', 'content', 'is_pinned', 'created_at'];
 

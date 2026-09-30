@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Todo;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TodoStoreRequest extends FormRequest
 {
@@ -23,6 +24,12 @@ class TodoStoreRequest extends FormRequest
     {
         return [
             'text' => 'required|string|max:255',
+            'due_date' => 'nullable|date_format:Y-m-d',
+            'job_application_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('job_applications', 'id')->where('user_id', $this->user()->id),
+            ],
         ];
     }
 }
