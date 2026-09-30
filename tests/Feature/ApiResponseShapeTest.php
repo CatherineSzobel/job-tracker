@@ -130,6 +130,13 @@ class ApiResponseShapeTest extends TestCase
         $this->deleteJson("/api/todos/{$this->todo->id}")->assertNoContent();
     }
 
+    public function test_settings(): void
+    {
+        $response = $this->getJson('/api/settings')->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
+        $this->assertHidden($response, 'data');
+        $this->putJson('/api/settings', ['archive_todos' => 'keep'])->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
+    }
+
     public function test_notes(): void
     {
         $this->getJson('/api/notes')->assertOk()->assertExactJsonStructure(['data' => [self::NOTE]]);

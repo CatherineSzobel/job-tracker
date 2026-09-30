@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ArchiveTodosAction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -19,16 +20,18 @@ class User extends Authenticatable
         'password',
         'daily_goal',
         'weekly_goal',
+        'archive_todos',
     ];
 
     /**
      * Same defaults as the columns, so a just-created user already has them.
      *
-     * @var array<string, int>
+     * @var array<string, int|string>
      */
     protected $attributes = [
         'daily_goal' => 5,
         'weekly_goal' => 20,
+        'archive_todos' => 'ask',
     ];
 
     protected $hidden = [
@@ -43,6 +46,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'daily_goal' => 'integer',
             'weekly_goal' => 'integer',
+            'archive_todos' => ArchiveTodosAction::class,
         ];
     }
 
