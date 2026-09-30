@@ -19,7 +19,6 @@ class ProfileResource extends JsonResource
             'title' => $this->title,
             'bio' => $this->bio,
             'location' => $this->location,
-            'links' => ProfileLinkResource::collection($this->whenLoaded('links')),
         ];
     }
 }

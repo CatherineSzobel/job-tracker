@@ -80,11 +80,9 @@ class OwnershipTest extends TestCase
         $interview = $job->interviews()->create(['user_id' => $owner->id, 'interview_date' => now()->addDay()]);
         $todo = $owner->todos()->create(['text' => 'Mine']);
         $note = $owner->notes()->create(['title' => 'Mine', 'content' => 'Secret']);
-        $link = $owner->profile()->create(['name' => 'Owner'])->links()->create(['type' => 'GitHub', 'url' => 'https://github.com/owner']);
         $document = Document::factory()->for($owner)->create(['name' => 'Mine']);
 
         $intruder = User::factory()->create();
-        $intruder->profile()->create(['name' => 'Intruder']);
         $intruderJob = $this->jobFor($intruder);
 
         $requests = [
@@ -95,8 +93,6 @@ class OwnershipTest extends TestCase
             ['putJson', "/api/todos/{$todo->id}", ['done' => true]],
             ['putJson', "/api/notes/{$note->id}", ['title' => 'Hacked']],
             ['deleteJson', "/api/notes/{$note->id}"],
-            ['putJson', "/api/profile/links/{$link->id}", ['type' => 'Hacked', 'url' => 'https://evil.test']],
-            ['deleteJson', "/api/profile/links/{$link->id}"],
             ['patchJson', "/api/documents/{$document->id}", ['name' => 'Hacked']],
             ['getJson', "/api/documents/{$document->id}/download"],
             ['deleteJson', "/api/documents/{$document->id}"],
@@ -116,20 +112,9 @@ class OwnershipTest extends TestCase
         $this->assertNull($interview->fresh()->location);
         $this->assertFalse((bool) $todo->fresh()->done);
         $this->assertSame('Mine', $note->fresh()->title);
-        $this->assertSame('GitHub', $link->fresh()->type);
         $this->assertSame('Mine', $document->fresh()->name);
         $this->assertModelExists($document);
         $this->assertSame(0, $intruderJob->documents()->count());
-    }
-
-    public function test_user_without_profile_gets_404_not_500_on_someone_elses_link(): void
-    {
-        $owner = User::factory()->create();
-        $link = $owner->profile()->create(['name' => 'Owner'])->links()->create(['type' => 'GitHub', 'url' => 'https://github.com/owner']);
-
-        $this->actingAs(User::factory()->create())
-            ->putJson("/api/profile/links/{$link->id}", ['type' => 'Hacked', 'url' => 'https://evil.test'])
-            ->assertNotFound();
     }
 
     public function test_owner_can_still_manage_own_records(): void
@@ -139,7 +124,6 @@ class OwnershipTest extends TestCase
         $interview = $job->interviews()->create(['user_id' => $owner->id, 'interview_date' => now()->addDay()]);
         $todo = $owner->todos()->create(['text' => 'Mine']);
         $note = $owner->notes()->create(['title' => 'Mine', 'content' => '']);
-        $link = $owner->profile()->create(['name' => 'Owner'])->links()->create(['type' => 'GitHub', 'url' => 'https://github.com/owner']);
         $document = Document::factory()->for($owner)->create();
 
         $this->actingAs($owner);
@@ -147,16 +131,13 @@ class OwnershipTest extends TestCase
         $this->putJson("/api/interviews/{$interview->id}", ['location' => 'Office'])->assertOk();
         $this->putJson("/api/todos/{$todo->id}", ['done' => true])->assertOk();
         $this->putJson("/api/notes/{$note->id}", ['title' => 'Renamed'])->assertOk();
-        $this->putJson("/api/profile/links/{$link->id}", ['type' => 'GitLab', 'url' => 'https://gitlab.com/owner'])->assertOk();
         $this->patchJson("/api/documents/{$document->id}", ['name' => 'Renamed'])->assertOk();
 
         $this->deleteJson("/api/interviews/{$interview->id}")->assertNoContent();
         $this->deleteJson("/api/notes/{$note->id}")->assertNoContent();
-        $this->deleteJson("/api/profile/links/{$link->id}")->assertNoContent();
         $this->deleteJson("/api/documents/{$document->id}")->assertNoContent();
         $this->assertModelMissing($interview);
         $this->assertModelMissing($note);
-        $this->assertModelMissing($link);
         $this->assertModelMissing($document);
     }
 

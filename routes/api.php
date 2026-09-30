@@ -6,7 +6,6 @@ use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\NotesController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ProfileLinkController;
 use App\Http\Controllers\TodoController;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
@@ -38,9 +37,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
-    Route::apiResource('profile/links', ProfileLinkController::class)
-        ->except('show')
-        ->parameters(['links' => 'link']);
 
     Route::put('/account/password', [AuthController::class, 'updatePassword']);
     Route::put('/account/goals', [AuthController::class, 'updateGoals']);

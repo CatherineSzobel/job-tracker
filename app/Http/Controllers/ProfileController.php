@@ -11,7 +11,7 @@ class ProfileController extends Controller
 {
     public function show(Request $request): ProfileResource|JsonResponse
     {
-        $profile = $request->user()->profile()->with('links')->first();
+        $profile = $request->user()->profile;
 
         return $profile
             ? new ProfileResource($profile)
@@ -23,6 +23,6 @@ class ProfileController extends Controller
         $profile = $request->user()->profile;
         $profile->update($request->validated());
 
-        return new ProfileResource($profile->load('links'));
+        return new ProfileResource($profile);
     }
 }

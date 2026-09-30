@@ -6,7 +6,6 @@ use App\Models\Document;
 use App\Models\Interview;
 use App\Models\JobApplication;
 use App\Models\Note;
-use App\Models\ProfileLink;
 use App\Models\Todo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,8 +26,6 @@ class ApiResponseShapeTest extends TestCase
 
     private const NOTE = ['id', 'title', 'content', 'is_pinned', 'created_at'];
 
-    private const LINK = ['id', 'type', 'url'];
-
     private const DOCUMENT = ['id', 'kind', 'category', 'name', 'url', 'original_filename', 'mime_type', 'size', 'archived_at', 'created_at'];
 
     private User $user;
@@ -41,8 +38,6 @@ class ApiResponseShapeTest extends TestCase
 
     private Note $note;
 
-    private ProfileLink $link;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -54,7 +49,7 @@ class ApiResponseShapeTest extends TestCase
         $this->interview = $this->job->interviews()->create(['user_id' => $this->user->id, 'interview_date' => now()->addDay()]);
         $this->todo = $this->user->todos()->create(['text' => 'Follow up']);
         $this->note = $this->user->notes()->create(['title' => 'Idea', 'content' => '']);
-        $this->link = $this->user->profile()->create(['name' => 'Jane'])->links()->create(['type' => 'GitHub', 'url' => 'https://github.com/jane']);
+        $this->user->profile()->create(['name' => 'Jane']);
 
         $this->actingAs($this->user);
     }
@@ -170,20 +165,16 @@ class ApiResponseShapeTest extends TestCase
             ->assertExactJsonStructure(['data' => $listed]);
     }
 
-    public function test_profile_and_links(): void
+    public function test_profile(): void
     {
-        $profile = ['id', 'name', 'title', 'bio', 'location', 'links' => [self::LINK]];
+        $profile = ['id', 'name', 'title', 'bio', 'location'];
 
         $this->getJson('/api/profile')->assertOk()->assertExactJsonStructure(['data' => $profile]);
         $this->putJson('/api/profile', ['title' => 'Engineer'])->assertOk()->assertExactJsonStructure(['data' => $profile]);
+    }
 
-        $this->getJson('/api/profile/links')->assertOk()->assertExactJsonStructure(['data' => [self::LINK]]);
-        $this->postJson('/api/profile/links', ['type' => 'Site', 'url' => 'https://jane.dev'])
-            ->assertCreated()
-            ->assertExactJsonStructure(['data' => self::LINK]);
-        $this->putJson("/api/profile/links/{$this->link->id}", ['type' => 'GitLab', 'url' => 'https://gitlab.com/jane'])
-            ->assertOk()
-            ->assertExactJsonStructure(['data' => self::LINK]);
-        $this->deleteJson("/api/profile/links/{$this->link->id}")->assertNoContent();
+    public function test_profile_link_endpoints_are_gone(): void
+    {
+        $this->getJson('/api/profile/links')->assertNotFound();
     }
 }
