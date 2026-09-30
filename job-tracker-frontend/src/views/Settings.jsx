@@ -284,7 +284,7 @@ export default function Settings() {
         ) : (
           <form onSubmit={submitDeleteAccount} className="space-y-4">
             <p className="text-sm text-light-muted dark:text-dark-muted">
-              This will permanently delete your account, profile, links, job applications,
+              This will permanently delete your account, profile, documents, job applications,
               interviews, notes, and to-dos. Enter your password to confirm.
             </p>
 

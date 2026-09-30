@@ -11,7 +11,7 @@ export const NAV_LINKS = [
 // Account pages, shown in the navbar's user menu
 export const ACCOUNT_LINKS = [
   { to: "/profile", label: "Profile" },
-  { to: "/links", label: "Links" },
+  { to: "/documents", label: "Documents & links" },
   { to: "/settings", label: "Settings" },
 ];
 
