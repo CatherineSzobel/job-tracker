@@ -1,8 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
+import ManageTagsModal from "../components/Tags/ManageTagsModal";
+import TagChip from "../components/Tags/TagChip";
+import useTags from "../components/Tags/useTags";
 import PageLoader from "../components/UI/PageLoader";
 import Modal from "../components/UI/Modal";
 import { EMPTY_JOB, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
@@ -21,16 +24,24 @@ export default function Applications() {
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [tagFilter, setTagFilter] = useState([]);
+  const [showManageTags, setShowManageTags] = useState(false);
+  const { tags, reloadTags, updateTag, deleteTag } = useTags();
 
   const [newJob, setNewJob] = useState(EMPTY_JOB);
 
-  // Fetch jobs
+  // Also run after tags are renamed or deleted, so the cards show the new names
+  const loadJobs = useCallback(
+    () =>
+      API.get("/job-applications")
+        .then((res) => setJobs(res.data.data))
+        .catch((err) => console.error(err)),
+    []
+  );
+
   useEffect(() => {
-    API.get("/job-applications")
-      .then((res) => setJobs(res.data.data))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+    loadJobs().finally(() => setLoading(false));
+  }, [loadJobs]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -62,6 +73,28 @@ export default function Applications() {
     }
   };
 
+  const toggleTagFilter = (tagId) =>
+    setTagFilter((currentIds) =>
+      currentIds.includes(tagId) ? currentIds.filter((id) => id !== tagId) : [...currentIds, tagId]
+    );
+
+  const openManageTags = () => {
+    reloadTags();
+    setShowManageTags(true);
+  };
+
+  const closeManageTags = () => {
+    setShowManageTags(false);
+    loadJobs();
+  };
+
+  // A deleted tag can't stay in the filter, or no application would match
+  const removeTag = async (tag) => {
+    if (await deleteTag(tag)) {
+      setTagFilter((currentIds) => currentIds.filter((id) => id !== tag.id));
+    }
+  };
+
   if (loading) {
     return <PageLoader text="Loading Applications..."/>
   }
@@ -69,7 +102,8 @@ export default function Applications() {
   const filteredJobs = jobs.filter((job) => {
     const statusMatch = statusFilter === "all" || job.status === statusFilter;
     const priorityMatch = priorityFilter === "all" || job.priority === priorityFilter;
-    return statusMatch && priorityMatch;
+    const tagMatch = tagFilter.every((tagId) => job.tags?.some((tag) => tag.id === tagId));
+    return statusMatch && priorityMatch && tagMatch;
   });
 
   const exportJobs = async () => {
@@ -212,6 +246,25 @@ export default function Applications() {
               ))}
             </select>
           </div>
+
+          {tags.length > 0 && (
+            <div>
+              <span className="block mb-1 text-light-text dark:text-dark-text">Tags</span>
+              <div className="flex flex-wrap gap-1">
+                {tags.map((tag) => (
+                  <TagChip key={tag.id} tag={tag} active={tagFilter.includes(tag.id)} onClick={() => toggleTagFilter(tag.id)} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={openManageTags}
+            className="self-end text-sm text-accent dark:text-accent-muted hover:underline"
+          >
+            Manage tags
+          </button>
         </div>
       </div>
 
@@ -224,7 +277,7 @@ export default function Applications() {
             <JobCard
               key={job.id}
               job={job}
-              onRemove={(id) => setJobs((prev) => prev.filter((j) => j.id !== id))}
+              onRemove={(id) => setJobs((currentJobs) => currentJobs.filter((existing) => existing.id !== id))}
             />
           ))}
         </div>
@@ -241,6 +294,10 @@ export default function Applications() {
             handleChange={handleChange}
           />
         </Modal>
+      )}
+
+      {showManageTags && (
+        <ManageTagsModal tags={tags} onUpdate={updateTag} onDelete={removeTag} onClose={closeManageTags} />
       )}
     </div>
   );

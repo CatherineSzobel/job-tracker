@@ -4,6 +4,7 @@ import API from "../../api/axios";
 import { PRIORITY_CLASSES, STATUS_COLORS } from "../../constants/jobs";
 import { useSettingsStore } from "../../stores/useSettingsStore";
 import { useToastStore } from "../../stores/useToastStore";
+import CardTags from "../Tags/CardTags";
 import ArchiveTodosPrompt from "./ArchiveTodosPrompt";
 
 // onRemove(id) is called after the job is archived or deleted so the parent can drop it
@@ -107,6 +108,8 @@ export default function JobCard({ job, onRemove }) {
             {job.priority}
           </span>
         </div>
+
+        <CardTags tags={job.tags} />
       </div>
 
       <div className="mt-4 flex flex-col gap-2 text-sm text-muted dark:text-dark-muted">
