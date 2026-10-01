@@ -32,7 +32,23 @@ class JobApplication extends Model
             'priority' => Priority::class,
             'applied_date' => 'date:Y-m-d',
             'is_archived' => 'boolean',
+            'reminder_hidden_until' => 'datetime',
+            'reminder_dismissed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Applied, active applications with no update for $days days that the user hasn't dismissed:
+     * not hidden for today, and not dismissed since their last update (dismissing never moves updated_at).
+     */
+    public function scopeNeedsReminder(Builder $query, int $days): Builder
+    {
+        return $query
+            ->where('status', JobStatus::Applied)
+            ->where('is_archived', false)
+            ->where('updated_at', '<=', now()->subDays($days))
+            ->where(fn (Builder $hidden) => $hidden->whereNull('reminder_hidden_until')->orWhere('reminder_hidden_until', '<', now()))
+            ->where(fn (Builder $dismissed) => $dismissed->whereNull('reminder_dismissed_at')->orWhereColumn('reminder_dismissed_at', '<', 'updated_at'));
     }
 
     public function user(): BelongsTo

@@ -120,6 +120,20 @@ class ApiResponseShapeTest extends TestCase
             ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count', 'tags']]]);
     }
 
+    public function test_reminders(): void
+    {
+        $this->getJson('/api/reminders')->assertOk()->assertExactJsonStructure(['data' => ['applications', 'todos']]);
+
+        $this->user->update(['reminders_in_app' => true]);
+        $this->travel(8)->days();
+        $this->user->todos()->create(['text' => 'Call', 'due_date' => today()->toDateString()]);
+
+        $this->getJson('/api/reminders')
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => ['applications' => [[...self::JOB, 'days_since_update']], 'todos' => [self::TODO]]]);
+        $this->postJson("/api/job-applications/{$this->job->id}/dismiss-reminder")->assertNoContent();
+    }
+
     public function test_interviews(): void
     {
         $job = ['id', 'company_name', 'position'];
