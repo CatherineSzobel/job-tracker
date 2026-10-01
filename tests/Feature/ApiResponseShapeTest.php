@@ -30,6 +30,8 @@ class ApiResponseShapeTest extends TestCase
 
     private const TAG = ['id', 'name', 'color'];
 
+    private const SETTINGS = ['archive_todos', 'reminders_in_app', 'reminders_email', 'reminder_days', 'reminder_dismiss_mode'];
+
     private User $user;
 
     private JobApplication $job;
@@ -147,9 +149,9 @@ class ApiResponseShapeTest extends TestCase
 
     public function test_settings(): void
     {
-        $response = $this->getJson('/api/settings')->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
+        $response = $this->getJson('/api/settings')->assertOk()->assertExactJsonStructure(['data' => self::SETTINGS]);
         $this->assertHidden($response, 'data');
-        $this->putJson('/api/settings', ['archive_todos' => 'keep'])->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
+        $this->putJson('/api/settings', ['archive_todos' => 'keep'])->assertOk()->assertExactJsonStructure(['data' => self::SETTINGS]);
     }
 
     public function test_tags(): void
