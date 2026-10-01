@@ -4,13 +4,16 @@ import Modal from "../UI/Modal";
 import TagChip from "./TagChip";
 import { TAG_COLORS, TAG_COLOR_CLASSES, TAG_NAME_MAX } from "../../constants/tags";
 
-// Rename, recolour and delete tags; every change saves straight away.
-export default function ManageTagsModal({ tags, onUpdate, onDelete, onClose }) {
+// Create, rename, recolour and delete tags; every change saves straight away.
+// onCreate(name) returns the new tag, or null when it failed.
+export default function ManageTagsModal({ tags, onCreate, onUpdate, onDelete, onClose }) {
   return (
     <Modal title="Manage tags" onClose={onClose} maxWidth="max-w-lg">
+      <NewTagForm onCreate={onCreate} />
+
       {tags.length === 0 ? (
         <p className="text-sm text-light-muted dark:text-dark-muted">
-          No tags yet. Add one on an application or from the selection bar.
+          No tags yet. Create one above, or add one on an application.
         </p>
       ) : (
         <ul className="flex flex-col gap-5">
@@ -20,6 +23,42 @@ export default function ManageTagsModal({ tags, onUpdate, onDelete, onClose }) {
         </ul>
       )}
     </Modal>
+  );
+}
+
+// Name + Create; the colour is picked automatically and can be changed below
+function NewTagForm({ onCreate }) {
+  const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const trimmedName = name.trim();
+
+  const submit = async (event) => {
+    event.preventDefault();
+    if (!trimmedName || saving) return;
+    setSaving(true);
+    const tag = await onCreate(trimmedName);
+    setSaving(false);
+    if (tag) setName("");
+  };
+
+  return (
+    <form onSubmit={submit} className="flex gap-2 mb-5">
+      <input
+        value={name}
+        maxLength={TAG_NAME_MAX}
+        onChange={(event) => setName(event.target.value)}
+        placeholder="New tag…"
+        aria-label="New tag name"
+        className="input-field py-1 text-sm"
+      />
+      <button
+        type="submit"
+        disabled={!trimmedName || saving}
+        className="px-3 py-1 text-sm rounded-lg bg-accent text-surface hover:bg-accent-soft disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap transition-colors"
+      >
+        Create
+      </button>
+    </form>
   );
 }
 

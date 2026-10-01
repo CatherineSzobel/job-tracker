@@ -26,7 +26,7 @@ export default function Applications() {
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState([]);
   const [showManageTags, setShowManageTags] = useState(false);
-  const { tags, reloadTags, updateTag, deleteTag } = useTags();
+  const { tags, reloadTags, createTag, updateTag, deleteTag } = useTags();
 
   const [newJob, setNewJob] = useState(EMPTY_JOB);
 
@@ -79,6 +79,7 @@ export default function Applications() {
     );
 
   const openManageTags = () => {
+    setShowMenu(false);
     reloadTags();
     setShowManageTags(true);
   };
@@ -188,6 +189,12 @@ export default function Applications() {
                 </button>
                 <button
                   className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                  onClick={openManageTags}
+                >
+                  Manage tags
+                </button>
+                <button
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
                   onClick={exportJobs}
                 >
                   Export Excel
@@ -257,14 +264,6 @@ export default function Applications() {
               </div>
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={openManageTags}
-            className="self-end text-sm text-accent dark:text-accent-muted hover:underline"
-          >
-            Manage tags
-          </button>
         </div>
       </div>
 
@@ -297,7 +296,7 @@ export default function Applications() {
       )}
 
       {showManageTags && (
-        <ManageTagsModal tags={tags} onUpdate={updateTag} onDelete={removeTag} onClose={closeManageTags} />
+        <ManageTagsModal tags={tags} onCreate={createTag} onUpdate={updateTag} onDelete={removeTag} onClose={closeManageTags} />
       )}
     </div>
   );
