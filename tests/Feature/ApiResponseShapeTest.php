@@ -28,6 +28,8 @@ class ApiResponseShapeTest extends TestCase
 
     private const LINK = ['id', 'type', 'url'];
 
+    private const TAG = ['id', 'name', 'color'];
+
     private User $user;
 
     private JobApplication $job;
@@ -135,6 +137,17 @@ class ApiResponseShapeTest extends TestCase
         $response = $this->getJson('/api/settings')->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
         $this->assertHidden($response, 'data');
         $this->putJson('/api/settings', ['archive_todos' => 'keep'])->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
+    }
+
+    public function test_tags(): void
+    {
+        $response = $this->postJson('/api/tags', ['name' => 'remote'])->assertCreated()->assertExactJsonStructure(['data' => self::TAG]);
+        $this->assertHidden($response, 'data');
+        $tagId = $response->json('data.id');
+
+        $this->getJson('/api/tags')->assertOk()->assertExactJsonStructure(['data' => [[...self::TAG, 'applications_count']]]);
+        $this->patchJson("/api/tags/{$tagId}", ['color' => 'pink'])->assertOk()->assertExactJsonStructure(['data' => self::TAG]);
+        $this->deleteJson("/api/tags/{$tagId}")->assertNoContent();
     }
 
     public function test_notes(): void

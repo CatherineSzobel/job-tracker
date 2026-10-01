@@ -7,6 +7,7 @@ use App\Http\Controllers\NotesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileLinkController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\TagController;
 use App\Http\Controllers\TodoController;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
@@ -31,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('interviews', InterviewController::class)->only(['index', 'update', 'destroy']);
     Route::apiResource('todos', TodoController::class)->except('show');
     Route::apiResource('notes', NotesController::class)->except('show');
+    Route::apiResource('tags', TagController::class)->except('show');
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
