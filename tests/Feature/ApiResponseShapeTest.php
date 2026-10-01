@@ -111,6 +111,13 @@ class ApiResponseShapeTest extends TestCase
         $this->deleteJson("/api/job-applications/{$this->job->id}")->assertNoContent();
     }
 
+    public function test_batch_update(): void
+    {
+        $this->patchJson('/api/job-applications/batch', ['ids' => [$this->job->id], 'status' => 'offer'])
+            ->assertOk()
+            ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count', 'tags']]]);
+    }
+
     public function test_interviews(): void
     {
         $job = ['id', 'company_name', 'position'];

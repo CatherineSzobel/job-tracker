@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\JobApplication\BatchUpdateJobApplicationsRequest;
 use App\Http\Requests\JobApplication\JobApplicationImportRequest;
 use App\Http\Requests\JobApplication\ScheduleInterviewRequest;
 use App\Http\Requests\JobApplication\StoreJobApplicationRequest;
@@ -59,6 +60,18 @@ class JobApplicationController extends Controller
         );
 
         return $this->detailed($updatedJob);
+    }
+
+    public function batchUpdate(BatchUpdateJobApplicationsRequest $request): AnonymousResourceCollection
+    {
+        $jobs = $this->jobApplicationService->batchUpdate(
+            $request->user(),
+            $request->validated('ids'),
+            $request->safe()->only(['status', 'is_archived', 'add_tag_ids', 'remove_tag_ids']),
+            $request->has('delete_open_todos') ? $request->boolean('delete_open_todos') : null,
+        );
+
+        return JobApplicationResource::collection($jobs);
     }
 
     public function syncTags(SyncJobApplicationTagsRequest $request, JobApplication $jobApplication): JobApplicationResource
