@@ -1,14 +1,32 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { CalendarDays, LayoutGrid } from "lucide-react";
 import API from "../api/axios";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
+import JobGroups from "../components/JobApplications/JobGroups";
 import ManageTagsModal from "../components/Tags/ManageTagsModal";
 import TagChip from "../components/Tags/TagChip";
 import useTags from "../components/Tags/useTags";
 import PageLoader from "../components/UI/PageLoader";
 import Modal from "../components/UI/Modal";
 import { EMPTY_JOB, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
+
+const VIEW_STORAGE_KEY = "applications-view";
+
+const VIEW_OPTIONS = [
+  { value: "grid", label: "Grid", icon: LayoutGrid },
+  { value: "grouped", label: "Grouped by date", icon: CalendarDays },
+];
+
+// Remembered per browser. localStorage can throw (private windows, blocked storage).
+function readSavedView() {
+  try {
+    return localStorage.getItem(VIEW_STORAGE_KEY) === "grouped" ? "grouped" : "grid";
+  } catch {
+    return "grid";
+  }
+}
 
 export default function Applications() {
   const fileInputRef = useRef(null);
@@ -26,6 +44,7 @@ export default function Applications() {
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState([]);
   const [showManageTags, setShowManageTags] = useState(false);
+  const [view, setView] = useState(readSavedView);
   const { tags, reloadTags, createTag, updateTag, deleteTag } = useTags();
 
   const [newJob, setNewJob] = useState(EMPTY_JOB);
@@ -89,6 +108,15 @@ export default function Applications() {
     loadJobs();
   };
 
+  const changeView = (nextView) => {
+    setView(nextView);
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, nextView);
+    } catch {
+      // Storage unavailable: the choice lasts for this visit only
+    }
+  };
+
   // A deleted tag can't stay in the filter, or no application would match
   const removeTag = async (tag) => {
     if (await deleteTag(tag)) {
@@ -106,6 +134,14 @@ export default function Applications() {
     const tagMatch = tagFilter.every((tagId) => job.tags?.some((tag) => tag.id === tagId));
     return statusMatch && priorityMatch && tagMatch;
   });
+
+  const renderJob = (job) => (
+    <JobCard
+      key={job.id}
+      job={job}
+      onRemove={(id) => setJobs((currentJobs) => currentJobs.filter((existing) => existing.id !== id))}
+    />
+  );
 
   const exportJobs = async () => {
     try {
@@ -164,6 +200,30 @@ export default function Applications() {
           </h1>
 
           <div className="flex items-center gap-2 relative" ref={dropdownRef}>
+            {/* View: icon buttons, the name shows as a tooltip */}
+            <div
+              role="group"
+              aria-label="View"
+              className="flex rounded-md border border-light-muted dark:border-dark-subtle overflow-hidden"
+            >
+              {VIEW_OPTIONS.map((option) => {
+                const ViewIcon = option.icon;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => changeView(option.value)}
+                    aria-pressed={view === option.value}
+                    aria-label={option.label}
+                    title={option.label}
+                    className={`w-9 h-9 flex items-center justify-center transition-colors ${view === option.value ? "bg-accent text-surface" : "text-light-muted dark:text-dark-muted hover:bg-light-soft dark:hover:bg-dark-subtle"}`}
+                  >
+                    <ViewIcon size={18} aria-hidden="true" />
+                  </button>
+                );
+              })}
+            </div>
+
             <button
               className="px-4 py-2 rounded-md text-sm bg-accent-soft hover:bg-accent text-surface font-semibold transition-colors"
               onClick={() => setShowForm(true)}
@@ -270,15 +330,11 @@ export default function Applications() {
       {/* JOB LIST */}
       {filteredJobs.length === 0 ? (
         <p className="text-center text-muted dark:text-dark-muted">No applications found.</p>
+      ) : view === "grouped" ? (
+        <JobGroups jobs={filteredJobs} renderJob={renderJob} />
       ) : (
         <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-          {filteredJobs.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              onRemove={(id) => setJobs((currentJobs) => currentJobs.filter((existing) => existing.id !== id))}
-            />
-          ))}
+          {filteredJobs.map(renderJob)}
         </div>
       )}
 
