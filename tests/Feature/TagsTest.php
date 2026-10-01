@@ -167,4 +167,73 @@ class TagsTest extends TestCase
         $this->assertModelExists($job);
         $this->assertFalse($job->tags()->exists());
     }
+
+    public function test_sets_the_tags_of_an_application(): void
+    {
+        $user = User::factory()->create();
+        $job = $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer']);
+        $remote = Tag::factory()->for($user)->create(['name' => 'remote']);
+        $fintech = Tag::factory()->for($user)->create(['name' => 'fintech']);
+        $job->tags()->attach($remote);
+
+        $this->actingAs($user)->putJson("/api/job-applications/{$job->id}/tags", ['tag_ids' => [$remote->id, $fintech->id]])
+            ->assertOk()
+            ->assertJsonPath('data.tags.0.name', 'fintech')
+            ->assertJsonPath('data.tags.1.name', 'remote');
+
+        $this->putJson("/api/job-applications/{$job->id}/tags", ['tag_ids' => []])
+            ->assertOk()
+            ->assertJsonCount(0, 'data.tags');
+
+        $this->assertFalse($job->tags()->exists());
+    }
+
+    public function test_an_application_cannot_get_another_users_tag(): void
+    {
+        $user = User::factory()->create();
+        $job = $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer']);
+        $theirTag = Tag::factory()->create();
+
+        $this->actingAs($user)->putJson("/api/job-applications/{$job->id}/tags", ['tag_ids' => [$theirTag->id]])
+            ->assertJsonValidationErrors('tag_ids.0');
+
+        $this->assertFalse($job->tags()->exists());
+    }
+
+    public function test_application_list_and_detail_include_tags_sorted_by_name(): void
+    {
+        $user = User::factory()->create();
+        $job = $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer']);
+        $job->tags()->attach([
+            Tag::factory()->for($user)->create(['name' => 'remote'])->id,
+            Tag::factory()->for($user)->create(['name' => 'fintech'])->id,
+        ]);
+
+        $this->actingAs($user)->getJson('/api/job-applications')
+            ->assertOk()
+            ->assertJsonPath('data.0.tags.0.name', 'fintech')
+            ->assertJsonPath('data.0.tags.1.name', 'remote');
+        $this->getJson("/api/job-applications/{$job->id}")
+            ->assertOk()
+            ->assertJsonCount(2, 'data.tags');
+    }
+
+    public function test_saving_the_whole_application_keeps_and_returns_its_tags(): void
+    {
+        $user = User::factory()->create();
+        $job = $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer']);
+        $tag = Tag::factory()->for($user)->create();
+        $job->tags()->attach($tag);
+
+        // The job page PUTs the whole job, including its tags array
+        $this->actingAs($user)->putJson("/api/job-applications/{$job->id}", [
+            'company_name' => 'Globex',
+            'tags' => [['id' => 999, 'name' => 'injected', 'color' => 'red']],
+        ])
+            ->assertOk()
+            ->assertJsonCount(1, 'data.tags')
+            ->assertJsonPath('data.tags.0.id', $tag->id);
+
+        $this->assertSame([$tag->id], $job->tags()->pluck('tags.id')->all());
+    }
 }

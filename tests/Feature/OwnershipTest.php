@@ -98,6 +98,7 @@ class OwnershipTest extends TestCase
             ['deleteJson', "/api/profile/links/{$link->id}"],
             ['patchJson', "/api/tags/{$tag->id}", ['name' => 'Hacked']],
             ['deleteJson', "/api/tags/{$tag->id}"],
+            ['putJson', "/api/job-applications/{$job->id}/tags", ['tag_ids' => []]],
         ];
 
         foreach ($requests as $request) {

@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/job-applications/import', [JobApplicationController::class, 'import']);
     Route::apiResource('job-applications', JobApplicationController::class);
     Route::post('/job-applications/{job_application}/interviews', [JobApplicationController::class, 'scheduleInterview']);
+    Route::put('/job-applications/{job_application}/tags', [JobApplicationController::class, 'syncTags']);
 
     Route::apiResource('interviews', InterviewController::class)->only(['index', 'update', 'destroy']);
     Route::apiResource('todos', TodoController::class)->except('show');

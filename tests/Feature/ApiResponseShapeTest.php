@@ -76,9 +76,11 @@ class ApiResponseShapeTest extends TestCase
 
     public function test_job_applications(): void
     {
+        $this->job->tags()->attach($this->user->tags()->create(['name' => 'remote', 'color' => 'blue']));
+
         $list = $this->getJson('/api/job-applications')
             ->assertOk()
-            ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count']]])
+            ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count', 'tags' => [self::TAG]]]])
             ->assertJsonPath('data.0.applied_date', '2026-09-01')
             ->assertJsonPath('data.0.is_archived', false);
         $this->assertHidden($list, 'data.0');
@@ -90,12 +92,16 @@ class ApiResponseShapeTest extends TestCase
 
         $this->getJson("/api/job-applications/{$this->job->id}")
             ->assertOk()
-            ->assertJsonStructure(['data' => [...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count']])
+            ->assertJsonStructure(['data' => [...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count', 'tags' => [self::TAG]]])
             ->assertJsonMissingPath('success');
 
         $this->putJson("/api/job-applications/{$this->job->id}", ['status' => 'offer'])
             ->assertOk()
             ->assertJsonPath('data.status', 'offer');
+
+        $this->putJson("/api/job-applications/{$this->job->id}/tags", ['tag_ids' => []])
+            ->assertOk()
+            ->assertJsonStructure(['data' => [...self::JOB, 'tags']]);
 
         $this->postJson("/api/job-applications/{$this->job->id}/interviews", ['interview_date' => now()->addWeek()->toDateTimeString()])
             ->assertCreated()

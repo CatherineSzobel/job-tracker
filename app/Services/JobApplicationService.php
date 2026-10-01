@@ -107,7 +107,7 @@ class JobApplicationService
      */
     public function filter(User $user, array $filters = []): Collection
     {
-        $query = $user->jobApplications()->with('interviews')->withCount(JobApplication::openTodosCount());
+        $query = $user->jobApplications()->with(['interviews', 'tags'])->withCount(JobApplication::openTodosCount());
 
         if (! array_key_exists('archived', $filters)) {
             $query->where('is_archived', false);
