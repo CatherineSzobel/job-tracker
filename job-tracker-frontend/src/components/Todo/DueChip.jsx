@@ -9,12 +9,15 @@ const STATE_CLASSES = {
 
 // A done to-do just shows its date: it can't be overdue any more
 export default function DueChip({ dueDate, done = false }) {
-  const { label, state } = describeDueDate(dueDate);
-  if (state === "none") return null;
+  if (!dueDate) return null;
+
+  const { label, state } = done
+    ? { label: formatDueDate(dueDate), state: "upcoming" }
+    : describeDueDate(dueDate);
 
   return (
-    <span className={`px-2 py-0.5 text-xs rounded-full whitespace-nowrap ${done ? STATE_CLASSES.upcoming : STATE_CLASSES[state]}`}>
-      {done ? formatDueDate(dueDate) : label}
+    <span className={`px-2 py-0.5 text-xs rounded-full whitespace-nowrap ${STATE_CLASSES[state]}`}>
+      {label}
     </span>
   );
 }
