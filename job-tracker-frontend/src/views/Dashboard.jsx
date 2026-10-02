@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import API from "../api/axios";
 import TodoList from "../components/ToDoList";
 import DashboardTabs from "../components/Dashboard/DashboardTabs";
+import ComingUp from "../components/Dashboard/ComingUp";
 import Reminders from "../components/Dashboard/Reminders";
 import StatusBadges from "../components/Dashboard/Status/StatusBadges";
 import StatusGrid from "../components/Dashboard/Status/StatusGrid";
@@ -82,8 +83,9 @@ export default function Dashboard() {
           <StatusGrid stats={stats} />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-5">
+            <div className="lg:col-span-5 flex flex-col gap-6">
               <StatusBadges stats={stats} />
+              <GoalStats stats={stats} dailyGoal={dailyGoal} weeklyGoal={weeklyGoal} />
             </div>
             <div className="lg:col-span-7 bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
               <h3 className="text-md font-semibold mb-2 text-light-text dark:text-white">Applications Breakdown</h3>
@@ -98,8 +100,9 @@ export default function Dashboard() {
           aria-labelledby="dashboard-tab-today"
           className="grid grid-cols-1 lg:grid-cols-12 gap-6"
         >
-          {/* On phones the two columns stack: Reminders, Coming up, Quick to-dos, Goals, Notes */}
+          {/* On phones the two columns stack: Coming up, Reminders, Quick to-dos, Notes */}
           <div className="lg:col-span-7 flex flex-col gap-6">
+            <ComingUp reloadSignal={reloads.comingUp} />
             {/* Reminders: only shows up when something is due */}
             <Reminders reloadSignal={reloads.reminders} onTodosChanged={() => todosChangedIn("reminders")} />
           </div>
@@ -109,8 +112,6 @@ export default function Dashboard() {
               <h2 className="text-lg font-semibold mb-4 text-light-text dark:text-white">Quick to-dos</h2>
               <TodoList reloadSignal={reloads.quickTodos} onTodosChanged={() => todosChangedIn("quickTodos")} />
             </div>
-
-            <GoalStats stats={stats} dailyGoal={dailyGoal} weeklyGoal={weeklyGoal} />
 
             <div className="bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 flex flex-col transition-shadow hover:shadow-xl">
               <Notes />
