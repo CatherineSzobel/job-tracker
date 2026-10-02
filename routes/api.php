@@ -49,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reminders', [ReminderController::class, 'index']);
 
     Route::put('/account/password', [AuthController::class, 'updatePassword']);
+    Route::put('/account/email', [AuthController::class, 'updateEmail']);
     Route::put('/account/goals', [AuthController::class, 'updateGoals']);
     Route::delete('/account', [AuthController::class, 'deleteAccount']);
 });

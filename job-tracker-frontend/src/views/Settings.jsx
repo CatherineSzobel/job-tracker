@@ -22,6 +22,11 @@ export default function Settings() {
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
 
+  const [emailForm, setEmailForm] = useState({ email: "", current_password: "" });
+  const [emailError, setEmailError] = useState("");
+  const [emailSuccess, setEmailSuccess] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
+
   // Goals
   const user = useAuthStore((state) => state.user);
   const [goalsForm, setGoalsForm] = useState({
@@ -79,6 +84,32 @@ export default function Settings() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
+
+  // Each input's name is the form field it fills
+  const changeEmailForm = (event) =>
+    setEmailForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+
+  const submitEmailChange = async (event) => {
+    event.preventDefault();
+    setEmailError("");
+    setEmailSuccess("");
+    setSavingEmail(true);
+    try {
+      const res = await API.put("/account/email", emailForm);
+      // Everything that shows the email (e.g. the reminders line below) reads it from the stored user
+      useAuthStore.setState({ user: res.data.data });
+      setEmailSuccess("Email updated.");
+      setEmailForm({ email: "", current_password: "" });
+    } catch (err) {
+      setEmailError(err.response?.data?.message || "Failed to update email");
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
+  // Each input's name is the form field it fills
+  const changePasswordForm = (event) =>
+    setPasswordForm((current) => ({ ...current, [event.target.name]: event.target.value }));
 
   const submitPasswordChange = async (e) => {
     e.preventDefault();
@@ -146,6 +177,61 @@ export default function Settings() {
           Account &amp; security
         </h2>
 
+        {/* Email */}
+        <div className="space-y-3 pb-4 border-b border-border dark:border-dark-subtle">
+          <p className="text-sm text-light-muted dark:text-dark-muted">
+            Email: <span className="font-medium text-light-text dark:text-dark-text">{user?.email}</span>
+          </p>
+
+          {user?.is_demo ? (
+            <p className="text-sm text-light-muted dark:text-dark-muted">The demo account&apos;s email can&apos;t be changed.</p>
+          ) : (
+            <>
+              {emailError && (
+                <div className="text-red-700 bg-red-100 border border-red-300 p-3 rounded-lg text-sm">{emailError}</div>
+              )}
+              {emailSuccess && (
+                <div className="text-green-700 bg-green-100 border border-green-300 p-3 rounded-lg text-sm">{emailSuccess}</div>
+              )}
+
+              <form onSubmit={submitEmailChange} className="space-y-4">
+                <div>
+                  <label className="input-label">New email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    className="input-field"
+                    value={emailForm.email}
+                    onChange={changeEmailForm}
+                    maxLength={255}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="input-label">Current password</label>
+                  <input
+                    type="password"
+                    name="current_password"
+                    className="input-field"
+                    value={emailForm.current_password}
+                    onChange={changeEmailForm}
+                    required
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+                    disabled={savingEmail}
+                  >
+                    {savingEmail ? "Updating..." : "Update email"}
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
+        </div>
+
         {passwordError && (
           <div className="text-red-700 bg-red-100 border border-red-300 p-3 rounded-lg text-sm">
             {passwordError}
@@ -164,11 +250,10 @@ export default function Settings() {
             </label>
             <input
               type="password"
+              name="current_password"
               className="input-field"
               value={passwordForm.current_password}
-              onChange={(e) =>
-                setPasswordForm((prev) => ({ ...prev, current_password: e.target.value }))
-              }
+              onChange={changePasswordForm}
               required
             />
           </div>
@@ -179,11 +264,10 @@ export default function Settings() {
             </label>
             <input
               type="password"
+              name="password"
               className="input-field"
               value={passwordForm.password}
-              onChange={(e) =>
-                setPasswordForm((prev) => ({ ...prev, password: e.target.value }))
-              }
+              onChange={changePasswordForm}
               minLength={8}
               required
             />
@@ -195,11 +279,10 @@ export default function Settings() {
             </label>
             <input
               type="password"
+              name="password_confirmation"
               className="input-field"
               value={passwordForm.password_confirmation}
-              onChange={(e) =>
-                setPasswordForm((prev) => ({ ...prev, password_confirmation: e.target.value }))
-              }
+              onChange={changePasswordForm}
               minLength={8}
               required
             />
