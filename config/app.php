@@ -67,6 +67,11 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
+    | Where the React app lives, for links in emails (e.g. http://localhost:5173 locally).
+    */
+    'frontend_url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost')),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
