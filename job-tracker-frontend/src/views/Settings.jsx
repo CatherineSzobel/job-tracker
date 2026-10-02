@@ -7,6 +7,7 @@ import { useThemeStore } from "../stores/useThemeStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
 import { DEFAULT_GOALS } from "../constants/jobs";
 import { ARCHIVE_TODOS_OPTIONS } from "../constants/todos";
+import { REMINDER_DAYS_MAX, REMINDER_DAYS_MIN, REMINDER_DISMISS_OPTIONS } from "../constants/reminders";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -31,11 +32,14 @@ export default function Settings() {
   const [goalsSuccess, setGoalsSuccess] = useState("");
   const [savingGoals, setSavingGoals] = useState(false);
 
-  // To-dos: saves as soon as an option is picked
+  // To-dos and Reminders: each control saves as soon as it changes
   const settings = useSettingsStore((state) => state.settings);
   const loadSettings = useSettingsStore((state) => state.loadSettings);
   const updateSettings = useSettingsStore((state) => state.updateSettings);
   const [archiveTodosError, setArchiveTodosError] = useState("");
+  const [reminderError, setReminderError] = useState("");
+  // While the number field is being edited; saved on blur
+  const [reminderDaysDraft, setReminderDaysDraft] = useState(null);
 
   useEffect(() => {
     loadSettings().catch((err) => {
@@ -45,17 +49,25 @@ export default function Settings() {
     });
   }, [loadSettings]);
 
-  const changeArchiveTodos = async (value) => {
-    const previous = settings;
-    setArchiveTodosError("");
-    useSettingsStore.setState({ settings: { ...settings, archive_todos: value } });
+  // The store shows the change at once and undoes it on failure; setError is the section's error setter
+  const saveSettings = async (changes, setError) => {
+    setError("");
     try {
-      await updateSettings({ archive_todos: value });
+      await updateSettings(changes);
     } catch (err) {
       console.error(err);
-      useSettingsStore.setState({ settings: previous });
-      setArchiveTodosError("Couldn't save. Please try again.");
+      setError(err.response?.data?.message || "Couldn't save. Please try again.");
     }
+  };
+
+  // An emptied or unchanged field just goes back to the saved number, without an error
+  const saveReminderDays = () => {
+    const draft = reminderDaysDraft;
+    setReminderDaysDraft(null);
+    if (draft === null || draft.trim() === "") return;
+    const days = Number(draft);
+    if (!Number.isInteger(days) || days === settings.reminder_days) return;
+    saveSettings({ reminder_days: days }, setReminderError);
   };
 
   // Appearance
@@ -284,7 +296,7 @@ export default function Settings() {
                 name="archive_todos"
                 value={value}
                 checked={settings?.archive_todos === value}
-                onChange={() => changeArchiveTodos(value)}
+                onChange={() => saveSettings({ archive_todos: value }, setArchiveTodosError)}
               />
               {label}
             </label>
@@ -315,6 +327,66 @@ export default function Settings() {
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </div>
+      </section>
+
+      {/* Reminders */}
+      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-4 transition-colors">
+        <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">Reminders</h2>
+        <fieldset disabled={!settings} className="space-y-4">
+          <label className="flex items-center gap-3 text-light-text dark:text-dark-text">
+            <input
+              type="checkbox"
+              checked={settings?.reminders_in_app ?? false}
+              onChange={(event) => saveSettings({ reminders_in_app: event.target.checked }, setReminderError)}
+              className="h-5 w-5 accent-accent"
+            />
+            In-app reminders (on the dashboard)
+          </label>
+
+          <div>
+            <label className="flex items-center gap-3 text-light-text dark:text-dark-text">
+              <input
+                type="checkbox"
+                checked={settings?.reminders_email ?? false}
+                onChange={(event) => saveSettings({ reminders_email: event.target.checked }, setReminderError)}
+                className="h-5 w-5 accent-accent"
+              />
+              Email reminders
+            </label>
+            <p className="ml-8 text-sm text-light-muted dark:text-dark-muted">Sent daily at 8:00 to {user?.email}</p>
+          </div>
+
+          <label className="flex flex-wrap items-center gap-2 text-light-text dark:text-dark-text">
+            Remind me after
+            <input
+              type="number"
+              min={REMINDER_DAYS_MIN}
+              max={REMINDER_DAYS_MAX}
+              value={reminderDaysDraft ?? settings?.reminder_days ?? ""}
+              onChange={(event) => setReminderDaysDraft(event.target.value)}
+              onBlur={saveReminderDays}
+              className="input-field w-20 py-1"
+            />
+            days without an update
+          </label>
+
+          <div className="space-y-2">
+            <p className="text-sm text-light-muted dark:text-dark-muted">Dismiss hides a reminder:</p>
+            {REMINDER_DISMISS_OPTIONS.map(({ value, label }) => (
+              <label key={value} className="flex items-center gap-2 text-light-text dark:text-dark-text">
+                <input
+                  type="radio"
+                  name="reminder_dismiss_mode"
+                  value={value}
+                  checked={settings?.reminder_dismiss_mode === value}
+                  onChange={() => saveSettings({ reminder_dismiss_mode: value }, setReminderError)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        {reminderError && <p className="text-sm text-red-500 dark:text-red-400">{reminderError}</p>}
       </section>
 
       {/* Danger zone */}

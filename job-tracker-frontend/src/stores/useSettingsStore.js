@@ -21,10 +21,22 @@ export const useSettingsStore = create((set, get) => ({
         return res.data.data
     },
 
-    // Throws on failure so the caller can revert and show an error
+    // Optimistic: shows the new values at once; on failure puts the old ones back and rethrows,
+    // so the caller can show an error. Only the changed keys are written back either way, so a slow
+    // or failed save can't undo another setting changed in the meantime.
     updateSettings: async (changes) => {
-        const res = await API.put('/settings', changes)
-        set({ settings: res.data.data })
-        return res.data.data
+        const changedKeys = Object.keys(changes)
+        const previousValues = Object.fromEntries(changedKeys.map((key) => [key, get().settings?.[key]]))
+        const applyValues = (values) => set({ settings: { ...get().settings, ...values } })
+
+        applyValues(changes)
+        try {
+            const res = await API.put('/settings', changes)
+            applyValues(Object.fromEntries(changedKeys.map((key) => [key, res.data.data[key]])))
+            return get().settings
+        } catch (err) {
+            applyValues(previousValues)
+            throw err
+        }
     },
 }))
