@@ -16,8 +16,9 @@ const DISMISS_HINTS = {
 // Applications to follow up and to-dos that are due. Renders nothing while loading or when there's
 // nothing to show (which includes reminders being off), so the dashboard looks the same as before.
 // onTodosChanged(): a to-do was marked done or moved, so other to-do lists on the page should reload.
-export default function Reminders({ onTodosChanged }) {
-  const { applications, todos, loading, dismissMode, dismiss, markTodoDone, postponeTodo } = useReminders(onTodosChanged);
+// reloadSignal: changes when another widget changed a to-do; the card refetches without flickering.
+export default function Reminders({ onTodosChanged, reloadSignal }) {
+  const { applications, todos, loading, dismissMode, dismiss, markTodoDone, postponeTodo } = useReminders(onTodosChanged, reloadSignal);
 
   if (loading || (applications.length === 0 && todos.length === 0)) return null;
 

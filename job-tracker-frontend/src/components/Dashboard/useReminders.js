@@ -10,8 +10,9 @@ const byDueDate = (first, second) => (first.due_date < second.due_date ? -1 : 1)
 
 // GET /api/reminders plus the card's actions. Every action is optimistic: the row disappears at once
 // and comes back (with a toast) if the request fails. onTodosChanged() runs after a to-do was saved,
-// so the Dashboard can reload the Quick Todo widget.
-export default function useReminders(onTodosChanged) {
+// so the Dashboard can reload its other to-do widgets. A new reloadSignal refetches without
+// showing the loader again.
+export default function useReminders(onTodosChanged, reloadSignal = 0) {
   const [applications, setApplications] = useState([]);
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,15 +21,21 @@ export default function useReminders(onTodosChanged) {
   const dismissMode = useSettingsStore((state) => state.settings?.reminder_dismiss_mode ?? null);
 
   useEffect(() => {
+    // Ignore a response that arrives after a newer reload started
+    let current = true;
     API.get("/reminders")
       .then((res) => {
+        if (!current) return;
         setApplications(res.data.data.applications);
         setTodos(res.data.data.todos);
       })
       .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+      .finally(() => current && setLoading(false));
     loadSettings().catch((err) => console.error(err));
-  }, [loadSettings]);
+    return () => {
+      current = false;
+    };
+  }, [loadSettings, reloadSignal]);
 
   const dismiss = async (job) => {
     setApplications((currentJobs) => currentJobs.filter((existing) => existing.id !== job.id));

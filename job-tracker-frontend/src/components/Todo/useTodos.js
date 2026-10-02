@@ -19,7 +19,7 @@ export function sortTodos(todos) {
 
 // The user's to-dos (or one application's) plus actions that keep the list in order.
 // Failures are reported with a toast.
-export default function useTodos({ job_application_id: applicationId } = {}) {
+export default function useTodos({ job_application_id: applicationId, reloadSignal = 0 } = {}) {
   const [todos, setTodos] = useState([]);
   // Which list is loaded ("all" or an application id): loading until it matches the one asked for,
   // so switching applications shows the loader instead of the previous application's to-dos
@@ -27,8 +27,10 @@ export default function useTodos({ job_application_id: applicationId } = {}) {
   const [loadedKey, setLoadedKey] = useState(null);
   const loading = loadedKey !== listKey;
 
+  // Loads the list, and again, quietly, when reloadSignal changes (the Dashboard bumps it when
+  // another widget changed a to-do)
   useEffect(() => {
-    // Ignore a response that arrives after we've moved on to another application
+    // Ignore a response that arrives after we've moved on to another application or a newer reload
     let current = true;
     API.get("/todos", { params: applicationId ? { job_application_id: applicationId } : {} })
       .then((res) => current && setTodos(res.data.data))
@@ -37,7 +39,7 @@ export default function useTodos({ job_application_id: applicationId } = {}) {
     return () => {
       current = false;
     };
-  }, [applicationId]);
+  }, [applicationId, reloadSignal]);
 
   const replace = (id, todo) =>
     setTodos((currentTodos) => sortTodos(currentTodos.map((existing) => (existing.id === id ? todo : existing))));
