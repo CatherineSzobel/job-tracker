@@ -78,6 +78,15 @@ export default function Notes() {
         }
     };
 
+    const startEditing = (note) => {
+        setEditingId(note.id);
+        setEditingNote({
+            title: note.title,
+            content: note.content,
+            is_pinned: note.is_pinned,
+        });
+    };
+
     const saveEdit = async (id) => {
         if (!editingNote.title.trim()) return;
 
@@ -117,7 +126,7 @@ export default function Notes() {
         <div className="flex flex-col gap-4">
             {/* Header */}
             <div className="flex justify-between items-center">
-                <h2 className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-white">
+                <h2 className="card-title">
                     <StickyNote size={18} aria-hidden="true" />
                     Notes
                 </h2>
@@ -218,31 +227,15 @@ export default function Notes() {
                                         {note.is_pinned ? "Unpin" : "Pin"}
                                     </button>
 
-                                    {editingId === note.id ? (
-                                        <button
-                                            className="btn-small"
-                                            onClick={() => saveEdit(note.id)}
-                                        >
-                                            Save
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className="btn-small"
-                                            onClick={() => {
-                                                setEditingId(note.id);
-                                                setEditingNote({
-                                                    title: note.title,
-                                                    content: note.content,
-                                                    is_pinned: note.is_pinned,
-                                                });
-                                            }}
-                                        >
-                                            Edit
-                                        </button>
-                                    )}
+                                    <button
+                                        className="btn-small"
+                                        onClick={() => (editingId === note.id ? saveEdit(note.id) : startEditing(note))}
+                                    >
+                                        {editingId === note.id ? "Save" : "Edit"}
+                                    </button>
 
                                     <button
-                                        className="btn-small text-red-500 dark:text-red-400"
+                                        className="btn-small-danger"
                                         onClick={() => deleteNote(note.id)}
                                     >
                                         Delete

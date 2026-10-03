@@ -161,7 +161,10 @@ export default function Application() {
                 tags={allTags}
                 excludeIds={jobTagIds}
                 onCreate={createTag}
-                onSelect={(tag) => saveTags([...jobTagIds, tag.id])}
+                // Typing the name of a tag the job already has selects it too; adding it twice would fail
+                onSelect={(tag) => {
+                  if (!jobTagIds.includes(tag.id)) saveTags([...jobTagIds, tag.id]);
+                }}
               />
             </div>
           </div>

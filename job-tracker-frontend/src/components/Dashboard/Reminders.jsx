@@ -14,8 +14,8 @@ export default function Reminders() {
   const { applications, loading, dismissMode, dismiss } = useReminders();
 
   return (
-    <div className="bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
-      <h2 className="flex items-center gap-2 text-lg font-semibold mb-4 text-light-text dark:text-white">
+    <div className="card">
+      <h2 className="card-title mb-4">
         <Bell size={18} aria-hidden="true" />
         Reminders
       </h2>

@@ -16,18 +16,18 @@ const INTERVIEW_TYPE_ICONS = { phone: Phone, online: Video, onsite: Building2 };
 const interviewTypeLabel = (type) => INTERVIEW_TYPES.find((option) => option.value === type)?.label ?? type;
 
 // This week's interviews and to-dos, by day ("Today", "Tomorrow", "Thu 9 Oct"). Read-only:
-// to-dos are ticked in Quick to-dos; reloadSignal changes when they do, and the card refetches quietly.
-export default function ComingUp({ reloadSignal }) {
-  const { days, loading } = useComingUp(reloadSignal);
+// to-dos are ticked in Quick to-dos, which shares its to-do list with this card.
+export default function ComingUp({ todos, todosLoading }) {
+  const { days, loading: interviewsLoading } = useComingUp(todos);
 
   return (
-    <div className="bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
-      <h2 className="flex items-center gap-2 text-lg font-semibold mb-4 text-light-text dark:text-white">
+    <div className="card">
+      <h2 className="card-title mb-4">
         <CalendarDays size={18} aria-hidden="true" />
         Coming up
       </h2>
 
-      {loading ? (
+      {interviewsLoading || todosLoading ? (
         <PageLoader text="Loading your week..." compact />
       ) : days.length === 0 ? (
         <p className="text-sm text-light-muted dark:text-dark-muted">Nothing in the next {COMING_UP_DAYS} days.</p>

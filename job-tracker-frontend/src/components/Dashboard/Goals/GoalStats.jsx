@@ -18,8 +18,8 @@ export default function GoalStats({ stats, dailyGoal, weeklyGoal }) {
 
     return (
         // h-full + justify-evenly: fills the height of the card next to it and spreads the bars out
-        <div className="h-full flex flex-col bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 transition-colors transition-shadow hover:shadow-xl">
-            <h2 className="text-lg font-semibold mb-4 text-light-text dark:text-white">Goals</h2>
+        <div className="card h-full flex flex-col">
+            <h2 className="card-title mb-4">Goals</h2>
             <div className="flex-1 flex flex-col justify-evenly gap-6">
                 {goalItems.map(({ label, currentKey, goal, barColor }) => {
                     const current = stats?.[currentKey] ?? 0;

@@ -28,10 +28,12 @@ export default function TodoItem({ todo, onUpdate, onDelete, showApplication = t
     onUpdate(todo, { text: trimmed });
   };
 
-  // Enter saves (by leaving the field), Escape cancels
+  // Enter saves (by leaving the field), Escape cancels. Escape stops here so a surrounding dialog
+  // (e.g. the Calendar's day view) doesn't close as well.
   const handleEditKeyDown = (event) => {
     if (event.key === "Escape") {
       cancelled.current = true;
+      event.stopPropagation();
     }
     if (event.key === "Enter" || event.key === "Escape") {
       event.currentTarget.blur();
