@@ -99,7 +99,6 @@ export default function Dashboard() {
           {/* On phones the two columns stack: Coming up, Reminders, Quick to-dos, Notes */}
           <div className="lg:col-span-7 flex flex-col gap-6">
             <ComingUp reloadSignal={todoChanges} />
-            {/* Only shows up when an application needs a follow-up */}
             <Reminders />
           </div>
 
