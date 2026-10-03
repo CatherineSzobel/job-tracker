@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { CalendarDays, Square } from "lucide-react";
+import { Building2, CalendarDays, Phone, Square, Video } from "lucide-react";
 import PageLoader from "../UI/PageLoader";
 import { COMING_UP_DAYS } from "../../constants/dashboard";
 import { INTERVIEW_TYPES } from "../../constants/jobs";
@@ -8,6 +8,10 @@ import { describeDueDate } from "../../utils/dueDate";
 import useComingUp from "./useComingUp";
 
 const LINK_CLASSES = "text-accent dark:text-accent-muted hover:underline";
+const ROW_CLASSES = "flex flex-wrap items-center gap-x-2";
+const ROW_ICON_CLASSES = "shrink-0 text-light-muted dark:text-dark-muted";
+
+const INTERVIEW_TYPE_ICONS = { phone: Phone, online: Video, onsite: Building2 };
 
 const interviewTypeLabel = (type) => INTERVIEW_TYPES.find((option) => option.value === type)?.label ?? type;
 
@@ -35,24 +39,28 @@ export default function ComingUp({ reloadSignal }) {
                 {describeDueDate(day.date).label}
               </h3>
               <ul className="flex flex-col gap-1 text-sm text-light-text dark:text-dark-text">
-                {day.interviews.map((interview) => (
-                  <li key={`interview-${interview.id}`}>
-                    <span className="font-medium">{format(interview.startsAt, "HH:mm")}</span>
-                    {" · "}
-                    {interviewTypeLabel(interview.type)}
-                    {" · "}
-                    {interview.job ? (
-                      <Link to={`/jobs/${interview.job.id}`} className={LINK_CLASSES}>
-                        {interview.job.company_name} – {interview.job.position}
-                      </Link>
-                    ) : (
-                      "Interview"
-                    )}
-                  </li>
-                ))}
+                {day.interviews.map((interview) => {
+                  const TypeIcon = INTERVIEW_TYPE_ICONS[interview.type] ?? CalendarDays;
+                  return (
+                    <li key={`interview-${interview.id}`} className={ROW_CLASSES}>
+                      <TypeIcon size={14} aria-hidden="true" className={ROW_ICON_CLASSES} />
+                      <span className="font-medium">{format(interview.startsAt, "HH:mm")}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{interviewTypeLabel(interview.type)}</span>
+                      <span aria-hidden="true">·</span>
+                      {interview.job ? (
+                        <Link to={`/jobs/${interview.job.id}`} className={LINK_CLASSES}>
+                          {interview.job.company_name} – {interview.job.position}
+                        </Link>
+                      ) : (
+                        <span>Interview</span>
+                      )}
+                    </li>
+                  );
+                })}
                 {day.todos.map((todo) => (
-                  <li key={`todo-${todo.id}`} className="flex flex-wrap items-center gap-x-2">
-                    <Square size={14} aria-hidden="true" className="shrink-0 text-light-muted dark:text-dark-muted" />
+                  <li key={`todo-${todo.id}`} className={ROW_CLASSES}>
+                    <Square size={14} aria-hidden="true" className={ROW_ICON_CLASSES} />
                     <span className="break-words">{todo.text}</span>
                     {todo.job_application && (
                       <>

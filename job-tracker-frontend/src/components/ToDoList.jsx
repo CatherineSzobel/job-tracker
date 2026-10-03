@@ -10,10 +10,9 @@ import PageLoader from "./UI/PageLoader";
 import { DASHBOARD_TODO_LIMIT, EMPTY_TODO_DRAFT } from "../constants/todos";
 
 // Dashboard widget: the next open to-dos. "Add to-do" opens the full form (text, date, application) in a dialog.
-// onTodosChanged(): runs after each change, so the Dashboard can reload its other to-do widgets.
-// reloadSignal: changes when another widget changed a to-do; the list refetches without flickering.
-export default function TodoList({ onTodosChanged, reloadSignal }) {
-  const { todos, loading, addTodo, updateTodo, deleteTodo } = useTodos({ reloadSignal });
+// onTodosChanged(): runs after each change, so the Dashboard can reload Coming up.
+export default function TodoList({ onTodosChanged }) {
+  const { todos, loading, addTodo, updateTodo, deleteTodo } = useTodos();
   const [draft, setDraft] = useState(EMPTY_TODO_DRAFT);
   const [showDetails, setShowDetails] = useState(false);
   const openTodos = todos.filter((todo) => !todo.done).slice(0, DASHBOARD_TODO_LIMIT);

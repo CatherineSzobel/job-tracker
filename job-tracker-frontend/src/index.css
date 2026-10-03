@@ -40,6 +40,11 @@
     @apply block text-sm font-medium mb-1 text-light-text dark:text-dark-text;
 }
 
+/* Small outlined button for card actions (Dismiss, Edit, ...) */
+@utility btn-small {
+    @apply px-2 py-1 text-xs rounded-lg border border-light-muted dark:border-dark-subtle text-light-text dark:text-dark-text hover:bg-light dark:hover:bg-dark-subtle transition-colors;
+}
+
 /* Global background */
 body {
     @apply bg-light-soft text-light-text;

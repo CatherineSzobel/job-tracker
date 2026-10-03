@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Trash2 } from "lucide-react";
+import { CalendarClock, Trash2 } from "lucide-react";
 import DueChip from "./DueChip";
-import { describeDueDate } from "../../utils/dueDate";
+import { describeDueDate, isoDateFromToday } from "../../utils/dueDate";
 
 // Click the text to edit it (Enter or leaving the field saves, Escape cancels).
 // showApplication: false where the page is already about that application.
@@ -10,7 +10,10 @@ export default function TodoItem({ todo, onUpdate, onDelete, showApplication = t
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(todo.text);
   const cancelled = useRef(false);
-  const overdue = !todo.done && describeDueDate(todo.due_date).state === "overdue";
+  const dueState = todo.done ? "none" : describeDueDate(todo.due_date).state;
+  const overdue = dueState === "overdue";
+  // An open to-do that's due today or overdue can be moved to tomorrow in one click
+  const canPostpone = overdue || dueState === "today";
 
   const startEditing = () => {
     cancelled.current = false;
@@ -86,6 +89,18 @@ export default function TodoItem({ todo, onUpdate, onDelete, showApplication = t
           </div>
         )}
       </div>
+
+      {canPostpone && (
+        <button
+          type="button"
+          onClick={() => onUpdate(todo, { due_date: isoDateFromToday(1) })}
+          aria-label="Move to tomorrow"
+          title="Move to tomorrow"
+          className="text-light-muted dark:text-dark-muted hover:text-accent dark:hover:text-accent-muted p-1 rounded-full transition-colors"
+        >
+          <CalendarClock size={16} />
+        </button>
+      )}
 
       <button
         onClick={() => onDelete(todo)}
