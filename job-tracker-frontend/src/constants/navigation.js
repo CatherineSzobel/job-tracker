@@ -22,6 +22,7 @@ const PAGE_TITLES = {
 };
 
 export function getPageTitle(pathname) {
+  if (pathname.startsWith("/interviews/")) return "Interview prep";
   if (pathname.startsWith("/jobs/")) return "Application";
   return PAGE_TITLES[pathname] || "Page";
 }

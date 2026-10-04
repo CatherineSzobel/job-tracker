@@ -12,6 +12,7 @@ import Login from "./views/Login";
 import Dashboard from "./views/Dashboard";
 import Applications from "./views/Applications";
 import Interviews from "./views/Interviews";
+import Interview from "./views/Interview";
 import Calendar from "./views/Calendar";
 import Profile from "./views/Profile";
 import Links from "./views/Links";
@@ -47,6 +48,7 @@ function App() {
         <Route index element={<Dashboard />} />
         <Route path="applications" element={<Applications />} />
         <Route path="interviews" element={<Interviews />} />
+        <Route path="interviews/:id" element={<Interview />} />
         <Route path="jobs/:id" element={<Application />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="todos" element={<Todos />} />
