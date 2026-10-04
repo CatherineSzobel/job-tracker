@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import API from "../api/axios";
+import PrepTemplateEditor from "../components/InterviewPrep/PrepTemplateEditor";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useThemeStore } from "../stores/useThemeStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
@@ -387,6 +388,8 @@ export default function Settings() {
         </fieldset>
         {archiveTodosError && <p className="text-sm text-red-500 dark:text-red-400">{archiveTodosError}</p>}
       </section>
+
+      <PrepTemplateEditor />
 
       {/* Appearance */}
       <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 transition-colors">
