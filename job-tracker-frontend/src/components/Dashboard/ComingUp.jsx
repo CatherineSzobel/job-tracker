@@ -48,13 +48,10 @@ export default function ComingUp({ todos, todosLoading }) {
                       <span aria-hidden="true">·</span>
                       <span>{interviewTypeLabel(interview.type)}</span>
                       <span aria-hidden="true">·</span>
-                      {interview.job ? (
-                        <Link to={`/jobs/${interview.job.id}`} className={LINK_CLASSES}>
-                          {interview.job.company_name} – {interview.job.position}
-                        </Link>
-                      ) : (
-                        <span>Interview</span>
-                      )}
+                      {/* Before an interview its prep page is where you go; the job is linked from there */}
+                      <Link to={`/interviews/${interview.id}`} className={LINK_CLASSES}>
+                        {interview.job ? `${interview.job.company_name} – ${interview.job.position}` : "Interview"}
+                      </Link>
                     </li>
                   );
                 })}
