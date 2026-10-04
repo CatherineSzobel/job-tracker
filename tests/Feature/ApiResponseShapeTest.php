@@ -20,7 +20,13 @@ class ApiResponseShapeTest extends TestCase
 
     private const JOB = ['id', 'company_name', 'position', 'location', 'status', 'priority', 'applied_date', 'job_link', 'notes', 'is_archived'];
 
-    private const INTERVIEW = ['id', 'job_application_id', 'interview_date', 'type', 'location', 'notes'];
+    private const INTERVIEW = ['id', 'job_application_id', 'interview_date', 'type', 'location', 'notes', 'prep_progress' => ['done', 'total']];
+
+    private const INTERVIEW_DETAIL = [
+        ...self::INTERVIEW,
+        'prep' => ['checklist', 'people', 'questions_to_ask', 'questions_asked'],
+        'rating', 'debrief_notes',
+    ];
 
     private const TODO = ['id', 'text', 'done', 'due_date', 'job_application', 'created_at'];
 
@@ -147,7 +153,28 @@ class ApiResponseShapeTest extends TestCase
             ->assertExactJsonStructure(['data' => [...self::INTERVIEW, 'job' => $job]])
             ->assertJsonPath('data.location', 'Office');
 
+        $this->getJson("/api/interviews/{$this->interview->id}")
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => [...self::INTERVIEW_DETAIL, 'job' => $job]]);
+
+        $this->putJson("/api/interviews/{$this->interview->id}/prep", [
+            'checklist' => [], 'people' => [], 'questions_to_ask' => [], 'questions_asked' => [], 'rating' => 3, 'debrief_notes' => null,
+        ])
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => [...self::INTERVIEW_DETAIL, 'job' => $job]]);
+
         $this->deleteJson("/api/interviews/{$this->interview->id}")->assertNoContent();
+    }
+
+    public function test_interview_prep_template(): void
+    {
+        $structure = ['data' => ['items' => ['*' => ['text', 'type']], 'is_default']];
+
+        $this->getJson('/api/interview-prep-template')->assertOk()->assertExactJsonStructure($structure);
+        $this->putJson('/api/interview-prep-template', ['items' => [['text' => 'Print CV', 'type' => null]]])
+            ->assertOk()
+            ->assertExactJsonStructure($structure);
+        $this->deleteJson('/api/interview-prep-template')->assertOk()->assertExactJsonStructure($structure);
     }
 
     public function test_todos(): void

@@ -13,6 +13,8 @@ class InterviewResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $checklist = $this->prep['checklist'];
+
         return [
             'id' => $this->id,
             'job_application_id' => $this->job_application_id,
@@ -20,6 +22,11 @@ class InterviewResource extends JsonResource
             'type' => $this->type,
             'location' => $this->location,
             'notes' => $this->notes,
+            // For the "Prep 3/7" chip on interview cards; lists don't carry the prep document itself
+            'prep_progress' => [
+                'done' => count(array_filter($checklist, fn (array $item) => (bool) $item['done'])),
+                'total' => count($checklist),
+            ],
             // Only the fields the interview lists show, loaded as job:id,company_name,position
             'job' => $this->whenLoaded('job', fn () => [
                 'id' => $this->job->id,

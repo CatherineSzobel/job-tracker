@@ -26,6 +26,7 @@ class User extends Authenticatable
         'reminders_email',
         'reminder_days',
         'reminder_dismiss_mode',
+        'prep_template',
     ];
 
     /**
@@ -60,6 +61,7 @@ class User extends Authenticatable
             'reminders_email' => 'boolean',
             'reminder_days' => 'integer',
             'reminder_dismiss_mode' => ReminderDismissMode::class,
+            'prep_template' => 'array',
         ];
     }
 

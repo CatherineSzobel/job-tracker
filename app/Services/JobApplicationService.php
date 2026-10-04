@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ArchiveTodosAction;
+use App\Enums\InterviewType;
 use App\Enums\JobStatus;
 use App\Exports\JobApplicationsExport;
 use App\Imports\JobApplicationsImport;
@@ -23,6 +24,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class JobApplicationService
 {
+    public function __construct(private InterviewPrepService $interviewPrep) {}
+
     /**
      * Create a new job application for a user
      */
@@ -107,13 +110,18 @@ class JobApplicationService
     }
 
     /**
-     * Schedule an interview for a job application
+     * Schedule an interview. Its checklist is copied from the user's template, filtered by the
+     * interview's type (online when none is given, like the column's default).
      */
     public function scheduleInterview(JobApplication $job, array $data, User $user): Interview
     {
-        return $job->interviews()->create(array_merge($data, [
+        $type = InterviewType::from($data['type'] ?? InterviewType::Online->value);
+
+        return $job->interviews()->create([
+            ...$data,
             'user_id' => $user->id,
-        ]));
+            'prep' => [...Interview::EMPTY_PREP, 'checklist' => $this->interviewPrep->checklistFor($user, $type)],
+        ]);
     }
 
     /**

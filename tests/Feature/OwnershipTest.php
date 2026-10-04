@@ -91,6 +91,10 @@ class OwnershipTest extends TestCase
             ['postJson', "/api/job-applications/{$job->id}/interviews", ['interview_date' => now()->addWeek()->toDateTimeString()]],
             ['putJson', "/api/interviews/{$interview->id}", ['location' => 'Hacked']],
             ['deleteJson', "/api/interviews/{$interview->id}"],
+            ['getJson', "/api/interviews/{$interview->id}"],
+            ['putJson', "/api/interviews/{$interview->id}/prep", [
+                'checklist' => [], 'people' => [], 'questions_to_ask' => [], 'questions_asked' => [], 'rating' => 5, 'debrief_notes' => 'Hacked',
+            ]],
             ['putJson', "/api/todos/{$todo->id}", ['done' => true]],
             ['putJson', "/api/notes/{$note->id}", ['title' => 'Hacked']],
             ['deleteJson', "/api/notes/{$note->id}"],
@@ -111,6 +115,7 @@ class OwnershipTest extends TestCase
 
         $this->assertSame(1, $job->interviews()->count());
         $this->assertNull($interview->fresh()->location);
+        $this->assertNull($interview->fresh()->rating);
         $this->assertFalse((bool) $todo->fresh()->done);
         $this->assertSame('Mine', $note->fresh()->title);
         $this->assertSame('GitHub', $link->fresh()->type);
