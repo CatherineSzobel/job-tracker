@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\BankQuestion;
 use Illuminate\Http\Request;
 
 /**
@@ -21,6 +22,14 @@ class InterviewDetailResource extends InterviewResource
             'prep' => $this->prep,
             'rating' => $this->rating,
             'debrief_notes' => $this->debrief_notes,
+            // The bank's current answer, plus this interview's note
+            'bank_questions' => $this->whenLoaded('bankQuestions', fn () => $this->bankQuestions->map(fn (BankQuestion $bankQuestion) => [
+                'id' => $bankQuestion->id,
+                'question' => $bankQuestion->question,
+                'answer' => $bankQuestion->answer,
+                'category' => $bankQuestion->category,
+                'note' => $bankQuestion->pivot->note,
+            ])),
         ];
     }
 }

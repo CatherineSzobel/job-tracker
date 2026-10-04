@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BankQuestionController;
 use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\InterviewPrepTemplateController;
 use App\Http\Controllers\JobApplicationController;
@@ -36,6 +37,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('interviews', InterviewController::class)->only(['index', 'show', 'update', 'destroy']);
     Route::put('/interviews/{interview}/prep', [InterviewController::class, 'updatePrep']);
+    Route::put('/interviews/{interview}/bank-questions', [InterviewController::class, 'syncBankQuestions']);
+    Route::apiResource('bank-questions', BankQuestionController::class)->except('show');
     Route::apiResource('todos', TodoController::class)->except('show');
     Route::apiResource('notes', NotesController::class)->except('show');
     Route::apiResource('tags', TagController::class)->except('show');

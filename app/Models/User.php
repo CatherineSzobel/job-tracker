@@ -94,4 +94,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Tag::class);
     }
+
+    public function bankQuestions(): HasMany
+    {
+        return $this->hasMany(BankQuestion::class);
+    }
 }

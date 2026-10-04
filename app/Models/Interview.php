@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Interview extends Model
 {
@@ -64,5 +65,13 @@ class Interview extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Linked bank questions in the order the interview page shows them, each with a per-interview note.
+     */
+    public function bankQuestions(): BelongsToMany
+    {
+        return $this->belongsToMany(BankQuestion::class)->withPivot('note', 'position')->orderByPivot('position');
     }
 }
