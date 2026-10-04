@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Interview;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,6 +20,19 @@ class SeederTest extends TestCase
         $this->assertNotNull($demo->profile);
         $this->assertDatabaseCount('profiles', 1);
         $this->assertGreaterThanOrEqual(20, $demo->jobApplications()->count());
+    }
+
+    public function test_demo_user_gets_a_question_bank_linked_to_their_next_interview(): void
+    {
+        $this->seed();
+
+        $demo = User::where('email', config('app.demo_email'))->sole();
+        $nextInterview = Interview::where('user_id', $demo->id)->orderBy('interview_date')->first();
+
+        $this->assertGreaterThanOrEqual(10, $demo->bankQuestions()->count());
+        $this->assertSame(5, $demo->bankQuestions()->distinct()->count('category'));
+        $this->assertSame(3, $nextInterview->bankQuestions()->count());
+        $this->assertNotNull($nextInterview->bankQuestions()->first()->pivot->note);
     }
 
     public function test_demo_user_can_log_in_with_seeded_password(): void

@@ -6,15 +6,17 @@ import Tabs, { TabPanel } from "../components/UI/Tabs";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
 import InterviewForm from "../components/Interview/InterviewForm";
+import BankQuestionForm from "../components/InterviewPrep/BankQuestionForm";
+import BankQuestionsSection from "../components/InterviewPrep/BankQuestionsSection";
 import EditableList from "../components/InterviewPrep/EditableList";
 import PeopleList from "../components/InterviewPrep/PeopleList";
 import PrepChecklist from "../components/InterviewPrep/PrepChecklist";
 import RatingInput from "../components/InterviewPrep/RatingInput";
 import SaveStatus from "../components/InterviewPrep/SaveStatus";
 import useAutosave, { combineAutosaves } from "../components/InterviewPrep/useAutosave";
-import { linksRejectedBy, toSavablePrep } from "../components/InterviewPrep/prepDocument";
+import { linksRejectedBy, normaliseQuestion, toSavablePrep } from "../components/InterviewPrep/prepDocument";
 import { INTERVIEW_TYPES } from "../constants/jobs";
-import { PREP_LIMITS, PREP_TABS } from "../constants/interviewPrep";
+import { BANK_LINKS_MAX, EMPTY_BANK_QUESTION, PREP_LIMITS, PREP_TABS } from "../constants/interviewPrep";
 import { useToastStore } from "../stores/useToastStore";
 import { toDateTimeInputValue } from "../utils/dateInput";
 
@@ -42,6 +44,10 @@ function InterviewPage({ interviewId }) {
   // The edit dialog's form, or null when it's closed
   const [editForm, setEditForm] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  // Linked bank questions: [{ id, question, answer, category, note }]
+  const [bankLinks, setBankLinks] = useState([]);
+  // The question text being saved to the bank from the debrief, or null
+  const [savingToBank, setSavingToBank] = useState(null);
 
   // If the only problem is a person's link (e.g. one with a character the backend's URL check refuses),
   // save everything else without those links instead of failing over and over
@@ -61,7 +67,24 @@ function InterviewPage({ interviewId }) {
 
   const prepAutosave = useAutosave(savePrep);
   const notesAutosave = useAutosave((value) => API.put(`/interviews/${interviewId}`, { notes: value || null }));
-  const saveState = combineAutosaves([prepAutosave, notesAutosave]);
+
+  // A 422 means a linked question no longer exists (e.g. deleted on the bank page in another tab):
+  // show what's really linked now instead of retrying the same list forever
+  const saveBankLinks = async (links) => {
+    try {
+      await API.put(`/interviews/${interviewId}/bank-questions`, {
+        questions: links.map((link) => ({ id: link.id, note: link.note?.trim() || null })),
+      });
+    } catch (err) {
+      if (err.response?.status !== 422) throw err;
+      const res = await API.get(`/interviews/${interviewId}`);
+      setBankLinks(res.data.data.bank_questions);
+      showToast("A linked question was deleted elsewhere, so the list was reloaded");
+    }
+  };
+
+  const bankAutosave = useAutosave(saveBankLinks);
+  const saveState = combineAutosaves([prepAutosave, notesAutosave, bankAutosave]);
 
   useEffect(() => {
     API.get(`/interviews/${interviewId}`)
@@ -70,6 +93,7 @@ function InterviewPage({ interviewId }) {
         setInterview(loaded);
         setPrep({ ...loaded.prep, rating: loaded.rating, debrief_notes: loaded.debrief_notes ?? "" });
         setNotes(loaded.notes ?? "");
+        setBankLinks(loaded.bank_questions ?? []);
         setActiveTab(new Date(loaded.interview_date) > new Date() ? "prep" : "debrief");
         setLoadError(null);
       })
@@ -93,6 +117,27 @@ function InterviewPage({ interviewId }) {
   const changeNotes = (event) => {
     setNotes(event.target.value);
     notesAutosave.schedule(event.target.value);
+  };
+
+  const updateBankLinks = (nextLinks) => {
+    setBankLinks(nextLinks);
+    bankAutosave.schedule(nextLinks);
+  };
+
+  // A question they asked counts as in the bank when one with the same text is linked here
+  const linkedQuestionTexts = bankLinks.map((link) => normaliseQuestion(link.question));
+
+  const saveToBank = async (values) => {
+    try {
+      const res = await API.post("/bank-questions", values);
+      updateBankLinks([...bankLinks, { ...res.data.data, note: "" }]);
+      setSavingToBank(null);
+      return res.data.data;
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || "Failed to save the question");
+      return null;
+    }
   };
 
   const startEditing = () =>
@@ -200,6 +245,11 @@ function InterviewPage({ interviewId }) {
             />
           </section>
 
+          <section className="card lg:col-span-2">
+            <h2 className="card-title mb-4">Answers from your question bank</h2>
+            <BankQuestionsSection links={bankLinks} onChange={updateBankLinks} />
+          </section>
+
           <section className="card">
             <h2 className="card-title mb-4">Prep notes</h2>
             <textarea
@@ -228,6 +278,18 @@ function InterviewPage({ interviewId }) {
               placeholder="Add a question they asked"
               itemLabel="Question they asked"
               maxItems={PREP_LIMITS.questionsAsked}
+              renderActions={(question) =>
+                question.trim() &&
+                (linkedQuestionTexts.includes(normaliseQuestion(question)) ? (
+                  <span className="text-xs whitespace-nowrap text-green-600 dark:text-green-400">✓ In bank</span>
+                ) : (
+                  bankLinks.length < BANK_LINKS_MAX && (
+                    <button type="button" onClick={() => setSavingToBank(question.trim())} className="btn-small whitespace-nowrap">
+                      Save to bank
+                    </button>
+                  )
+                ))
+              }
             />
           </section>
 
@@ -244,6 +306,17 @@ function InterviewPage({ interviewId }) {
             />
           </section>
         </TabPanel>
+      )}
+
+      {savingToBank !== null && (
+        <Modal title="Save to your question bank" onClose={() => setSavingToBank(null)} maxWidth="max-w-lg">
+          <BankQuestionForm
+            initialValues={{ ...EMPTY_BANK_QUESTION, question: savingToBank }}
+            submitLabel="Save to bank"
+            onSubmit={saveToBank}
+            onCancel={() => setSavingToBank(null)}
+          />
+        </Modal>
       )}
 
       {editForm && (

@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             JobApplicationSeeder::class,
+            BankQuestionSeeder::class,
         ]);
     }
 }
