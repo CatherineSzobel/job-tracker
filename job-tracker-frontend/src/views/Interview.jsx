@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import API from "../api/axios";
@@ -46,6 +46,20 @@ function InterviewPage({ interviewId }) {
   const [bankLinks, setBankLinks] = useState([]);
   // The question text being saved to the bank from the debrief, or null
   const [savingToBank, setSavingToBank] = useState(null);
+  // The latest prep and bank links, so a change that lands after a request (the template loading,
+  // a question saved to the bank) builds on what's on screen now, not on what was there when it started
+  const latestPrep = useRef(null);
+  const latestBankLinks = useRef([]);
+
+  const showPrep = (nextPrep) => {
+    latestPrep.current = nextPrep;
+    setPrep(nextPrep);
+  };
+
+  const showBankLinks = (nextLinks) => {
+    latestBankLinks.current = nextLinks;
+    setBankLinks(nextLinks);
+  };
 
   const prepAutosave = useAutosave((document) => API.put(`/interviews/${interviewId}/prep`, document));
   const notesAutosave = useAutosave((value) => API.put(`/interviews/${interviewId}`, { notes: value || null }));
@@ -60,7 +74,7 @@ function InterviewPage({ interviewId }) {
     } catch (err) {
       if (err.response?.status !== 422) throw err;
       const res = await API.get(`/interviews/${interviewId}`);
-      setBankLinks(res.data.data.bank_questions);
+      showBankLinks(res.data.data.bank_questions);
       showToast("A linked question was deleted elsewhere, so the list was reloaded");
     }
   };
@@ -73,9 +87,9 @@ function InterviewPage({ interviewId }) {
       .then((res) => {
         const loaded = res.data.data;
         setInterview(loaded);
-        setPrep({ ...loaded.prep, rating: loaded.rating, debrief_notes: loaded.debrief_notes });
+        showPrep({ ...loaded.prep, rating: loaded.rating, debrief_notes: loaded.debrief_notes });
         setNotes(loaded.notes ?? "");
-        setBankLinks(loaded.bank_questions ?? []);
+        showBankLinks(loaded.bank_questions ?? []);
         setActiveTab(new Date(loaded.interview_date) > new Date() ? "prep" : "debrief");
         setLoadError(null);
       })
@@ -91,8 +105,8 @@ function InterviewPage({ interviewId }) {
   }, [interviewId, loadAttempt]);
 
   const updatePrep = (changes) => {
-    const nextPrep = { ...prep, ...changes };
-    setPrep(nextPrep);
+    const nextPrep = { ...latestPrep.current, ...changes };
+    showPrep(nextPrep);
     prepAutosave.schedule(toSavablePrep(nextPrep));
   };
 
@@ -102,7 +116,7 @@ function InterviewPage({ interviewId }) {
   };
 
   const updateBankLinks = (nextLinks) => {
-    setBankLinks(nextLinks);
+    showBankLinks(nextLinks);
     bankAutosave.schedule(nextLinks);
   };
 
@@ -112,7 +126,7 @@ function InterviewPage({ interviewId }) {
   const saveToBank = async (values) => {
     const saved = await createBankQuestion(values);
     if (!saved) return;
-    updateBankLinks([...bankLinks, { ...saved, note: "" }]);
+    updateBankLinks([...latestBankLinks.current, { ...saved, note: "" }]);
     setSavingToBank(null);
   };
 
