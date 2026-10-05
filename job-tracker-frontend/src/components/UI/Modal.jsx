@@ -1,11 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 // Centered dialog over a dimmed backdrop. Escape and backdrop clicks call onClose.
+// When dialogs are stacked (e.g. a confirm over Manage tags), Escape only closes the top one.
 export default function Modal({ title, onClose, maxWidth = "max-w-2xl", children }) {
+  const dialogRef = useRef(null);
+
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      const openDialogs = document.querySelectorAll('[aria-modal="true"]');
+      if (openDialogs[openDialogs.length - 1] === dialogRef.current) onClose();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -19,6 +24,7 @@ export default function Modal({ title, onClose, maxWidth = "max-w-2xl", children
     >
       {/* Scrolls inside itself when taller than the screen (long forms on phones) */}
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}

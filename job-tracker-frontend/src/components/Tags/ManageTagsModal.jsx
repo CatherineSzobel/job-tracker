@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { confirmAction } from "../../stores/useConfirmStore";
 import { Trash2 } from "lucide-react";
 import Modal from "../UI/Modal";
 import TagChip from "./TagChip";
@@ -76,11 +77,11 @@ function ManagedTagRow({ tag, onUpdate, onDelete }) {
     if (!saved) setName(tag.name);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     const question = usageCount > 0
       ? `Remove "${tag.name}" from ${usageCount} application${usageCount === 1 ? "" : "s"} and delete it?`
       : `Delete "${tag.name}"?`;
-    if (window.confirm(question)) onDelete(tag);
+    if (await confirmAction({ message: question, confirmLabel: "Delete", danger: true })) onDelete(tag);
   };
 
   return (

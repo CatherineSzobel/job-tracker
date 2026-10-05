@@ -4,8 +4,10 @@ import API from "../api/axios";
 import ArchivedJobCard from "../components/JobApplications/ArchivedJobCard";
 import BatchBar from "../components/JobApplications/BatchBar";
 import { batchUpdateJobs, mergeBatchResult, tagIdsOf } from "../components/JobApplications/batchUpdate";
+import useBatchChanges from "../components/JobApplications/useBatchChanges";
 import useSelection from "../components/UI/useSelection";
 import useTags from "../components/Tags/useTags";
+import ListPageHeader from "../components/UI/ListPageHeader";
 import PageLoader from "../components/UI/PageLoader";
 import SelectModeButtons from "../components/UI/SelectModeButtons";
 import { useToastStore } from "../stores/useToastStore";
@@ -16,7 +18,9 @@ export default function Archive() {
     const [loading, setLoading] = useState(true);
     const [batchBusy, setBatchBusy] = useState(false);
     const { tags, createTag } = useTags();
-    const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany } = useSelection();
+    // Unsaved tag changes for the selection; leaving select mode (any way) drops them
+    const batchChanges = useBatchChanges();
+    const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany } = useSelection({ onExit: batchChanges.clear });
     const showToast = useToastStore((state) => state.showToast);
 
     useEffect(() => {
@@ -34,16 +38,19 @@ export default function Archive() {
         setArchivedJobs((currentJobs) => currentJobs.filter((job) => job.id !== restoredJobId));
     };
 
-    // The selection stays after tag changes; restored cards leave the list, so restoring ends select mode
+    // The selection stays after saving tag changes; restored cards leave the list, so restoring ends
+    // select mode. Returns whether it worked (BatchBar keeps unsaved changes when it didn't).
     const applyBatch = async (changes) => {
         setBatchBusy(true);
         try {
             const updatedJobs = await batchUpdateJobs(selectedIds, changes);
             setArchivedJobs((currentJobs) => mergeBatchResult(currentJobs, updatedJobs, true));
             if ("is_archived" in changes) exitSelecting();
+            return true;
         } catch (err) {
             console.error(err);
             showToast(err.response?.data?.message || "Failed to update the selected applications");
+            return false;
         } finally {
             setBatchBusy(false);
         }
@@ -55,27 +62,26 @@ export default function Archive() {
 
     return (
         <div className={`max-w-6xl mx-auto mt-4 sm:mt-10 sm:px-4 transition-colors ${selecting ? "pb-28" : ""}`}>
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h1 className="text-2xl sm:text-3xl font-bold text-light-text dark:text-dark-text">Archive</h1>
-                <div className="flex flex-wrap gap-2">
-                    {archivedJobs.length > 0 && (
-                        <SelectModeButtons
-                            selecting={selecting}
-                            visibleCount={archivedJobs.length}
-                            onStart={startSelecting}
-                            onSelectAll={() => selectMany(archivedJobs.map((job) => job.id))}
-                            onCancel={exitSelecting}
-                        />
-                    )}
-                    <button
-                        className="bg-accent hover:bg-accent-soft dark:bg-accent dark:hover:bg-accent-soft text-surface px-5 py-2 rounded-lg transition shadow"
-                        onClick={() => navigate("/applications")}
-                    >
-                        Applications
-                    </button>
-                </div>
-            </div>
+            <ListPageHeader
+                title="Archive"
+                count={archivedJobs.length}
+                actions={
+                    <>
+                        {archivedJobs.length > 0 && (
+                            <SelectModeButtons
+                                selecting={selecting}
+                                visibleCount={archivedJobs.length}
+                                onStart={startSelecting}
+                                onSelectAll={() => selectMany(archivedJobs.map((job) => job.id))}
+                                onCancel={exitSelecting}
+                            />
+                        )}
+                        <button type="button" className="btn-primary shadow" onClick={() => navigate("/applications")}>
+                            Applications
+                        </button>
+                    </>
+                }
+            />
 
             {/* Empty state */}
             {archivedJobs.length === 0 ? (
@@ -92,6 +98,7 @@ export default function Archive() {
                             selecting={selecting}
                             selected={selectedIds.includes(job.id)}
                             onToggleSelect={toggleSelected}
+                            pendingChanges={batchChanges.hasChanges && selectedIds.includes(job.id) ? batchChanges : null}
                         />
                     ))}
                 </div>
@@ -103,6 +110,7 @@ export default function Archive() {
                     actions={["restore", "tags"]}
                     tags={tags}
                     removableTagIds={tagIdsOf(archivedJobs.filter((job) => selectedIds.includes(job.id)))}
+                    changes={batchChanges}
                     onApply={applyBatch}
                     onCreateTag={createTag}
                     onCancel={exitSelecting}

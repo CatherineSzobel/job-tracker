@@ -4,7 +4,8 @@ import { useToastStore } from "../../stores/useToastStore";
 import CardTags from "../Tags/CardTags";
 
 // In select mode (selecting) clicking the card calls onToggleSelect(id) and Restore is replaced by a checkbox.
-export default function ArchivedJobCard({ job, onRestore, selecting = false, selected = false, onToggleSelect }) {
+// pendingChanges (useBatchChanges, only for a selected card): unsaved tag changes to preview on the card.
+export default function ArchivedJobCard({ job, onRestore, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
     const navigate = useNavigate();
     const showToast = useToastStore((state) => state.showToast);
 
@@ -79,7 +80,15 @@ export default function ArchivedJobCard({ job, onRestore, selecting = false, sel
                 )}
             </div>
 
-            <CardTags tags={job.tags} />
+            <CardTags
+                tags={job.tags}
+                addedTags={pendingChanges?.tagsToAdd}
+                removedTagIds={pendingChanges?.tagsToRemove.map((tag) => tag.id)}
+            />
+
+            {pendingChanges?.hasChanges && (
+                <p className="mt-1 text-xs italic text-accent dark:text-accent-muted">Not saved yet</p>
+            )}
         </div>
     );
 }

@@ -1,5 +1,6 @@
 import { Download, ExternalLink } from "lucide-react";
 import { downloadDocument } from "./documentUtils";
+import { showToast } from "../../stores/useToastStore";
 
 const BUTTON_CLASSES =
   "inline-flex items-center gap-1 text-sm text-accent dark:text-accent-muted hover:text-accent-soft transition-colors";
@@ -19,7 +20,7 @@ export default function OpenDocumentButton({ document: item }) {
       await downloadDocument(item);
     } catch (err) {
       console.error(err);
-      alert(err.response?.status === 404 ? "This file can no longer be found." : "Download failed");
+      showToast(err.response?.status === 404 ? "This file can no longer be found." : "Download failed");
     }
   };
 

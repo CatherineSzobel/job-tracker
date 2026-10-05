@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmAction } from "../stores/useConfirmStore";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import AttachedDocuments from "../components/Documents/AttachedDocuments";
@@ -68,7 +69,7 @@ export default function Application() {
       setEditing(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to save changes");
+      showToast("Failed to save changes");
     } finally {
       setSaving(false);
     }
@@ -84,21 +85,21 @@ export default function Application() {
       setNewInterview(null);
     } catch (err) {
       console.error(err);
-      alert("Failed to add interview. Make sure all fields are valid.");
+      showToast("Failed to add interview. Make sure all fields are valid.");
     } finally {
       setSavingInterview(false);
     }
   };
 
   const deleteJob = async () => {
-    if (!window.confirm("Delete this job application?")) return;
+    if (!(await confirmAction({ message: "Delete this job application?", confirmLabel: "Delete", danger: true }))) return;
 
     try {
       await API.delete(`/job-applications/${job.id}`);
       navigate("/applications");
     } catch (err) {
       console.error(err);
-      alert("Failed to delete job");
+      showToast("Failed to delete job");
     }
   };
 

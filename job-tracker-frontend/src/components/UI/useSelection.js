@@ -1,14 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Select mode for a list (applications, interviews). Escape or exitSelecting() leaves it and clears the selection
 // (Escape is left to a dialog when one is open, so closing it doesn't lose the selection).
-export default function useSelection() {
+// onExit: runs whenever select mode ends, however it ends (e.g. to drop unsaved batch changes).
+export default function useSelection({ onExit } = {}) {
   const [selecting, setSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
+  const onExitRef = useRef(onExit);
+
+  useEffect(() => {
+    onExitRef.current = onExit;
+  });
 
   const exitSelecting = () => {
     setSelecting(false);
     setSelectedIds([]);
+    onExitRef.current?.();
   };
 
   useEffect(() => {
@@ -18,6 +25,7 @@ export default function useSelection() {
       if (event.key !== "Escape" || document.querySelector('[aria-modal="true"]')) return;
       setSelecting(false);
       setSelectedIds([]);
+      onExitRef.current?.();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);

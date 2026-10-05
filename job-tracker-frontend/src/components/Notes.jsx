@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { StickyNote } from "lucide-react";
 import API from "../api/axios";
+import { showToast } from "../stores/useToastStore";
 import PageLoader from "./UI/PageLoader";
 
 export default function Notes() {
@@ -64,7 +65,7 @@ export default function Notes() {
             setShowAddForm(false); // collapse after adding
         } catch (err) {
             console.error("Failed to add note:", err.response?.data || err.message);
-            alert("Failed to add note");
+            showToast("Failed to add note");
         }
     };
 
@@ -74,7 +75,7 @@ export default function Notes() {
             setNotes((prev) => prev.filter((n) => n.id !== id));
         } catch (err) {
             console.error(err);
-            alert("Failed to delete note");
+            showToast("Failed to delete note");
         }
     };
 
@@ -98,7 +99,7 @@ export default function Notes() {
             setEditingId(null);
         } catch (err) {
             console.error(err);
-            alert("Failed to update note");
+            showToast("Failed to update note");
         }
     };
 
@@ -114,7 +115,7 @@ export default function Notes() {
             );
         } catch (err) {
             console.error(err);
-            alert("Failed to update pinned state");
+            showToast("Failed to update pinned state");
         }
     };
 

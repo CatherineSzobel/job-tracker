@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { confirmAction } from "../stores/useConfirmStore";
 import BankQuestionFilters from "../components/InterviewPrep/BankQuestionFilters";
 import BankQuestionForm from "../components/InterviewPrep/BankQuestionForm";
 import BankQuestionSummary from "../components/InterviewPrep/BankQuestionSummary";
@@ -20,12 +21,12 @@ export default function QuestionBank() {
     if (saved) setEditing(null);
   };
 
-  const confirmDelete = (question) => {
+  const confirmDelete = async (question) => {
     const usedIn =
       question.interviews_count > 0
         ? `Used in ${question.interviews_count} interview${question.interviews_count === 1 ? "" : "s"} — it will be removed from them.\n\n`
         : "";
-    if (window.confirm(`${usedIn}Delete "${question.question}"?`)) deleteQuestion(question);
+    if (await confirmAction({ message: `${usedIn}Delete "${question.question}"?`, confirmLabel: "Delete", danger: true })) deleteQuestion(question);
   };
 
   if (loading) {

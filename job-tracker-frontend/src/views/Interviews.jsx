@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { confirmAction } from "../stores/useConfirmStore";
 import API from "../api/axios";
 import InterviewForm from "../components/Interview/InterviewForm";
 import InterviewListCard from "../components/Interview/InterviewListCard";
 import { INTERVIEW_WHEN_OPTIONS, filterInterviews, sortOrderFor } from "../components/Interview/interviewFilters";
 import DateGroups from "../components/UI/DateGroups";
+import ListPageHeader from "../components/UI/ListPageHeader";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
 import SelectModeButtons from "../components/UI/SelectModeButtons";
@@ -111,7 +113,7 @@ export default function Interviews() {
   };
 
   const deleteInterview = async (interview) => {
-    if (!window.confirm("Delete this interview?")) return;
+    if (!(await confirmAction({ message: "Delete this interview?", confirmLabel: "Delete", danger: true }))) return;
     try {
       await API.delete(`/interviews/${interview.id}`);
       setInterviews((current) => current.filter((existing) => existing.id !== interview.id));
@@ -124,7 +126,7 @@ export default function Interviews() {
   const deleteSelected = async () => {
     const count = visibleSelectedIds.length;
     const question = `Delete ${count} interview${count === 1 ? "" : "s"}? Their prep and debrief are deleted too. Your bank questions stay in the bank.`;
-    if (!window.confirm(question)) return;
+    if (!(await confirmAction({ message: question, confirmLabel: "Delete", danger: true }))) return;
 
     setDeleting(true);
     try {
@@ -182,62 +184,62 @@ export default function Interviews() {
 
   return (
     <div className={`max-w-6xl mx-auto mt-4 sm:mt-10 sm:px-4 transition-colors ${selecting ? "pb-28" : ""}`}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold text-light-text dark:text-dark-text">
-          Interviews ({visibleInterviews.length})
-        </h1>
-        <div className="flex flex-wrap items-center gap-2">
-          {interviews.length > 0 && (
-            <>
-              <SelectModeButtons
-                selecting={selecting}
-                visibleCount={visibleIds.length}
-                onStart={startSelecting}
-                onSelectAll={() => selectMany(visibleIds)}
-                onCancel={exitSelecting}
-              />
-              <ViewToggle view={view} onChange={changeView} />
-            </>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              resetForm();
-              setShowForm(true);
-            }}
-            className="btn-primary shadow"
-          >
-            + Add Interview
-          </button>
-        </div>
-      </div>
-
-      {interviews.length > 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-          <div role="group" aria-label="Show" className="flex rounded-md border border-light-muted dark:border-dark-subtle overflow-hidden self-start">
-            {INTERVIEW_WHEN_OPTIONS.map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setWhen(value)}
-                aria-pressed={when === value}
-                className={`px-4 py-2 text-sm transition-colors ${when === value ? "bg-accent text-surface" : "text-light-text dark:text-dark-text hover:bg-light-soft dark:hover:bg-dark-subtle"}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search company or position"
-            aria-label="Search company or position"
-            className="input-field sm:max-w-xs"
-          />
-        </div>
-      )}
+      <ListPageHeader
+        title="Interviews"
+        count={visibleInterviews.length}
+        actions={
+          <>
+            {interviews.length > 0 && (
+              <>
+                <SelectModeButtons
+                  selecting={selecting}
+                  visibleCount={visibleIds.length}
+                  onStart={startSelecting}
+                  onSelectAll={() => selectMany(visibleIds)}
+                  onCancel={exitSelecting}
+                />
+                <ViewToggle view={view} onChange={changeView} />
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
+              className="btn-primary shadow"
+            >
+              + Add Interview
+            </button>
+          </>
+        }
+      >
+        {interviews.length > 0 && (
+          <>
+            <div role="group" aria-label="Show" className="flex rounded-md border border-light-muted dark:border-dark-subtle overflow-hidden self-start">
+              {INTERVIEW_WHEN_OPTIONS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setWhen(value)}
+                  aria-pressed={when === value}
+                  className={`px-4 py-2 text-sm transition-colors ${when === value ? "bg-accent text-surface" : "text-light-text dark:text-dark-text hover:bg-light-soft dark:hover:bg-dark-subtle"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search company or position"
+              aria-label="Search company or position"
+              className="input-field sm:max-w-xs"
+            />
+          </>
+        )}
+      </ListPageHeader>
 
       {loadFailed ? (
         <div className="card text-center text-light-muted dark:text-dark-muted">

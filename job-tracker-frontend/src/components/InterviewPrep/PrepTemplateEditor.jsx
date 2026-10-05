@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmAction } from "../../stores/useConfirmStore";
 import API from "../../api/axios";
 import AddItemInput from "../UI/AddItemInput";
 import PageLoader from "../UI/PageLoader";
@@ -47,7 +48,7 @@ export default function PrepTemplateEditor() {
   };
 
   const resetToDefault = async () => {
-    if (!window.confirm("Replace your checklist with the default one?")) return;
+    if (!(await confirmAction({ message: "Replace your checklist with the default one?", confirmLabel: "Reset" }))) return;
     setError("");
     try {
       const res = await API.delete("/interview-prep-template");

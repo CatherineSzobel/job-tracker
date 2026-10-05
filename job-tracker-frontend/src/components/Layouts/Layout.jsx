@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "../Sidebar";
 import Navbar from "../Navbar";
 import Footer from "../Footer";
+import ConfirmDialog from "../UI/ConfirmDialog";
 import Toaster from "../UI/Toaster";
 
 // Phones/tablets: the sidebar's top bar sits above the page. Desktop (lg+): sidebar beside it.
@@ -19,6 +20,7 @@ function Layout() {
         <Footer />
       </div>
       <Toaster />
+      <ConfirmDialog />
     </div>
   );
 }

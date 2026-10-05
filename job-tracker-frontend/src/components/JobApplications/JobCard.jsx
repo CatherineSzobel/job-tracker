@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { confirmAction } from "../../stores/useConfirmStore";
 import API from "../../api/axios";
 import { PRIORITY_CLASSES, STATUS_COLORS } from "../../constants/jobs";
 import { useToastStore } from "../../stores/useToastStore";
@@ -7,9 +8,12 @@ import useArchiveWithTodos, { archiveChanges } from "./useArchiveWithTodos";
 
 // onRemove(id) is called after the job is archived or deleted so the parent can drop it.
 // In select mode (selecting) clicking the card calls onToggleSelect(id) and the action buttons are hidden.
-export default function JobCard({ job, onRemove, selecting = false, selected = false, onToggleSelect }) {
+// pendingChanges (useBatchChanges, only for a selected card): unsaved batch changes to preview on the card.
+export default function JobCard({ job, onRemove, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
   const navigate = useNavigate();
   const showToast = useToastStore((state) => state.showToast);
+  const newStatus = pendingChanges?.status && pendingChanges.status !== job.status ? pendingChanges.status : null;
+  const shownStatus = newStatus ?? job.status;
 
   // deleteOpenTodos: the user's answer, or undefined to let the server follow their setting
   const archive = async (deleteOpenTodos) => {
@@ -25,7 +29,7 @@ export default function JobCard({ job, onRemove, selecting = false, selected = f
   const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archive);
 
   const deleteJob = async () => {
-    if (!window.confirm("Delete this job application?")) return;
+    if (!(await confirmAction({ message: "Delete this job application?", confirmLabel: "Delete", danger: true }))) return;
     try {
       await API.delete(`/job-applications/${job.id}`);
       onRemove?.(job.id);
@@ -77,17 +81,26 @@ export default function JobCard({ job, onRemove, selecting = false, selected = f
 
         <div className="flex gap-2 mt-2">
           <span
-            className="px-2 py-1 text-xs rounded-full text-white truncate"
-            style={{ backgroundColor: STATUS_COLORS[job.status] }}
+            title={newStatus ? `Not saved yet (now ${job.status})` : undefined}
+            className={`px-2 py-1 text-xs rounded-full text-white truncate ${newStatus ? "outline-2 outline-dashed outline-offset-2 outline-accent" : ""}`}
+            style={{ backgroundColor: STATUS_COLORS[shownStatus] }}
           >
-            {job.status}
+            {shownStatus}
           </span>
           <span className={`px-2 py-1 text-xs rounded-full truncate ${PRIORITY_CLASSES[job.priority]}`}>
             {job.priority}
           </span>
         </div>
 
-        <CardTags tags={job.tags} />
+        <CardTags
+          tags={job.tags}
+          addedTags={pendingChanges?.tagsToAdd}
+          removedTagIds={pendingChanges?.tagsToRemove.map((tag) => tag.id)}
+        />
+
+        {pendingChanges?.hasChanges && (
+          <p className="mt-1 text-xs italic text-accent dark:text-accent-muted">Not saved yet</p>
+        )}
       </div>
 
       <div className="mt-4 flex flex-col gap-2 text-sm text-muted dark:text-dark-muted">

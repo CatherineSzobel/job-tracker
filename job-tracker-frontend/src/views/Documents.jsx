@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { confirmAction } from "../stores/useConfirmStore";
 import { Plus } from "lucide-react";
 import API from "../api/axios";
+import { showToast } from "../stores/useToastStore";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
 import DocumentForm from "../components/Documents/DocumentForm";
@@ -53,7 +55,7 @@ export default function Documents() {
     const message = count > 0
       ? `"${item.name}" is attached to ${count} application${count === 1 ? "" : "s"}, so it will be archived instead of deleted. It stays visible on those applications and you can restore it later.`
       : `Delete "${item.name}"? This can't be undone.`;
-    if (!window.confirm(message)) return;
+    if (!(await confirmAction({ message, confirmLabel: count > 0 ? "Archive" : "Delete", danger: count === 0 }))) return;
 
     try {
       const res = await API.delete(`/documents/${item.id}`);
@@ -64,7 +66,7 @@ export default function Documents() {
       }
     } catch (err) {
       console.error(err);
-      alert(apiErrorMessage(err, "Failed to delete document"));
+      showToast(apiErrorMessage(err, "Failed to delete document"));
     }
   };
 
@@ -74,7 +76,7 @@ export default function Documents() {
       replaceDocument(res.data.data);
     } catch (err) {
       console.error(err);
-      alert(apiErrorMessage(err, "Failed to restore document"));
+      showToast(apiErrorMessage(err, "Failed to restore document"));
     }
   };
 

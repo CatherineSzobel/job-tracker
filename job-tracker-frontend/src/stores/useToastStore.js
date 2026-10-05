@@ -23,3 +23,6 @@ export const useToastStore = create((set, get) => ({
         set({ toasts: get().toasts.filter((toast) => toast.id !== id) })
     },
 }))
+
+// Shortcut for code outside components: showToast('Saved', 'success')
+export const showToast = (message, type) => useToastStore.getState().showToast(message, type)

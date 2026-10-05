@@ -1,5 +1,6 @@
 import { useState } from "react";
 import API from "../../api/axios";
+import { showToast } from "../../stores/useToastStore";
 import Modal from "../UI/Modal";
 import DocumentPicker from "./DocumentPicker";
 import OpenDocumentButton from "./OpenDocumentButton";
@@ -19,7 +20,7 @@ export default function AttachedDocuments({ jobId, documents, onChange }) {
       setPicking(false);
     } catch (err) {
       console.error(err);
-      alert(apiErrorMessage(err, "Failed to save documents"));
+      showToast(apiErrorMessage(err, "Failed to save documents"));
     } finally {
       setSaving(false);
     }

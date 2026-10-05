@@ -6,10 +6,12 @@ import { batchUpdateJobs, mergeBatchResult, tagIdsOf } from "../components/JobAp
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
 import useArchiveWithTodos, { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
+import useBatchChanges from "../components/JobApplications/useBatchChanges";
 import ManageTagsModal from "../components/Tags/ManageTagsModal";
 import TagChip from "../components/Tags/TagChip";
 import useTags from "../components/Tags/useTags";
 import DateGroups from "../components/UI/DateGroups";
+import ListPageHeader from "../components/UI/ListPageHeader";
 import PageLoader from "../components/UI/PageLoader";
 import Modal from "../components/UI/Modal";
 import SelectModeButtons from "../components/UI/SelectModeButtons";
@@ -17,6 +19,7 @@ import ViewToggle from "../components/UI/ViewToggle";
 import useSavedView from "../components/UI/useSavedView";
 import useSelection from "../components/UI/useSelection";
 import { EMPTY_JOB, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
+import { confirmAction } from "../stores/useConfirmStore";
 import { useToastStore } from "../stores/useToastStore";
 
 export default function Applications() {
@@ -37,7 +40,9 @@ export default function Applications() {
   const [showManageTags, setShowManageTags] = useState(false);
   const [view, changeView] = useSavedView("applications-view");
   const { tags, reloadTags, createTag, updateTag, deleteTag } = useTags();
-  const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany } = useSelection();
+  // Unsaved status and tag changes for the selection; leaving select mode (any way) drops them
+  const batchChanges = useBatchChanges();
+  const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany } = useSelection({ onExit: batchChanges.clear });
   const [batchBusy, setBatchBusy] = useState(false);
   const showToast = useToastStore((state) => state.showToast);
 
@@ -80,7 +85,7 @@ export default function Applications() {
       setNewJob(EMPTY_JOB);
     } catch (err) {
       console.error(err);
-      alert("Failed to add job application");
+      showToast(err.response?.data?.message || "Failed to add job application");
     } finally {
       setSaving(false);
     }
@@ -120,17 +125,19 @@ export default function Applications() {
   // Only selected cards that are still visible count: changing a filter hides some without unselecting them
   const visibleSelectedIds = selectedIds.filter((id) => visibleIds.includes(id));
 
-  // The selection stays after status and tag changes (so several can be applied in a row);
-  // archived cards leave the list, so archiving ends select mode
+  // The selection stays after saving status and tag changes (so more can follow);
+  // archived cards leave the list, so archiving ends select mode. Returns whether it worked.
   const sendBatch = async (changes) => {
     setBatchBusy(true);
     try {
       const updatedJobs = await batchUpdateJobs(visibleSelectedIds, changes);
       setJobs((currentJobs) => mergeBatchResult(currentJobs, updatedJobs, false));
       if ("is_archived" in changes) exitSelecting();
+      return true;
     } catch (err) {
       console.error(err);
       showToast(err.response?.data?.message || "Failed to update the selected applications");
+      return false;
     } finally {
       setBatchBusy(false);
     }
@@ -138,10 +145,10 @@ export default function Applications() {
 
   // deleteOpenTodos: the answer from the to-dos prompt, or undefined when it wasn't asked
   // (then confirm here, and the server follows the user's setting)
-  const archiveSelected = (deleteOpenTodos) => {
+  const archiveSelected = async (deleteOpenTodos) => {
     const count = visibleSelectedIds.length;
     const wasAsked = deleteOpenTodos !== undefined;
-    if (!wasAsked && !window.confirm(`Archive ${count} application${count === 1 ? "" : "s"}?`)) {
+    if (!wasAsked && !(await confirmAction({ message: `Archive ${count} application${count === 1 ? "" : "s"}?`, confirmLabel: "Archive" }))) {
       return;
     }
     sendBatch(archiveChanges(deleteOpenTodos));
@@ -149,10 +156,10 @@ export default function Applications() {
 
   const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archiveSelected);
 
+  // Status and tag changes are saved together (BatchBar's Save); archiving asks first (the to-dos prompt)
   const applyBatch = (changes) => {
     if (!changes.is_archived) {
-      sendBatch(changes);
-      return;
+      return sendBatch(changes);
     }
     const withOpenTodos = jobs.filter((job) => visibleSelectedIds.includes(job.id) && job.open_todos_count > 0);
     requestArchive({
@@ -170,6 +177,7 @@ export default function Applications() {
       selecting={selecting}
       selected={selectedIds.includes(job.id)}
       onToggleSelect={toggleSelected}
+      pendingChanges={batchChanges.hasChanges && selectedIds.includes(job.id) ? batchChanges : null}
     />
   );
 
@@ -201,17 +209,20 @@ export default function Applications() {
       const res = await API.get("/job-applications");
       setJobs(res.data.data);
 
-      // Invalid rows are skipped by the server and listed in `failures`
+      showToast(data.message, "success");
+
+      // Invalid rows are skipped by the server and listed in `failures`; the toast names the first few
       const skipped = (data.failures ?? []).map(
-        (f) => `Row ${f.row} (${f.attribute}): ${f.errors.join(", ")}`
+        (failure) => `row ${failure.row} (${failure.attribute}): ${failure.errors.join(", ")}`
       );
-      alert(skipped.length ? `${data.message}\n\n${skipped.join("\n")}` : data.message);
+      if (skipped.length > 0) {
+        console.warn("Skipped rows", skipped);
+        const firstFew = skipped.slice(0, 3).join("; ");
+        showToast(`${skipped.length} row${skipped.length === 1 ? " was" : "s were"} skipped: ${firstFew}${skipped.length > 3 ? "; …" : ""}`);
+      }
     } catch (err) {
       console.error("Import failed", err.response || err);
-      alert(
-        "Import failed: " +
-        (err.response?.data?.message || JSON.stringify(err.response?.data) || err.message)
-      );
+      showToast(`Import failed: ${err.response?.data?.message || err.message}`);
     } finally {
       setImporting(false);
     }
@@ -223,18 +234,12 @@ export default function Applications() {
   }
 
   return (
-    <div className={`max-w-5xl mx-auto sm:px-4 py-4 sm:py-10 ${selecting ? "pb-28" : ""}`}>
-      {/* HEADER */}
-      <div className="rounded-2xl p-4 sm:p-6 mb-6 bg-surface dark:bg-dark-soft shadow-md border border-border dark:border-dark-subtle transition-colors">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-light-text dark:text-dark-text">
-            Job Applications
-            <span className="ml-2 text-sm text-muted dark:text-dark-muted">
-              ({jobs.length})
-            </span>
-          </h1>
-
-          <div className="flex items-center gap-2 relative" ref={dropdownRef}>
+    <div className={`max-w-6xl mx-auto mt-4 sm:mt-10 sm:px-4 transition-colors ${selecting ? "pb-28" : ""}`}>
+      <ListPageHeader
+        title="Job Applications"
+        count={jobs.length}
+        actions={
+          <>
             <SelectModeButtons
               selecting={selecting}
               visibleCount={visibleIds.length}
@@ -245,108 +250,100 @@ export default function Applications() {
 
             <ViewToggle view={view} onChange={changeView} />
 
-            <button
-              className="px-4 py-2 rounded-md text-sm bg-accent-soft hover:bg-accent text-surface font-semibold transition-colors"
-              onClick={() => setShowForm(true)}
-            >
-              + Add
+            <button type="button" className="btn-primary shadow" onClick={() => setShowForm(true)}>
+              + Add Application
             </button>
 
-            {/* Dropdown */}
-            <button
-              onClick={() => setShowMenu((s) => !s)}
-              className="w-9 h-9 flex items-center justify-center font-extrabold hover:border rounded-lg text-accent dark:text-accent-muted transition-colors"
-            >
-              ⋮
-            </button>
-
-            {showMenu && (
-              <div className="absolute right-0 top-11 w-40 rounded-lg shadow-lg border overflow-hidden z-50 bg-surface dark:bg-dark-soft border-border dark:border-dark-subtle text-primary dark:text-dark-text transition-colors">
-                <button
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
-                  onClick={() => navigate("/archives")}
-                >
-                  Archives
-                </button>
-                <button
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
-                  onClick={openManageTags}
-                >
-                  Manage tags
-                </button>
-                <button
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
-                  onClick={exportJobs}
-                >
-                  Export Excel
-                </button>
-                <button
-                  className="w-full text-left px-4 py-2 text-sm disabled:opacity-50 hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
-                  onClick={() => fileInputRef.current.click()}
-                  disabled={importing}
-                >
-                  {importing ? "Importing…" : "Import Excel"}
-                </button>
-              </div>
-            )}
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files.length > 0) {
-                  importJobs(e.target.files[0]);
-                  e.target.value = null;
-                }
-              }}
-            />
-          </div>
-        </div>
-
-        {/* FILTER BAR */}
-        <div className="rounded-xl pt-4 sm:p-4 mb-2 sm:mb-6 flex flex-wrap gap-4 sm:gap-6 text-sm">
-          <div>
-            <label className="block mb-1 text-light-text dark:text-dark-text">Status</label>
-            <select
-              className="border rounded-lg px-3 py-1 text-light-text dark:text-dark-text border-light-muted dark:border-dark-subtle bg-surface dark:bg-dark-soft transition-colors"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">All</option>
-              {JOB_STATUSES.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block mb-1 text-light-text dark:text-dark-text">Priority</label>
-            <select
-              className="border rounded-lg px-3 py-1 text-light-text dark:text-dark-text border-light-muted dark:border-dark-subtle bg-surface dark:bg-dark-soft transition-colors"
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-            >
-              <option value="all">All</option>
-              {PRIORITIES.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </div>
-
-          {tags.length > 0 && (
-            <div>
-              <span className="block mb-1 text-light-text dark:text-dark-text">Tags</span>
-              <div className="flex flex-wrap gap-1">
-                {tags.map((tag) => (
-                  <TagChip key={tag.id} tag={tag} active={tagFilter.includes(tag.id)} onClick={() => toggleTagFilter(tag.id)} />
-                ))}
-              </div>
+            {/* More: archives, tags, import and export */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowMenu((s) => !s)}
+                aria-label="More"
+                className="w-9 h-9 flex items-center justify-center font-extrabold hover:border rounded-lg text-accent dark:text-accent-muted transition-colors"
+              >
+                ⋮
+              </button>
+  
+              {showMenu && (
+                <div className="absolute right-0 top-11 w-40 rounded-lg shadow-lg border overflow-hidden z-50 bg-surface dark:bg-dark-soft border-border dark:border-dark-subtle text-primary dark:text-dark-text transition-colors">
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                    onClick={() => navigate("/archives")}
+                  >
+                    Archives
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                    onClick={openManageTags}
+                  >
+                    Manage tags
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                    onClick={exportJobs}
+                  >
+                    Export Excel
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm disabled:opacity-50 hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                    onClick={() => fileInputRef.current.click()}
+                    disabled={importing}
+                  >
+                    {importing ? "Importing…" : "Import Excel"}
+                  </button>
+                </div>
+              )}
+  
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files.length > 0) {
+                    importJobs(e.target.files[0]);
+                    e.target.value = null;
+                  }
+                }}
+              />
             </div>
-          )}
-        </div>
-      </div>
+          </>
+        }
+      >
+        <select
+          aria-label="Status"
+          className="input-field sm:w-auto"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">All statuses</option>
+          {JOB_STATUSES.map(({ value, label }) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+
+        <select
+          aria-label="Priority"
+          className="input-field sm:w-auto"
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value)}
+        >
+          <option value="all">All priorities</option>
+          {PRIORITIES.map(({ value, label }) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+
+        {tags.length > 0 && (
+          <div role="group" aria-label="Tags" className="flex flex-wrap items-center gap-1">
+            <span className="mr-1 text-sm text-light-muted dark:text-dark-muted">Tags</span>
+            {tags.map((tag) => (
+              <TagChip key={tag.id} tag={tag} active={tagFilter.includes(tag.id)} onClick={() => toggleTagFilter(tag.id)} />
+            ))}
+          </div>
+        )}
+      </ListPageHeader>
 
       {/* JOB LIST */}
       {filteredJobs.length === 0 ? (
@@ -388,6 +385,7 @@ export default function Applications() {
           actions={["status", "tags", "archive"]}
           tags={tags}
           removableTagIds={tagIdsOf(jobs.filter((job) => visibleSelectedIds.includes(job.id)))}
+          changes={batchChanges}
           onApply={applyBatch}
           onCreateTag={createTag}
           onCancel={exitSelecting}
