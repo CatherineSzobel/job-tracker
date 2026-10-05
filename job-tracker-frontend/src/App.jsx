@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthStore } from "./stores/useAuthStore";
 
@@ -16,7 +16,7 @@ import Interview from "./views/Interview";
 import QuestionBank from "./views/QuestionBank";
 import Calendar from "./views/Calendar";
 import Profile from "./views/Profile";
-import Links from "./views/Links";
+import Documents from "./views/Documents";
 import Settings from "./views/Settings";
 import Application from "./views/Application";
 import Archive from "./views/Archive";
@@ -55,7 +55,8 @@ function App() {
         <Route path="calendar" element={<Calendar />} />
         <Route path="todos" element={<Todos />} />
         <Route path="profile" element={<Profile />} />
-        <Route path="links" element={<Links />} />
+        <Route path="documents" element={<Documents />} />
+        <Route path="links" element={<Navigate to="/documents" replace />} />
         <Route path="settings" element={<Settings />} />
         <Route path="archives" element={<Archive />} />
       </Route>

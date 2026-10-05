@@ -27,6 +27,7 @@ class JobApplicationResource extends JsonResource
             'interviews' => InterviewResource::collection($this->whenLoaded('interviews')),
             'open_todos_count' => $this->whenCounted('open_todos'),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
+            'documents' => DocumentResource::collection($this->whenLoaded('documents')),
         ];
     }
 }

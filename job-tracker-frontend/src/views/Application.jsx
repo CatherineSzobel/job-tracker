@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axios";
+import AttachedDocuments from "../components/Documents/AttachedDocuments";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
 import TagChip from "../components/Tags/TagChip";
@@ -54,8 +55,8 @@ export default function Application() {
   };
 
   const cancelEditing = () => {
-    // Tags save on their own, so keep the current ones
-    setJob((currentJob) => ({ ...originalJob, tags: currentJob.tags }));
+    // Tags and documents save on their own, so Cancel keeps the current ones
+    setJob((currentJob) => ({ ...originalJob, tags: currentJob.tags, documents: currentJob.documents }));
     setEditing(false);
   };
 
@@ -262,6 +263,13 @@ export default function Application() {
 
       {/* FOLLOW-UPS */}
       <JobFollowUps job={job} />
+
+      {/* DOCUMENTS */}
+      <AttachedDocuments
+        jobId={job.id}
+        documents={job.documents ?? []}
+        onChange={(documents) => setJob((prev) => ({ ...prev, documents }))}
+      />
 
       {/* INTERVIEWS */}
       <div className="bg-light-soft dark:bg-dark-soft rounded-xl p-6 transition-colors">

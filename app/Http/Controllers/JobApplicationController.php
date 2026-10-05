@@ -84,12 +84,12 @@ class JobApplicationController extends Controller
     }
 
     /**
-     * The job page's shape: interviews, tags and open_todos_count, so it can replace its copy after a save.
+     * The job page's shape: interviews, tags, documents and open_todos_count, so it can replace its copy after a save.
      */
     private function detailed(JobApplication $jobApplication): JobApplicationResource
     {
         return new JobApplicationResource(
-            $jobApplication->load(['interviews', 'tags'])->loadCount(JobApplication::openTodosCount())
+            $jobApplication->load(['interviews', 'tags', 'documents'])->loadCount(JobApplication::openTodosCount())
         );
     }
 

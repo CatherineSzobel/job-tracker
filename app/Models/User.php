@@ -99,4 +99,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(BankQuestion::class);
     }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
 }

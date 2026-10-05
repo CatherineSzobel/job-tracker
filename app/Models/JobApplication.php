@@ -80,4 +80,9 @@ class JobApplication extends Model
     {
         return ['todos as open_todos_count' => fn (Builder $query) => $query->where('done', false)];
     }
+
+    public function documents(): BelongsToMany
+    {
+        return $this->belongsToMany(Document::class)->withPivot('attached_at');
+    }
 }
