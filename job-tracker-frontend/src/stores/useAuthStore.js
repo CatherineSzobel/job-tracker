@@ -2,6 +2,10 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import API from '../api/axios'
 
+// The seeded demo account offered on the landing and login pages (see database/seeders/DatabaseSeeder.php)
+export const DEMO_EMAIL = 'test@example.com'
+const DEMO_PASSWORD = 'secret123'
+
 export const useAuthStore = create(
     persist(
         (set, get) => ({
@@ -32,6 +36,9 @@ export const useAuthStore = create(
                     throw err
                 }
             },
+
+            // Logs in with the shared demo account; throws like loginAction when it fails
+            demoLoginAction: () => get().loginAction(DEMO_EMAIL, DEMO_PASSWORD),
 
             // Safely registers a new user and logs them in immediately
             registerAction: async (name, email, password, passwordConfirmation) => {
