@@ -4,7 +4,7 @@ import API from "../api/axios";
 import ArchivedJobCard from "../components/JobApplications/ArchivedJobCard";
 import BatchBar from "../components/JobApplications/BatchBar";
 import { batchUpdateJobs, mergeBatchResult, tagIdsOf } from "../components/JobApplications/batchUpdate";
-import useSelection from "../components/JobApplications/useSelection";
+import useSelection from "../components/UI/useSelection";
 import useTags from "../components/Tags/useTags";
 import PageLoader from "../components/UI/PageLoader";
 import { useToastStore } from "../stores/useToastStore";

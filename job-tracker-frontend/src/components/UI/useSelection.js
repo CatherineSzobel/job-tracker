@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-// Select mode for a list of applications. Escape or exitSelecting() leaves it and clears the selection
+// Select mode for a list (applications, interviews). Escape or exitSelecting() leaves it and clears the selection
 // (Escape is left to a dialog when one is open, so closing it doesn't lose the selection).
 export default function useSelection() {
   const [selecting, setSelecting] = useState(false);

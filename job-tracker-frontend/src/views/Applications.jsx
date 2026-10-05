@@ -1,39 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarDays, LayoutGrid } from "lucide-react";
 import API from "../api/axios";
 import BatchBar from "../components/JobApplications/BatchBar";
 import { batchUpdateJobs, mergeBatchResult, tagIdsOf } from "../components/JobApplications/batchUpdate";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
-import JobGroups from "../components/JobApplications/JobGroups";
 import useArchiveWithTodos, { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
-import useSelection from "../components/JobApplications/useSelection";
 import ManageTagsModal from "../components/Tags/ManageTagsModal";
 import TagChip from "../components/Tags/TagChip";
 import useTags from "../components/Tags/useTags";
+import DateGroups from "../components/UI/DateGroups";
 import PageLoader from "../components/UI/PageLoader";
 import Modal from "../components/UI/Modal";
+import SelectModeButtons from "../components/UI/SelectModeButtons";
+import ViewToggle from "../components/UI/ViewToggle";
+import useSavedView from "../components/UI/useSavedView";
+import useSelection from "../components/UI/useSelection";
 import { EMPTY_JOB, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
 import { useToastStore } from "../stores/useToastStore";
-
-const HEADER_BUTTON_CLASSES = "px-3 py-2 rounded-md text-sm border border-light-muted dark:border-dark-subtle text-light-text dark:text-dark-text hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors";
-
-const VIEW_STORAGE_KEY = "applications-view";
-
-const VIEW_OPTIONS = [
-  { value: "grid", label: "Grid", icon: LayoutGrid },
-  { value: "grouped", label: "Grouped by date", icon: CalendarDays },
-];
-
-// Remembered per browser. localStorage can throw (private windows, blocked storage).
-function readSavedView() {
-  try {
-    return localStorage.getItem(VIEW_STORAGE_KEY) === "grouped" ? "grouped" : "grid";
-  } catch {
-    return "grid";
-  }
-}
 
 export default function Applications() {
   const fileInputRef = useRef(null);
@@ -51,7 +35,7 @@ export default function Applications() {
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState([]);
   const [showManageTags, setShowManageTags] = useState(false);
-  const [view, setView] = useState(readSavedView);
+  const [view, changeView] = useSavedView("applications-view");
   const { tags, reloadTags, createTag, updateTag, deleteTag } = useTags();
   const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany } = useSelection();
   const [batchBusy, setBatchBusy] = useState(false);
@@ -116,15 +100,6 @@ export default function Applications() {
   const closeManageTags = () => {
     setShowManageTags(false);
     loadJobs();
-  };
-
-  const changeView = (nextView) => {
-    setView(nextView);
-    try {
-      localStorage.setItem(VIEW_STORAGE_KEY, nextView);
-    } catch {
-      // Storage unavailable: the choice lasts for this visit only
-    }
   };
 
   // A deleted tag can't stay in the filter, or no application would match
@@ -260,44 +235,15 @@ export default function Applications() {
           </h1>
 
           <div className="flex items-center gap-2 relative" ref={dropdownRef}>
-            {selecting ? (
-              <>
-                <button type="button" onClick={() => selectMany(visibleIds)} className={HEADER_BUTTON_CLASSES}>
-                  Select all ({visibleIds.length})
-                </button>
-                <button type="button" onClick={exitSelecting} className={HEADER_BUTTON_CLASSES}>
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <button type="button" onClick={startSelecting} className={HEADER_BUTTON_CLASSES}>
-                Select
-              </button>
-            )}
+            <SelectModeButtons
+              selecting={selecting}
+              visibleCount={visibleIds.length}
+              onStart={startSelecting}
+              onSelectAll={() => selectMany(visibleIds)}
+              onCancel={exitSelecting}
+            />
 
-            {/* View: icon buttons, the name shows as a tooltip */}
-            <div
-              role="group"
-              aria-label="View"
-              className="flex rounded-md border border-light-muted dark:border-dark-subtle overflow-hidden"
-            >
-              {VIEW_OPTIONS.map((option) => {
-                const ViewIcon = option.icon;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => changeView(option.value)}
-                    aria-pressed={view === option.value}
-                    aria-label={option.label}
-                    title={option.label}
-                    className={`w-9 h-9 flex items-center justify-center transition-colors ${view === option.value ? "bg-accent text-surface" : "text-light-muted dark:text-dark-muted hover:bg-light-soft dark:hover:bg-dark-subtle"}`}
-                  >
-                    <ViewIcon size={18} aria-hidden="true" />
-                  </button>
-                );
-              })}
-            </div>
+            <ViewToggle view={view} onChange={changeView} />
 
             <button
               className="px-4 py-2 rounded-md text-sm bg-accent-soft hover:bg-accent text-surface font-semibold transition-colors"
@@ -406,25 +352,12 @@ export default function Applications() {
       {filteredJobs.length === 0 ? (
         <p className="text-center text-muted dark:text-dark-muted">No applications found.</p>
       ) : view === "grouped" ? (
-        <JobGroups
-          jobs={filteredJobs}
-          renderJob={renderJob}
-          renderGroupActions={
-            selecting
-              ? (groupJobs) => (
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      selectMany(groupJobs.map((job) => job.id));
-                    }}
-                    className="text-xs font-normal text-accent dark:text-accent-muted hover:underline"
-                  >
-                    Select all
-                  </button>
-                )
-              : undefined
-          }
+        <DateGroups
+          items={filteredJobs}
+          getDateString={(job) => job.applied_date}
+          itemLabel="application"
+          renderItem={renderJob}
+          onSelectAll={selecting ? (groupJobs) => selectMany(groupJobs.map((job) => job.id)) : undefined}
         />
       ) : (
         <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
