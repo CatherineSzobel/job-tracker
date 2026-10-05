@@ -40,6 +40,24 @@
     @apply block text-sm font-medium mb-1 text-light-text dark:text-dark-text;
 }
 
+/* Dashboard-style card and its heading (add your own margin to the heading) */
+@utility card {
+    @apply bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl;
+}
+
+@utility card-title {
+    @apply flex items-center gap-2 text-lg font-semibold text-light-text dark:text-white;
+}
+
+/* Small outlined button for card actions (Dismiss, Edit, ...); the danger one for Delete */
+@utility btn-small {
+    @apply px-2 py-1 text-xs rounded-lg border border-light-muted dark:border-dark-subtle text-light-text dark:text-dark-text hover:bg-light dark:hover:bg-dark-subtle transition-colors;
+}
+
+@utility btn-small-danger {
+    @apply px-2 py-1 text-xs rounded-lg border border-red-300 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors;
+}
+
 /* Global background */
 body {
     @apply bg-light-soft text-light-text;
