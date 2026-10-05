@@ -1,3 +1,5 @@
+import PrepProgressLink from "./PrepProgressLink";
+
 export default function InterviewCard({ interview }) {
   const date = new Date(interview.interview_date);
 
@@ -33,6 +35,8 @@ export default function InterviewCard({ interview }) {
       <div className="flex items-center gap-2 text-sm text-light-muted dark:text-dark-muted">
         <span>{interview.notes || "No notes yet"}</span>
       </div>
+
+      <PrepProgressLink interview={interview} />
     </div>
   );
 }

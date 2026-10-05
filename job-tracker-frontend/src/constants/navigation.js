@@ -1,10 +1,11 @@
-import { Home, Briefcase, ClipboardList, Calendar, ListTodo } from "lucide-react";
+import { Home, Briefcase, ClipboardList, MessageSquareText, Calendar, ListTodo } from "lucide-react";
 
 // Main pages, shown in the sidebar (and its mobile menu)
 export const NAV_LINKS = [
   { to: "/", label: "Dashboard", icon: Home },
   { to: "/applications", label: "Applications", icon: Briefcase },
   { to: "/interviews", label: "Interviews", icon: ClipboardList },
+  { to: "/question-bank", label: "Question bank", icon: MessageSquareText },
   { to: "/calendar", label: "Calendar", icon: Calendar },
   { to: "/todos", label: "To-dos", icon: ListTodo },
 ];
@@ -22,6 +23,7 @@ const PAGE_TITLES = {
 };
 
 export function getPageTitle(pathname) {
+  if (pathname.startsWith("/interviews/")) return "Interview prep";
   if (pathname.startsWith("/jobs/")) return "Application";
   return PAGE_TITLES[pathname] || "Page";
 }

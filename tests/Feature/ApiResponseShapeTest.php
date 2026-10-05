@@ -20,7 +20,13 @@ class ApiResponseShapeTest extends TestCase
 
     private const JOB = ['id', 'company_name', 'position', 'location', 'status', 'priority', 'applied_date', 'job_link', 'notes', 'is_archived'];
 
-    private const INTERVIEW = ['id', 'job_application_id', 'interview_date', 'type', 'location', 'notes'];
+    private const INTERVIEW = ['id', 'job_application_id', 'interview_date', 'type', 'location', 'notes', 'prep_progress' => ['done', 'total']];
+
+    private const INTERVIEW_DETAIL = [
+        ...self::INTERVIEW,
+        'prep' => ['checklist', 'people', 'questions_to_ask', 'questions_asked'],
+        'rating', 'debrief_notes',
+    ];
 
     private const TODO = ['id', 'text', 'done', 'due_date', 'job_application', 'created_at'];
 
@@ -29,6 +35,8 @@ class ApiResponseShapeTest extends TestCase
     private const LINK = ['id', 'type', 'url'];
 
     private const TAG = ['id', 'name', 'color'];
+
+    private const BANK_QUESTION = ['id', 'question', 'answer', 'category'];
 
     private const SETTINGS = ['archive_todos', 'reminders_in_app', 'reminders_email', 'reminder_days', 'reminder_dismiss_mode'];
 
@@ -147,7 +155,50 @@ class ApiResponseShapeTest extends TestCase
             ->assertExactJsonStructure(['data' => [...self::INTERVIEW, 'job' => $job]])
             ->assertJsonPath('data.location', 'Office');
 
+        $this->getJson("/api/interviews/{$this->interview->id}")
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => [...self::INTERVIEW_DETAIL, 'job' => $job, 'bank_questions']]);
+
+        $this->putJson("/api/interviews/{$this->interview->id}/prep", [
+            'checklist' => [], 'people' => [], 'questions_to_ask' => [], 'questions_asked' => [], 'rating' => 3, 'debrief_notes' => null,
+        ])
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => [...self::INTERVIEW_DETAIL, 'job' => $job]]);
+
         $this->deleteJson("/api/interviews/{$this->interview->id}")->assertNoContent();
+    }
+
+    public function test_bank_questions(): void
+    {
+        $response = $this->postJson('/api/bank-questions', ['question' => 'Why us?', 'category' => 'motivation'])
+            ->assertCreated()
+            ->assertExactJsonStructure(['data' => self::BANK_QUESTION]);
+        $this->assertHidden($response, 'data');
+        $questionId = $response->json('data.id');
+
+        $this->getJson('/api/bank-questions')->assertOk()->assertExactJsonStructure(['data' => [[...self::BANK_QUESTION, 'interviews_count']]]);
+        $this->patchJson("/api/bank-questions/{$questionId}", ['answer' => 'Your mission'])
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => self::BANK_QUESTION]);
+        $this->putJson("/api/interviews/{$this->interview->id}/bank-questions", ['questions' => [['id' => $questionId, 'note' => 'Short']]])
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => [
+                ...self::INTERVIEW_DETAIL,
+                'job' => ['id', 'company_name', 'position'],
+                'bank_questions' => [[...self::BANK_QUESTION, 'note']],
+            ]]);
+        $this->deleteJson("/api/bank-questions/{$questionId}")->assertNoContent();
+    }
+
+    public function test_interview_prep_template(): void
+    {
+        $structure = ['data' => ['items' => ['*' => ['text', 'type']], 'is_default']];
+
+        $this->getJson('/api/interview-prep-template')->assertOk()->assertExactJsonStructure($structure);
+        $this->putJson('/api/interview-prep-template', ['items' => [['text' => 'Print CV', 'type' => null]]])
+            ->assertOk()
+            ->assertExactJsonStructure($structure);
+        $this->deleteJson('/api/interview-prep-template')->assertOk()->assertExactJsonStructure($structure);
     }
 
     public function test_todos(): void

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BankQuestion;
 use App\Models\JobApplication;
 use App\Models\Tag;
 use App\Models\User;
@@ -82,6 +83,7 @@ class OwnershipTest extends TestCase
         $note = $owner->notes()->create(['title' => 'Mine', 'content' => 'Secret']);
         $link = $owner->profile()->create(['name' => 'Owner'])->links()->create(['type' => 'GitHub', 'url' => 'https://github.com/owner']);
         $tag = Tag::factory()->for($owner)->create(['name' => 'Mine']);
+        $bankQuestion = BankQuestion::factory()->for($owner)->create(['question' => 'Mine']);
 
         $intruder = User::factory()->create();
         $intruder->profile()->create(['name' => 'Intruder']);
@@ -91,6 +93,10 @@ class OwnershipTest extends TestCase
             ['postJson', "/api/job-applications/{$job->id}/interviews", ['interview_date' => now()->addWeek()->toDateTimeString()]],
             ['putJson', "/api/interviews/{$interview->id}", ['location' => 'Hacked']],
             ['deleteJson', "/api/interviews/{$interview->id}"],
+            ['getJson', "/api/interviews/{$interview->id}"],
+            ['putJson', "/api/interviews/{$interview->id}/prep", [
+                'checklist' => [], 'people' => [], 'questions_to_ask' => [], 'questions_asked' => [], 'rating' => 5, 'debrief_notes' => 'Hacked',
+            ]],
             ['putJson', "/api/todos/{$todo->id}", ['done' => true]],
             ['putJson', "/api/notes/{$note->id}", ['title' => 'Hacked']],
             ['deleteJson', "/api/notes/{$note->id}"],
@@ -100,6 +106,9 @@ class OwnershipTest extends TestCase
             ['deleteJson', "/api/tags/{$tag->id}"],
             ['putJson', "/api/job-applications/{$job->id}/tags", ['tag_ids' => []]],
             ['postJson', "/api/job-applications/{$job->id}/dismiss-reminder"],
+            ['putJson', "/api/interviews/{$interview->id}/bank-questions", ['questions' => []]],
+            ['patchJson', "/api/bank-questions/{$bankQuestion->id}", ['question' => 'Hacked']],
+            ['deleteJson', "/api/bank-questions/{$bankQuestion->id}"],
         ];
 
         foreach ($requests as $request) {
@@ -111,10 +120,12 @@ class OwnershipTest extends TestCase
 
         $this->assertSame(1, $job->interviews()->count());
         $this->assertNull($interview->fresh()->location);
+        $this->assertNull($interview->fresh()->rating);
         $this->assertFalse((bool) $todo->fresh()->done);
         $this->assertSame('Mine', $note->fresh()->title);
         $this->assertSame('GitHub', $link->fresh()->type);
         $this->assertSame('Mine', $tag->fresh()->name);
+        $this->assertSame('Mine', $bankQuestion->fresh()->question);
     }
 
     public function test_user_without_profile_gets_404_not_500_on_someone_elses_link(): void

@@ -4,7 +4,7 @@ import { ListChecks } from "lucide-react";
 import API from "../api/axios";
 import TodoList from "../components/ToDoList";
 import useTodos from "../components/Todo/useTodos";
-import DashboardTabs, { DashboardTabPanel } from "../components/Dashboard/DashboardTabs";
+import Tabs, { TabPanel } from "../components/UI/Tabs";
 import ComingUp from "../components/Dashboard/ComingUp";
 import Reminders from "../components/Dashboard/Reminders";
 import StatusGrid from "../components/Dashboard/Status/StatusGrid";
@@ -66,11 +66,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-light p-4 sm:p-6 lg:p-8 dark:bg-dark transition-colors rounded-2xl">
-      <DashboardTabs activeTab={activeTab} onChange={changeTab} />
+      <Tabs tabs={DASHBOARD_TABS} activeTab={activeTab} onChange={changeTab} idPrefix="dashboard" label="Dashboard" />
 
       {/* Only the active tab is rendered: a hidden chart would measure 0 width */}
       {activeTab === "insights" ? (
-        <DashboardTabPanel tabId="insights">
+        <TabPanel idPrefix="dashboard" tabId="insights">
           {/* Only Insights needs the stats, so Today doesn't wait for them */}
           {loading ? (
             <PageLoader text="Loading insights..." />
@@ -89,9 +89,9 @@ export default function Dashboard() {
               </div>
             </>
           )}
-        </DashboardTabPanel>
+        </TabPanel>
       ) : (
-        <DashboardTabPanel tabId="today" className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <TabPanel idPrefix="dashboard" tabId="today" className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* On phones the two columns stack: Coming up, Reminders, Quick to-dos, Notes */}
           <div className="lg:col-span-7 flex flex-col gap-6">
             <ComingUp todos={todoList.todos} todosLoading={todoList.loading} />
@@ -111,7 +111,7 @@ export default function Dashboard() {
               <Notes />
             </div>
           </div>
-        </DashboardTabPanel>
+        </TabPanel>
       )}
     </div>
   );

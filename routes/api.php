@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BankQuestionController;
 use App\Http\Controllers\InterviewController;
+use App\Http\Controllers\InterviewPrepTemplateController;
 use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\NotesController;
 use App\Http\Controllers\ProfileController;
@@ -33,7 +35,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/job-applications/{job_application}/tags', [JobApplicationController::class, 'syncTags']);
     Route::post('/job-applications/{job_application}/dismiss-reminder', [ReminderController::class, 'dismiss']);
 
-    Route::apiResource('interviews', InterviewController::class)->only(['index', 'update', 'destroy']);
+    Route::apiResource('interviews', InterviewController::class)->only(['index', 'show', 'update', 'destroy']);
+    Route::put('/interviews/{interview}/prep', [InterviewController::class, 'updatePrep']);
+    Route::put('/interviews/{interview}/bank-questions', [InterviewController::class, 'syncBankQuestions']);
+    Route::apiResource('bank-questions', BankQuestionController::class)->except('show');
     Route::apiResource('todos', TodoController::class)->except('show');
     Route::apiResource('notes', NotesController::class)->except('show');
     Route::apiResource('tags', TagController::class)->except('show');
@@ -47,6 +52,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/settings', [SettingsController::class, 'show']);
     Route::put('/settings', [SettingsController::class, 'update']);
     Route::get('/reminders', [ReminderController::class, 'index']);
+
+    Route::get('/interview-prep-template', [InterviewPrepTemplateController::class, 'show']);
+    Route::put('/interview-prep-template', [InterviewPrepTemplateController::class, 'update']);
+    Route::delete('/interview-prep-template', [InterviewPrepTemplateController::class, 'destroy']);
 
     Route::put('/account/password', [AuthController::class, 'updatePassword']);
     Route::put('/account/email', [AuthController::class, 'updateEmail']);

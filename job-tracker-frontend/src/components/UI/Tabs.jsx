@@ -1,38 +1,36 @@
-import { DASHBOARD_TABS } from "../../constants/dashboard";
+const tabButtonId = (idPrefix, tabId) => `${idPrefix}-tab-${tabId}`;
+const tabPanelId = (idPrefix, tabId) => `${idPrefix}-panel-${tabId}`;
 
-const tabButtonId = (tabId) => `dashboard-tab-${tabId}`;
-const tabPanelId = (tabId) => `dashboard-panel-${tabId}`;
-
-// Accessible tab bar: Left/Right arrow keys move between tabs. Pair it with one DashboardTabPanel
-// for the active tab.
-export default function DashboardTabs({ activeTab, onChange }) {
+// Accessible tab bar: Left/Right arrow keys move between tabs. tabs: [{ id, label }].
+// Pair it with one TabPanel (same idPrefix) for the active tab.
+export default function Tabs({ tabs, activeTab, onChange, idPrefix, label }) {
   const moveWithArrowKeys = (event) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-    const currentIndex = DASHBOARD_TABS.findIndex((tab) => tab.id === activeTab);
+    const currentIndex = tabs.findIndex((tab) => tab.id === activeTab);
     const step = event.key === "ArrowRight" ? 1 : -1;
-    const nextTab = DASHBOARD_TABS[(currentIndex + step + DASHBOARD_TABS.length) % DASHBOARD_TABS.length];
+    const nextTab = tabs[(currentIndex + step + tabs.length) % tabs.length];
     onChange(nextTab.id);
-    document.getElementById(tabButtonId(nextTab.id))?.focus();
+    document.getElementById(tabButtonId(idPrefix, nextTab.id))?.focus();
   };
 
   return (
     <div
       role="tablist"
-      aria-label="Dashboard"
+      aria-label={label}
       onKeyDown={moveWithArrowKeys}
       className="flex gap-6 mb-6 border-b border-border dark:border-dark-subtle"
     >
-      {DASHBOARD_TABS.map((tab) => {
+      {tabs.map((tab) => {
         const selected = tab.id === activeTab;
         return (
           <button
             key={tab.id}
-            id={tabButtonId(tab.id)}
+            id={tabButtonId(idPrefix, tab.id)}
             type="button"
             role="tab"
             aria-selected={selected}
             // Only the active panel is on the page, so only its tab points to one
-            aria-controls={selected ? tabPanelId(tab.id) : undefined}
+            aria-controls={selected ? tabPanelId(idPrefix, tab.id) : undefined}
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(tab.id)}
             className={`-mb-px pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
@@ -50,9 +48,9 @@ export default function DashboardTabs({ activeTab, onChange }) {
 }
 
 // The content of one tab, linked to its tab button for screen readers
-export function DashboardTabPanel({ tabId, className, children }) {
+export function TabPanel({ idPrefix, tabId, className, children }) {
   return (
-    <div id={tabPanelId(tabId)} role="tabpanel" aria-labelledby={tabButtonId(tabId)} className={className}>
+    <div id={tabPanelId(idPrefix, tabId)} role="tabpanel" aria-labelledby={tabButtonId(idPrefix, tabId)} className={className}>
       {children}
     </div>
   );

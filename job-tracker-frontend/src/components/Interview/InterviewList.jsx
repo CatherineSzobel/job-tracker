@@ -1,3 +1,5 @@
+import PrepProgressLink from "./PrepProgressLink";
+
 export default function InterviewList({ i, startEdit, deleteInterview }) {
   const isPast = new Date(i.interview_date) < new Date();
 
@@ -42,6 +44,8 @@ export default function InterviewList({ i, startEdit, deleteInterview }) {
           <strong>Notes:</strong> {i.notes}
         </p>
       )}
+
+      <PrepProgressLink interview={i} />
 
       <div className="flex justify-end gap-2 mt-auto">
         <button

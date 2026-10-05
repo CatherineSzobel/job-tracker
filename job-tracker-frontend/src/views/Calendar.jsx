@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import API from "../api/axios";
 import {
   format,
@@ -171,6 +172,9 @@ export default function Calendar() {
                     <p className="text-sm text-dark-soft dark:text-dark-muted">{i.job?.company_name}</p>
                     <p className="text-sm text-dark dark:text-light">Type: {i.type}</p>
                     <p className="text-sm text-dark dark:text-light">Location: {i.location}</p>
+                    <Link to={`/interviews/${i.id}`} className="inline-block mt-1 text-sm text-accent dark:text-accent-muted hover:underline">
+                      Open prep →
+                    </Link>
                   </div>
                 ))}
               </div>

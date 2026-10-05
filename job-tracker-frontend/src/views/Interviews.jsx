@@ -5,6 +5,7 @@ import InterviewList from "../components/Interview/InterviewList";
 import PageLoader from "../components/UI/PageLoader";
 import Modal from "../components/UI/Modal";
 import { EMPTY_INTERVIEW } from "../constants/jobs";
+import { toDateTimeInputValue } from "../utils/dateInput";
 
 export default function Interviews() {
   const [interviews, setInterviews] = useState([]);
@@ -94,25 +95,11 @@ export default function Interviews() {
     setNewInterview({
       job_id: interview.job_application_id,
       type: interview.type || "",
-      interview_date: formatForInput(interview.interview_date),
+      interview_date: toDateTimeInputValue(interview.interview_date),
       location: interview.location || "",
       notes: interview.notes || "",
     });
     setShowForm(true);
-  };
-
-  const formatForInput = (dateString) => {
-    if (!dateString) return "";
-
-    const date = new Date(dateString);
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   const resetForm = () => {

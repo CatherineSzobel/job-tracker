@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import API from "../api/axios";
+import PrepTemplateEditor from "../components/InterviewPrep/PrepTemplateEditor";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useThemeStore } from "../stores/useThemeStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
@@ -172,7 +173,7 @@ export default function Settings() {
       </div>
 
       {/* Account & security */}
-      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-4 transition-colors">
+      <section className="settings-section space-y-4">
         <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">
           Account &amp; security
         </h2>
@@ -221,7 +222,7 @@ export default function Settings() {
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+                    className="btn-primary"
                     disabled={savingEmail}
                   >
                     {savingEmail ? "Updating..." : "Update email"}
@@ -291,7 +292,7 @@ export default function Settings() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+              className="btn-primary"
               disabled={savingPassword}
             >
               {savingPassword ? "Updating..." : "Update password"}
@@ -301,7 +302,7 @@ export default function Settings() {
       </section>
 
       {/* Goals */}
-      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-4 transition-colors">
+      <section className="settings-section space-y-4">
         <div>
           <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">Goals</h2>
           <p className="text-sm text-light-muted dark:text-dark-muted">
@@ -356,7 +357,7 @@ export default function Settings() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+              className="btn-primary"
               disabled={savingGoals}
             >
               {savingGoals ? "Saving..." : "Save goals"}
@@ -366,7 +367,7 @@ export default function Settings() {
       </section>
 
       {/* To-dos */}
-      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-4 transition-colors">
+      <section className="settings-section space-y-4">
         <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">To-dos</h2>
         <fieldset disabled={!settings} className="space-y-2">
           <legend className="text-sm text-light-muted dark:text-dark-muted mb-2">
@@ -388,8 +389,10 @@ export default function Settings() {
         {archiveTodosError && <p className="text-sm text-red-500 dark:text-red-400">{archiveTodosError}</p>}
       </section>
 
+      <PrepTemplateEditor />
+
       {/* Appearance */}
-      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 transition-colors">
+      <section className="settings-section">
         <h2 className="text-lg font-semibold text-light-text dark:text-dark-text mb-4">
           Appearance
         </h2>
@@ -413,7 +416,7 @@ export default function Settings() {
       </section>
 
       {/* Reminders */}
-      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-4 transition-colors">
+      <section className="settings-section space-y-4">
         <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">Reminders</h2>
         <fieldset disabled={!settings} className="space-y-4">
           <label className="flex items-center gap-3 text-light-text dark:text-dark-text">
