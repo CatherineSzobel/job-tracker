@@ -14,6 +14,9 @@ export const PREP_LIMITS = {
   questionsAsked: 50,
 };
 
+// A checklist item's (and template item's) text, same as the backend's max:200
+export const CHECKLIST_ITEM_MAX_LENGTH = 200;
+
 export const RATING_VALUES = [1, 2, 3, 4, 5];
 
 // Mirrors app/Enums/BankQuestionCategory

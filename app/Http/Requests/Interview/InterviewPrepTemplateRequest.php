@@ -29,4 +29,17 @@ class InterviewPrepTemplateRequest extends FormRequest
             'items.*.type' => ['nullable', Rule::enum(InterviewType::class)],
         ];
     }
+
+    /**
+     * The validated items, each with a type (an item sent without one is for every interview).
+     *
+     * @return list<array{text: string, type: ?string}>
+     */
+    public function items(): array
+    {
+        return array_map(
+            fn (array $item) => ['text' => $item['text'], 'type' => $item['type'] ?? null],
+            $this->validated('items')
+        );
+    }
 }

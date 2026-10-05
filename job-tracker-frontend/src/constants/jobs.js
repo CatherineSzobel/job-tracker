@@ -19,6 +19,9 @@ export const INTERVIEW_TYPES = [
   { value: "onsite", label: "On-site" },
 ];
 
+// "On-site" for "onsite"; an unknown type is shown as is
+export const interviewTypeLabel = (type) => INTERVIEW_TYPES.find((option) => option.value === type)?.label ?? type;
+
 // Same defaults as the backend (JobStatus::Applied, Priority::Medium)
 export const DEFAULT_STATUS = "applied";
 export const DEFAULT_PRIORITY = "medium";

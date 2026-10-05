@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Building2, CalendarDays, Phone, Square, Video } from "lucide-react";
 import PageLoader from "../UI/PageLoader";
 import { COMING_UP_DAYS } from "../../constants/dashboard";
-import { INTERVIEW_TYPES } from "../../constants/jobs";
+import { interviewTypeLabel } from "../../constants/jobs";
 import { describeDueDate } from "../../utils/dueDate";
 import useComingUp from "./useComingUp";
 
@@ -12,8 +12,6 @@ const ROW_CLASSES = "flex flex-wrap items-center gap-x-2";
 const ROW_ICON_CLASSES = "shrink-0 text-light-muted dark:text-dark-muted";
 
 const INTERVIEW_TYPE_ICONS = { phone: Phone, online: Video, onsite: Building2 };
-
-const interviewTypeLabel = (type) => INTERVIEW_TYPES.find((option) => option.value === type)?.label ?? type;
 
 // This week's interviews and to-dos, by day ("Today", "Tomorrow", "Thu 9 Oct"). Read-only:
 // to-dos are ticked in Quick to-dos, which shares its to-do list with this card.

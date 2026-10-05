@@ -22,12 +22,7 @@ class InterviewPrepTemplateController extends Controller
 
     public function update(InterviewPrepTemplateRequest $request): JsonResponse
     {
-        $items = collect($request->validated('items'))
-            ->map(fn (array $item) => ['text' => $item['text'], 'type' => $item['type'] ?? null])
-            ->values()
-            ->all();
-
-        $request->user()->update(['prep_template' => $items]);
+        $request->user()->update(['prep_template' => $request->items()]);
 
         return $this->templateResponse($request->user());
     }

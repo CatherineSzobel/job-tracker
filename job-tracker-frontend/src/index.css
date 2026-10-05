@@ -49,6 +49,16 @@
     @apply flex items-center gap-2 text-lg font-semibold text-light-text dark:text-white;
 }
 
+/* A section of the Settings page (add space-y-4 when it stacks several blocks) */
+@utility settings-section {
+    @apply bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 transition-colors;
+}
+
+/* Filled accent button for a form's main action (Save, Update, Add) */
+@utility btn-primary {
+    @apply px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50;
+}
+
 /* Small outlined button for card actions (Dismiss, Edit, ...); the danger one for Delete */
 @utility btn-small {
     @apply px-2 py-1 text-xs rounded-lg border border-light-muted dark:border-dark-subtle text-light-text dark:text-dark-text hover:bg-light dark:hover:bg-dark-subtle transition-colors;

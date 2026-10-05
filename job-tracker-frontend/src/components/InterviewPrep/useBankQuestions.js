@@ -4,6 +4,19 @@ import { useToastStore } from "../../stores/useToastStore";
 
 const showToast = (message) => useToastStore.getState().showToast(message);
 
+// POST /bank-questions: the saved question, or null when it failed (a toast says so). Also used on
+// its own by the interview page's "Save to bank", which doesn't need the whole bank loaded.
+export async function createBankQuestion(values) {
+  try {
+    const res = await API.post("/bank-questions", values);
+    return res.data.data;
+  } catch (err) {
+    console.error(err);
+    showToast(err.response?.data?.message || "Failed to save the question");
+    return null;
+  }
+}
+
 // The user's question bank, newest first, and its actions. Each action returns the saved question
 // (true for delete), or null/false when it failed; a toast says so.
 export default function useBankQuestions() {
@@ -21,16 +34,11 @@ export default function useBankQuestions() {
   }, []);
 
   const createQuestion = async (values) => {
-    try {
-      const res = await API.post("/bank-questions", values);
-      const saved = { ...res.data.data, interviews_count: 0 };
-      setQuestions((current) => [saved, ...current]);
-      return saved;
-    } catch (err) {
-      console.error(err);
-      showToast(err.response?.data?.message || "Failed to save the question");
-      return null;
-    }
+    const saved = await createBankQuestion(values);
+    if (!saved) return null;
+    const withCount = { ...saved, interviews_count: 0 };
+    setQuestions((current) => [withCount, ...current]);
+    return withCount;
   };
 
   const updateQuestion = async (question, values) => {

@@ -1,22 +1,22 @@
 import RemoveButton from "../UI/RemoveButton";
 import { PREP_LIMITS } from "../../constants/interviewPrep";
+import { removeAt, replaceAt } from "../../utils/lists";
 import { toSavableUrl } from "./prepDocument";
 
 const EMPTY_PERSON = { name: "", role: "", url: "" };
 
-// The people you're meeting. A person is saved once they have a name; a link once it's a valid
-// http(s) link (until then the row says so). rejectedLinks: links the backend turned down.
-export default function PeopleList({ people, rejectedLinks, onChange }) {
-  const changePerson = (index, changes) =>
-    onChange(people.map((person, personIndex) => (personIndex === index ? { ...person, ...changes } : person)));
-  const removePerson = (index) => onChange(people.filter((_, personIndex) => personIndex !== index));
+// The people you're meeting. A person is saved once they have a name; a link once it's an http(s)
+// link (until then the row says so).
+export default function PeopleList({ people, onChange }) {
+  const changePerson = (index, changes) => onChange(replaceAt(people, index, changes));
+  const removePerson = (index) => onChange(removeAt(people, index));
 
   return (
     <div className="flex flex-col gap-3">
       {people.length > 0 && (
         <ul className="flex flex-col gap-3">
           {people.map((person, index) => {
-            const savableUrl = toSavableUrl(person.url, rejectedLinks);
+            const savableUrl = toSavableUrl(person.url);
             return (
               <li key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1.5fr_auto] gap-2 items-start">
                 <input

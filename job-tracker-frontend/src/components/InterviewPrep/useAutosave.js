@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export const AUTOSAVE_DELAY_MS = 800;
+const AUTOSAVE_DELAY_MS = 800;
 
 // Saving while you type: schedule(value) saves it after a short pause, one request at a time and
 // always the latest value (last write wins). Whatever is still waiting is sent when the page unmounts,
 // and closing the tab asks first while something is unsaved. After a failed save, retry() resends.
 // status: "idle" | "saving" | "saved" | "error"
-export default function useAutosave(save, delayMs = AUTOSAVE_DELAY_MS) {
+export default function useAutosave(save) {
   const [status, setStatus] = useState("idle");
   const saveRef = useRef(save);
   // { value } waiting to be sent, or null
@@ -47,9 +47,9 @@ export default function useAutosave(save, delayMs = AUTOSAVE_DELAY_MS) {
       pending.current = { value };
       setStatus("saving");
       clearTimeout(timer.current);
-      timer.current = setTimeout(flush, delayMs);
+      timer.current = setTimeout(flush, AUTOSAVE_DELAY_MS);
     },
-    [flush, delayMs]
+    [flush]
   );
 
   // Leaving the page (another route) sends what's still waiting

@@ -18,7 +18,6 @@ export default function QuestionBank() {
   const saveQuestion = async (values) => {
     const saved = editing === "new" ? await createQuestion(values) : await updateQuestion(editing, values);
     if (saved) setEditing(null);
-    return saved;
   };
 
   const confirmDelete = (question) => {

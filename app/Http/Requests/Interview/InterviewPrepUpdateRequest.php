@@ -15,6 +15,34 @@ class InterviewPrepUpdateRequest extends FormRequest
     }
 
     /**
+     * A pasted link may contain characters a URL can't (a space, |, ...): percent-encode those so it
+     * still passes the url rule, instead of one link stopping the whole document from saving.
+     */
+    protected function prepareForValidation(): void
+    {
+        $people = $this->input('people');
+        if (! is_array($people)) {
+            return;
+        }
+
+        $this->merge(['people' => array_map(
+            fn (mixed $person) => is_array($person) && is_string($person['url'] ?? null)
+                ? [...$person, 'url' => $this->encodeUnsafeCharacters($person['url'])]
+                : $person,
+            $people
+        )]);
+    }
+
+    private function encodeUnsafeCharacters(string $url): string
+    {
+        return preg_replace_callback(
+            "/[^A-Za-z0-9\\-._~:\\/?#\\[\\]@!$&'()*+,;=%]/",
+            fn (array $match) => rawurlencode($match[0]),
+            $url
+        );
+    }
+
+    /**
      * The whole prep document, rating and debrief notes: every key must be sent (lists may be empty).
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>

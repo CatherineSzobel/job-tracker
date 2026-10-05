@@ -159,6 +159,23 @@ class InterviewPrepTest extends TestCase
             ->assertJsonPath('data.rating', null);
     }
 
+    public function test_links_with_characters_a_url_cannot_contain_are_saved_encoded(): void
+    {
+        $user = User::factory()->create();
+        $interview = $this->interviewFor($user);
+
+        $this->actingAs($user)->putJson("/api/interviews/{$interview->id}/prep", [...self::validPrep(), 'people' => [
+            ['name' => 'Sam', 'role' => null, 'url' => ' https://www.linkedin.com/in/sam lee '],
+            ['name' => 'Alex', 'role' => null, 'url' => 'https://example.com/a|b'],
+            ['name' => 'Kim', 'role' => null, 'url' => ''],
+        ]])->assertOk();
+
+        $this->assertSame(
+            ['https://www.linkedin.com/in/sam%20lee', 'https://example.com/a%7Cb', null],
+            array_column($interview->fresh()->prep['people'], 'url')
+        );
+    }
+
     /**
      * @return array<string, array{Closure(array<string, mixed>): array<string, mixed>, string}>
      */
@@ -170,7 +187,6 @@ class InterviewPrepTest extends TestCase
             'missing list' => [fn (array $prep) => Arr::except($prep, 'people'), 'people'],
             'link that is not http(s)' => [fn (array $prep) => [...$prep, 'people' => [['name' => 'Sam', 'role' => null, 'url' => 'javascript:alert(1)']]], 'people.0.url'],
             'link without a scheme' => [fn (array $prep) => [...$prep, 'people' => [['name' => 'Sam', 'role' => null, 'url' => 'linkedin.com/in/sam']]], 'people.0.url'],
-            'link with a space' => [fn (array $prep) => [...$prep, 'people' => [['name' => 'Sam', 'role' => null, 'url' => 'https://www.linkedin.com/in/sam lee']]], 'people.0.url'],
             'person without a name' => [fn (array $prep) => [...$prep, 'people' => [['name' => '', 'role' => 'CTO', 'url' => null]]], 'people.0.name'],
             'too many questions asked' => [fn (array $prep) => [...$prep, 'questions_asked' => array_fill(0, 51, 'Why?')], 'questions_asked'],
             'rating 0' => [fn (array $prep) => [...$prep, 'rating' => 0], 'rating'],

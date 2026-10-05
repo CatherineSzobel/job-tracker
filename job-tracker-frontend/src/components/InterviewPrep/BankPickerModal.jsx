@@ -30,7 +30,6 @@ export default function BankPickerModal({ linkedIds, onAdd, onClose }) {
       setSelectedIds((current) => [...current, saved.id]);
       setCreating(false);
     }
-    return saved;
   };
 
   const addSelected = () => {
@@ -90,7 +89,7 @@ export default function BankPickerModal({ linkedIds, onAdd, onClose }) {
                 type="button"
                 onClick={addSelected}
                 disabled={selectedIds.length === 0 || tooMany}
-                className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+                className="btn-primary"
               >
                 Add{selectedIds.length > 0 ? ` ${selectedIds.length}` : ""}
               </button>

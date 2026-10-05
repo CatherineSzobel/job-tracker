@@ -19,6 +19,8 @@ class BankQuestionResource extends JsonResource
             'answer' => $this->answer,
             'category' => $this->category,
             'interviews_count' => $this->whenCounted('interviews'),
+            // When listed on an interview: that interview's note
+            'note' => $this->whenPivotLoaded('bank_question_interview', fn () => $this->pivot->note),
         ];
     }
 }

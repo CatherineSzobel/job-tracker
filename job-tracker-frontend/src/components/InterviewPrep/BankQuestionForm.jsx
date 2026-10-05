@@ -8,8 +8,8 @@ const toFormValues = (question) => ({
   answer: question.answer ?? "",
 });
 
-// Question, category and answer. onSubmit(values) returns the saved question or null; when saving
-// fails the form keeps what was entered.
+// Question, category and answer. onSubmit(values) saves; the parent closes the form when that worked,
+// so after a failed save the form is still there with what was entered.
 export default function BankQuestionForm({ initialValues = EMPTY_BANK_QUESTION, submitLabel = "Save", onSubmit, onCancel }) {
   const [values, setValues] = useState(() => toFormValues(initialValues));
   const [saving, setSaving] = useState(false);
@@ -68,7 +68,7 @@ export default function BankQuestionForm({ initialValues = EMPTY_BANK_QUESTION, 
         <button
           type="submit"
           disabled={saving || !values.question.trim()}
-          className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+          className="btn-primary"
         >
           {saving ? "Saving..." : submitLabel}
         </button>

@@ -15,9 +15,14 @@ use Illuminate\Support\Facades\Gate;
 
 class InterviewController extends Controller
 {
+    /**
+     * Only the job fields the interview pages show.
+     */
+    private const JOB = 'job:id,company_name,position';
+
     public function index(Request $request): AnonymousResourceCollection
     {
-        $interviews = Interview::with('job:id,company_name,position')
+        $interviews = Interview::with(self::JOB)
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get();
@@ -29,7 +34,7 @@ class InterviewController extends Controller
     {
         Gate::authorize('view', $interview);
 
-        return new InterviewDetailResource($interview->load(['job:id,company_name,position', 'bankQuestions']));
+        return new InterviewDetailResource($interview->load([self::JOB, 'bankQuestions']));
     }
 
     /**
@@ -45,7 +50,7 @@ class InterviewController extends Controller
             'debrief_notes' => $request->validated('debrief_notes'),
         ]);
 
-        return new InterviewDetailResource($interview->load('job:id,company_name,position'));
+        return new InterviewDetailResource($interview->load(self::JOB));
     }
 
     /**
@@ -63,7 +68,7 @@ class InterviewController extends Controller
                 ->all()
         );
 
-        return new InterviewDetailResource($interview->load(['job:id,company_name,position', 'bankQuestions']));
+        return new InterviewDetailResource($interview->load([self::JOB, 'bankQuestions']));
     }
 
     public function update(InterviewUpdateRequest $request, Interview $interview): InterviewResource
@@ -72,7 +77,7 @@ class InterviewController extends Controller
 
         $interview->update($request->validated());
 
-        return new InterviewResource($interview->load('job:id,company_name,position'));
+        return new InterviewResource($interview->load(self::JOB));
     }
 
     public function destroy(Interview $interview): Response

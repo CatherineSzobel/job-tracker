@@ -14,13 +14,13 @@ import PrepChecklist from "../components/InterviewPrep/PrepChecklist";
 import RatingInput from "../components/InterviewPrep/RatingInput";
 import SaveStatus from "../components/InterviewPrep/SaveStatus";
 import useAutosave, { combineAutosaves } from "../components/InterviewPrep/useAutosave";
-import { linksRejectedBy, normaliseQuestion, toSavablePrep } from "../components/InterviewPrep/prepDocument";
-import { INTERVIEW_TYPES } from "../constants/jobs";
+import { createBankQuestion } from "../components/InterviewPrep/useBankQuestions";
+import { normaliseQuestion, toSavablePrep } from "../components/InterviewPrep/prepDocument";
+import { interviewTypeLabel } from "../constants/jobs";
 import { BANK_LINKS_MAX, EMPTY_BANK_QUESTION, PREP_LIMITS, PREP_TABS } from "../constants/interviewPrep";
 import { useToastStore } from "../stores/useToastStore";
 import { toDateTimeInputValue } from "../utils/dateInput";
 
-const interviewTypeLabel = (type) => INTERVIEW_TYPES.find((option) => option.value === type)?.label ?? type;
 const showToast = (message) => useToastStore.getState().showToast(message);
 
 // Keyed by id: opening another interview starts a fresh page, so a save still waiting goes to the
@@ -39,8 +39,6 @@ function InterviewPage({ interviewId }) {
   const [loadError, setLoadError] = useState(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [activeTab, setActiveTab] = useState("prep");
-  // People links the backend turned down; they're held back (with a hint) so the rest still saves
-  const [rejectedLinks, setRejectedLinks] = useState([]);
   // The edit dialog's form, or null when it's closed
   const [editForm, setEditForm] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -49,23 +47,7 @@ function InterviewPage({ interviewId }) {
   // The question text being saved to the bank from the debrief, or null
   const [savingToBank, setSavingToBank] = useState(null);
 
-  // If the only problem is a person's link (e.g. one with a character the backend's URL check refuses),
-  // save everything else without those links instead of failing over and over
-  const savePrep = async (document) => {
-    try {
-      await API.put(`/interviews/${interviewId}/prep`, document);
-    } catch (err) {
-      const badLinks = linksRejectedBy(err, document);
-      if (!badLinks) throw err;
-      setRejectedLinks((current) => [...current, ...badLinks]);
-      await API.put(`/interviews/${interviewId}/prep`, {
-        ...document,
-        people: document.people.map((person) => (badLinks.includes(person.url) ? { ...person, url: null } : person)),
-      });
-    }
-  };
-
-  const prepAutosave = useAutosave(savePrep);
+  const prepAutosave = useAutosave((document) => API.put(`/interviews/${interviewId}/prep`, document));
   const notesAutosave = useAutosave((value) => API.put(`/interviews/${interviewId}`, { notes: value || null }));
 
   // A 422 means a linked question no longer exists (e.g. deleted on the bank page in another tab):
@@ -91,7 +73,7 @@ function InterviewPage({ interviewId }) {
       .then((res) => {
         const loaded = res.data.data;
         setInterview(loaded);
-        setPrep({ ...loaded.prep, rating: loaded.rating, debrief_notes: loaded.debrief_notes ?? "" });
+        setPrep({ ...loaded.prep, rating: loaded.rating, debrief_notes: loaded.debrief_notes });
         setNotes(loaded.notes ?? "");
         setBankLinks(loaded.bank_questions ?? []);
         setActiveTab(new Date(loaded.interview_date) > new Date() ? "prep" : "debrief");
@@ -111,7 +93,7 @@ function InterviewPage({ interviewId }) {
   const updatePrep = (changes) => {
     const nextPrep = { ...prep, ...changes };
     setPrep(nextPrep);
-    prepAutosave.schedule(toSavablePrep(nextPrep, rejectedLinks));
+    prepAutosave.schedule(toSavablePrep(nextPrep));
   };
 
   const changeNotes = (event) => {
@@ -128,16 +110,24 @@ function InterviewPage({ interviewId }) {
   const linkedQuestionTexts = bankLinks.map((link) => normaliseQuestion(link.question));
 
   const saveToBank = async (values) => {
-    try {
-      const res = await API.post("/bank-questions", values);
-      updateBankLinks([...bankLinks, { ...res.data.data, note: "" }]);
-      setSavingToBank(null);
-      return res.data.data;
-    } catch (err) {
-      console.error(err);
-      showToast(err.response?.data?.message || "Failed to save the question");
-      return null;
+    const saved = await createBankQuestion(values);
+    if (!saved) return;
+    updateBankLinks([...bankLinks, { ...saved, note: "" }]);
+    setSavingToBank(null);
+  };
+
+  // Next to a question they asked: "✓ In bank" when it's linked here, otherwise a Save to bank button
+  const bankActionFor = (question) => {
+    if (!question.trim()) return null;
+    if (linkedQuestionTexts.includes(normaliseQuestion(question))) {
+      return <span className="text-xs whitespace-nowrap text-green-600 dark:text-green-400">✓ In bank</span>;
     }
+    if (bankLinks.length >= BANK_LINKS_MAX) return null;
+    return (
+      <button type="button" onClick={() => setSavingToBank(question.trim())} className="btn-small whitespace-nowrap">
+        Save to bank
+      </button>
+    );
   };
 
   const startEditing = () =>
@@ -183,7 +173,7 @@ function InterviewPage({ interviewId }) {
     );
   }
 
-  if (loadError === "failed" && !interview) {
+  if (loadError === "failed") {
     return (
       <div className="max-w-3xl mx-auto mt-10 text-center space-y-3">
         <p className="text-light-text dark:text-dark-text">Couldn&apos;t load this interview.</p>
@@ -231,7 +221,7 @@ function InterviewPage({ interviewId }) {
 
           <section className="card">
             <h2 className="card-title mb-4">People you&apos;re meeting</h2>
-            <PeopleList people={prep.people} rejectedLinks={rejectedLinks} onChange={(people) => updatePrep({ people })} />
+            <PeopleList people={prep.people} onChange={(people) => updatePrep({ people })} />
           </section>
 
           <section className="card">
@@ -278,25 +268,14 @@ function InterviewPage({ interviewId }) {
               placeholder="Add a question they asked"
               itemLabel="Question they asked"
               maxItems={PREP_LIMITS.questionsAsked}
-              renderActions={(question) =>
-                question.trim() &&
-                (linkedQuestionTexts.includes(normaliseQuestion(question)) ? (
-                  <span className="text-xs whitespace-nowrap text-green-600 dark:text-green-400">✓ In bank</span>
-                ) : (
-                  bankLinks.length < BANK_LINKS_MAX && (
-                    <button type="button" onClick={() => setSavingToBank(question.trim())} className="btn-small whitespace-nowrap">
-                      Save to bank
-                    </button>
-                  )
-                ))
-              }
+              renderActions={bankActionFor}
             />
           </section>
 
           <section className="card lg:col-span-2">
             <h2 className="card-title mb-4">Debrief notes</h2>
             <textarea
-              value={prep.debrief_notes}
+              value={prep.debrief_notes ?? ""}
               onChange={(event) => updatePrep({ debrief_notes: event.target.value })}
               rows={8}
               maxLength={10000}

@@ -3,10 +3,8 @@ import API from "../../api/axios";
 import AddItemInput from "../UI/AddItemInput";
 import PageLoader from "../UI/PageLoader";
 import RemoveButton from "../UI/RemoveButton";
-import { TEMPLATE_ITEMS_MAX, TEMPLATE_TYPE_OPTIONS } from "../../constants/interviewPrep";
-
-const SECTION_CLASSES =
-  "bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-4 transition-colors";
+import { CHECKLIST_ITEM_MAX_LENGTH, TEMPLATE_ITEMS_MAX, TEMPLATE_TYPE_OPTIONS } from "../../constants/interviewPrep";
+import { removeAt, replaceAt } from "../../utils/lists";
 
 // Settings section: the checklist every new interview starts with. Changes save straight away (a
 // text when its field loses focus); a failed save puts the last saved list back.
@@ -43,9 +41,6 @@ export default function PrepTemplateEditor() {
     }
   };
 
-  const changeItem = (index, changes) =>
-    items.map((item, itemIndex) => (itemIndex === index ? { ...item, ...changes } : item));
-
   // Leaving a text field saves it, unless nothing changed
   const saveTextIfChanged = () => {
     if (JSON.stringify(items) !== JSON.stringify(template.items)) save(items);
@@ -65,7 +60,7 @@ export default function PrepTemplateEditor() {
   };
 
   return (
-    <section className={SECTION_CLASSES}>
+    <section className="settings-section space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">Interview prep checklist</h2>
         <p className="text-sm text-light-muted dark:text-dark-muted">
@@ -82,15 +77,15 @@ export default function PrepTemplateEditor() {
               <li key={index} className="flex items-center gap-2">
                 <input
                   value={item.text}
-                  onChange={(event) => setItems(changeItem(index, { text: event.target.value }))}
+                  onChange={(event) => setItems(replaceAt(items, index, { text: event.target.value }))}
                   onBlur={saveTextIfChanged}
-                  maxLength={200}
+                  maxLength={CHECKLIST_ITEM_MAX_LENGTH}
                   aria-label="Checklist item"
                   className="input-field py-1"
                 />
                 <select
                   value={item.type ?? ""}
-                  onChange={(event) => save(changeItem(index, { type: event.target.value || null }))}
+                  onChange={(event) => save(replaceAt(items, index, { type: event.target.value || null }))}
                   aria-label={`Which interviews: ${item.text}`}
                   className="input-field py-1 w-32 shrink-0"
                 >
@@ -98,13 +93,13 @@ export default function PrepTemplateEditor() {
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
-                <RemoveButton label={`Remove: ${item.text}`} onClick={() => save(items.filter((_, itemIndex) => itemIndex !== index))} />
+                <RemoveButton label={`Remove: ${item.text}`} onClick={() => save(removeAt(items, index))} />
               </li>
             ))}
           </ul>
 
           {items.length < TEMPLATE_ITEMS_MAX && (
-            <AddItemInput placeholder="Add an item" maxLength={200} onAdd={(text) => save([...items, { text, type: null }])} />
+            <AddItemInput placeholder="Add an item" maxLength={CHECKLIST_ITEM_MAX_LENGTH} onAdd={(text) => save([...items, { text, type: null }])} />
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-3">

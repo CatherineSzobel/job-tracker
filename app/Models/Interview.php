@@ -54,7 +54,7 @@ class Interview extends Model
         return Attribute::make(
             get: fn (?string $value) => [...self::EMPTY_PREP, ...($value === null ? [] : json_decode($value, true))],
             set: fn (array $value) => json_encode($value),
-        );
+        )->shouldCache();
     }
 
     public function job(): BelongsTo
