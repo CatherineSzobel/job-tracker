@@ -21,6 +21,7 @@ import Settings from "./views/Settings";
 import Application from "./views/Application";
 import Archive from "./views/Archive";
 import Todos from "./views/Todos";
+import Landing from "./views/Landing";
 
 function App() {
 
@@ -40,7 +41,7 @@ function App() {
       <Route
         path="/*"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute guestHome={<Landing />}>
             <Layout />
           </ProtectedRoute>
         }
