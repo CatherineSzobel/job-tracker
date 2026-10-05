@@ -36,6 +36,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/job-applications/{job_application}/documents', [DocumentController::class, 'syncForApplication']);
     Route::post('/job-applications/{job_application}/dismiss-reminder', [ReminderController::class, 'dismiss']);
 
+    // Registered before the resource so "batch" isn't read as an {interview} id
+    Route::delete('/interviews/batch', [InterviewController::class, 'batchDestroy']);
     Route::apiResource('interviews', InterviewController::class)->only(['index', 'show', 'update', 'destroy']);
     Route::put('/interviews/{interview}/prep', [InterviewController::class, 'updatePrep']);
     Route::put('/interviews/{interview}/bank-questions', [InterviewController::class, 'syncBankQuestions']);

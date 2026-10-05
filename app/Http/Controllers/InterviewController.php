@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Interview\BatchDeleteInterviewsRequest;
 use App\Http\Requests\Interview\InterviewBankQuestionsSyncRequest;
 use App\Http\Requests\Interview\InterviewPrepUpdateRequest;
 use App\Http\Requests\Interview\InterviewUpdateRequest;
@@ -11,6 +12,7 @@ use App\Models\Interview;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class InterviewController extends Controller
@@ -85,6 +87,24 @@ class InterviewController extends Controller
         Gate::authorize('delete', $interview);
 
         $interview->delete();
+
+        return response()->noContent();
+    }
+
+    /**
+     * Deletes several of the user's interviews: all of them, or none (404) when any id isn't the
+     * user's, like the applications batch. Prep, debrief and bank-question links go with them.
+     */
+    public function batchDestroy(BatchDeleteInterviewsRequest $request): Response
+    {
+        $ids = $request->validated('ids');
+
+        DB::transaction(function () use ($request, $ids) {
+            $interviews = Interview::where('user_id', $request->user()->id)->whereKey($ids)->get();
+            abort_if($interviews->count() !== count($ids), 404);
+
+            Interview::whereKey($interviews->modelKeys())->delete();
+        });
 
         return response()->noContent();
     }

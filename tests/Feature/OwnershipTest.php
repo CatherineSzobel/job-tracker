@@ -94,6 +94,7 @@ class OwnershipTest extends TestCase
             ['postJson', "/api/job-applications/{$job->id}/interviews", ['interview_date' => now()->addWeek()->toDateTimeString()]],
             ['putJson', "/api/interviews/{$interview->id}", ['location' => 'Hacked']],
             ['deleteJson', "/api/interviews/{$interview->id}"],
+            ['deleteJson', '/api/interviews/batch', ['ids' => [$interview->id]]],
             ['getJson', "/api/interviews/{$interview->id}"],
             ['putJson', "/api/interviews/{$interview->id}/prep", [
                 'checklist' => [], 'people' => [], 'questions_to_ask' => [], 'questions_asked' => [], 'rating' => 5, 'debrief_notes' => 'Hacked',

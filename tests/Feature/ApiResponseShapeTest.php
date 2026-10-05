@@ -189,6 +189,11 @@ class ApiResponseShapeTest extends TestCase
         $this->deleteJson("/api/bank-questions/{$questionId}")->assertNoContent();
     }
 
+    public function test_interview_batch_delete(): void
+    {
+        $this->deleteJson('/api/interviews/batch', ['ids' => [$this->interview->id]])->assertNoContent();
+    }
+
     public function test_interview_prep_template(): void
     {
         $structure = ['data' => ['items' => ['*' => ['text', 'type']], 'is_default']];
