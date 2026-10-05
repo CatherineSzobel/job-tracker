@@ -42,7 +42,7 @@
 
 /* Dashboard-style card and its heading (add your own margin to the heading) */
 @utility card {
-    @apply bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl;
+    @apply bg-surface dark:bg-dark-soft border border-border dark:border-dark-subtle shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl;
 }
 
 @utility card-title {

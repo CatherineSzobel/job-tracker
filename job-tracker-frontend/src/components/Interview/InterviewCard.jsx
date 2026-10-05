@@ -4,7 +4,7 @@ export default function InterviewCard({ interview }) {
   const date = new Date(interview.interview_date);
 
   return (
-    <div className="bg-light-soft dark:bg-dark-soft rounded-2xl shadow-sm border border-border dark:border-dark-subtle p-5 flex flex-col gap-4 transition-colors">
+    <div className="bg-surface dark:bg-dark-soft rounded-2xl shadow-sm border border-border dark:border-dark-subtle p-5 flex flex-col gap-4 transition-colors">
 
       {/* Header */}
       <div className="flex items-center justify-between">
