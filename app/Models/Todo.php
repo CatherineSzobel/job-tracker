@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,5 +30,19 @@ class Todo extends Model
     public function jobApplication(): BelongsTo
     {
         return $this->belongsTo(JobApplication::class);
+    }
+
+    /**
+     * Open to-dos due today or earlier, unless they belong to an archived application.
+     */
+    public function scopeDueForReminder(Builder $query): Builder
+    {
+        return $query
+            ->where('done', false)
+            // whereDate, not a plain comparison: the date cast stores "Y-m-d 00:00:00" on SQLite
+            ->whereDate('due_date', '<=', today())
+            ->where(fn (Builder $linked) => $linked
+                ->whereNull('job_application_id')
+                ->orWhereHas('jobApplication', fn (Builder $job) => $job->where('is_archived', false)));
     }
 }

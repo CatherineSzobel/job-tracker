@@ -6,6 +6,7 @@ use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\NotesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileLinkController;
+use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TodoController;
@@ -30,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('job-applications', JobApplicationController::class);
     Route::post('/job-applications/{job_application}/interviews', [JobApplicationController::class, 'scheduleInterview']);
     Route::put('/job-applications/{job_application}/tags', [JobApplicationController::class, 'syncTags']);
+    Route::post('/job-applications/{job_application}/dismiss-reminder', [ReminderController::class, 'dismiss']);
 
     Route::apiResource('interviews', InterviewController::class)->only(['index', 'update', 'destroy']);
     Route::apiResource('todos', TodoController::class)->except('show');
@@ -44,8 +46,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/settings', [SettingsController::class, 'show']);
     Route::put('/settings', [SettingsController::class, 'update']);
+    Route::get('/reminders', [ReminderController::class, 'index']);
 
     Route::put('/account/password', [AuthController::class, 'updatePassword']);
+    Route::put('/account/email', [AuthController::class, 'updateEmail']);
     Route::put('/account/goals', [AuthController::class, 'updateGoals']);
     Route::delete('/account', [AuthController::class, 'deleteAccount']);
 });

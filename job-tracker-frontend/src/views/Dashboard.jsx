@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../api/axios";
 import TodoList from "../components/ToDoList";
+import Reminders from "../components/Dashboard/Reminders";
 import StatusBadges from "../components/Dashboard/Status/StatusBadges";
 import StatusGrid from "../components/Dashboard/Status/StatusGrid";
 import GoalStats from "../components/Dashboard/Goals/GoalStats";
@@ -13,6 +14,13 @@ import { DEFAULT_GOALS } from "../constants/jobs";
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // The Reminders card and the Quick Todo widget load their own to-dos; when one changes a to-do,
+  // bumping the other's counter (its key) makes it reload
+  const [remindersReloads, setRemindersReloads] = useState(0);
+  const [quickTodoReloads, setQuickTodoReloads] = useState(0);
+  const reloadReminders = () => setRemindersReloads((count) => count + 1);
+  const reloadQuickTodo = () => setQuickTodoReloads((count) => count + 1);
 
   const user = useAuthStore((state) => state.user);
   const dailyGoal = user?.daily_goal ?? DEFAULT_GOALS.daily_goal;
@@ -66,7 +74,7 @@ export default function Dashboard() {
           {/* Quick Todo */}
           <div className="bg-light-soft dark:bg-dark-soft shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl">
             <h2 className="text-lg font-semibold mb-4 text-light-text dark:text-white">Quick Todo</h2>
-            <TodoList />
+            <TodoList key={quickTodoReloads} onTodosChanged={reloadReminders} />
           </div>
 
           {/* Goals */}
@@ -75,6 +83,9 @@ export default function Dashboard() {
 
         {/* CENTER COLUMN */}
         <div className="lg:col-span-5 flex flex-col gap-6">
+
+          {/* Reminders: only shows up when something is due */}
+          <Reminders key={remindersReloads} onTodosChanged={reloadQuickTodo} />
 
           {/* Status Badges */}
           <StatusBadges stats={stats} />

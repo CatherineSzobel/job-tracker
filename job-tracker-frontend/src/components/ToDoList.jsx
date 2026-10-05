@@ -10,18 +10,27 @@ import PageLoader from "./UI/PageLoader";
 import { DASHBOARD_TODO_LIMIT, EMPTY_TODO_DRAFT } from "../constants/todos";
 
 // Dashboard widget: the next open to-dos. "Add to-do" opens the full form (text, date, application) in a dialog.
-export default function TodoList() {
+// onTodosChanged(): runs after each change, so the Dashboard can reload the Reminders card.
+export default function TodoList({ onTodosChanged }) {
   const { todos, loading, addTodo, updateTodo, deleteTodo } = useTodos();
   const [draft, setDraft] = useState(EMPTY_TODO_DRAFT);
   const [showDetails, setShowDetails] = useState(false);
   const openTodos = todos.filter((todo) => !todo.done).slice(0, DASHBOARD_TODO_LIMIT);
 
+  const afterChange = (action) => async (...args) => {
+    const result = await action(...args);
+    onTodosChanged?.();
+    return result;
+  };
+  const updateAndNotify = afterChange(updateTodo);
+  const deleteAndNotify = afterChange(deleteTodo);
+
   // Close the dialog only when the save worked, so a failed add keeps what was entered
-  const addFromDetails = async (payload) => {
+  const addFromDetails = afterChange(async (payload) => {
     const saved = await addTodo(payload);
     if (saved) setShowDetails(false);
     return saved;
-  };
+  });
 
   if (loading) {
     return <PageLoader text="Loading to-dos..." compact />;
@@ -51,8 +60,8 @@ export default function TodoList() {
             <TodoItem
               key={todo.id}
               todo={todo}
-              onUpdate={updateTodo}
-              onDelete={deleteTodo}
+              onUpdate={updateAndNotify}
+              onDelete={deleteAndNotify}
             />
           ))}
         </ul>

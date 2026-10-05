@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Settings;
 
 use App\Enums\ArchiveTodosAction;
+use App\Enums\ReminderDismissMode;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,6 +29,10 @@ class SettingsUpdateRequest extends FormRequest
     {
         return [
             'archive_todos' => ['sometimes', Rule::enum(ArchiveTodosAction::class)],
+            'reminders_in_app' => ['sometimes', 'boolean'],
+            'reminders_email' => ['sometimes', 'boolean'],
+            'reminder_days' => ['sometimes', 'integer', 'between:1,60'],
+            'reminder_dismiss_mode' => ['sometimes', Rule::enum(ReminderDismissMode::class)],
         ];
     }
 }

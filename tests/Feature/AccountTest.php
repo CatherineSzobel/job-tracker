@@ -87,4 +87,77 @@ class AccountTest extends TestCase
             ->assertForbidden()
             ->assertJsonPath('message', 'The demo account cannot be deleted.');
     }
+
+    public function test_email_can_be_changed_with_the_current_password(): void
+    {
+        $user = User::factory()->create(['email' => 'old@example.com']);
+
+        $this->actingAs($user)
+            ->putJson('/api/account/email', ['email' => 'new@example.com', 'current_password' => 'password'])
+            ->assertOk()
+            ->assertJsonPath('data.email', 'new@example.com');
+
+        $this->assertSame('new@example.com', $user->fresh()->email);
+    }
+
+    public function test_email_change_requires_the_current_password(): void
+    {
+        $user = User::factory()->create(['email' => 'old@example.com']);
+
+        $this->actingAs($user)
+            ->putJson('/api/account/email', ['email' => 'new@example.com', 'current_password' => 'wrong-password'])
+            ->assertJsonValidationErrors('current_password');
+
+        $this->assertSame('old@example.com', $user->fresh()->email);
+    }
+
+    public function test_email_already_used_by_another_account_is_rejected(): void
+    {
+        User::factory()->create(['email' => 'taken@example.com']);
+        $user = User::factory()->create(['email' => 'old@example.com']);
+
+        $this->actingAs($user)
+            ->putJson('/api/account/email', ['email' => 'TAKEN@example.com', 'current_password' => 'password'])
+            ->assertJsonValidationErrors('email');
+
+        $this->assertSame('old@example.com', $user->fresh()->email);
+    }
+
+    public function test_an_invalid_email_is_rejected(): void
+    {
+        $user = User::factory()->create(['email' => 'old@example.com']);
+
+        $this->actingAs($user)
+            ->putJson('/api/account/email', ['email' => 'not-an-email', 'current_password' => 'password'])
+            ->assertJsonValidationErrors('email');
+    }
+
+    public function test_demo_users_email_cannot_be_changed(): void
+    {
+        $demo = User::factory()->create(['email' => config('app.demo_email')]);
+
+        $this->actingAs($demo)
+            ->putJson('/api/account/email', ['email' => 'new@example.com', 'current_password' => 'password'])
+            ->assertForbidden()
+            ->assertJsonPath('message', 'The demo account email cannot be changed.');
+
+        $this->assertSame(config('app.demo_email'), $demo->fresh()->email);
+    }
+
+    public function test_the_current_user_says_whether_it_is_the_demo_account(): void
+    {
+        $this->actingAs(User::factory()->create(['email' => config('app.demo_email')]))
+            ->getJson('/api/user')
+            ->assertJsonPath('data.is_demo', true);
+
+        $this->actingAs(User::factory()->create())
+            ->getJson('/api/user')
+            ->assertJsonPath('data.is_demo', false);
+    }
+
+    public function test_guests_cannot_change_an_email(): void
+    {
+        $this->putJson('/api/account/email', ['email' => 'new@example.com', 'current_password' => 'password'])
+            ->assertUnauthorized();
+    }
 }

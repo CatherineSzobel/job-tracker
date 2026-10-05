@@ -30,6 +30,8 @@ class ApiResponseShapeTest extends TestCase
 
     private const TAG = ['id', 'name', 'color'];
 
+    private const SETTINGS = ['archive_todos', 'reminders_in_app', 'reminders_email', 'reminder_days', 'reminder_dismiss_mode'];
+
     private User $user;
 
     private JobApplication $job;
@@ -69,7 +71,7 @@ class ApiResponseShapeTest extends TestCase
     {
         $response = $this->getJson('/api/user')
             ->assertOk()
-            ->assertExactJsonStructure(['data' => ['id', 'name', 'email', 'daily_goal', 'weekly_goal']]);
+            ->assertExactJsonStructure(['data' => ['id', 'name', 'email', 'daily_goal', 'weekly_goal', 'is_demo']]);
 
         $this->assertHidden($response, 'data');
     }
@@ -118,6 +120,20 @@ class ApiResponseShapeTest extends TestCase
             ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count', 'tags']]]);
     }
 
+    public function test_reminders(): void
+    {
+        $this->getJson('/api/reminders')->assertOk()->assertExactJsonStructure(['data' => ['applications', 'todos']]);
+
+        $this->user->update(['reminders_in_app' => true]);
+        $this->travel(8)->days();
+        $this->user->todos()->create(['text' => 'Call', 'due_date' => today()->toDateString()]);
+
+        $this->getJson('/api/reminders')
+            ->assertOk()
+            ->assertExactJsonStructure(['data' => ['applications' => [[...self::JOB, 'days_since_update']], 'todos' => [self::TODO]]]);
+        $this->postJson("/api/job-applications/{$this->job->id}/dismiss-reminder")->assertNoContent();
+    }
+
     public function test_interviews(): void
     {
         $job = ['id', 'company_name', 'position'];
@@ -147,9 +163,9 @@ class ApiResponseShapeTest extends TestCase
 
     public function test_settings(): void
     {
-        $response = $this->getJson('/api/settings')->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
+        $response = $this->getJson('/api/settings')->assertOk()->assertExactJsonStructure(['data' => self::SETTINGS]);
         $this->assertHidden($response, 'data');
-        $this->putJson('/api/settings', ['archive_todos' => 'keep'])->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
+        $this->putJson('/api/settings', ['archive_todos' => 'keep'])->assertOk()->assertExactJsonStructure(['data' => self::SETTINGS]);
     }
 
     public function test_tags(): void

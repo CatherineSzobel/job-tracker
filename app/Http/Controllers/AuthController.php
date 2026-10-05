@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\ChangeEmailRequest;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\DeleteAccountRequest;
 use App\Http\Requests\Auth\LoginRequest;
@@ -69,6 +70,14 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Password updated successfully',
         ]);
+    }
+
+    // Demo-account, current-password and unique-email checks happen in ChangeEmailRequest
+    public function updateEmail(ChangeEmailRequest $request): UserResource
+    {
+        $request->user()->update(['email' => $request->validated('email')]);
+
+        return new UserResource($request->user());
     }
 
     public function updateGoals(UpdateGoalsRequest $request): UserResource
