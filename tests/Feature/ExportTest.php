@@ -24,8 +24,25 @@ class ExportTest extends TestCase
         $rows = IOFactory::load($response->baseResponse->getFile()->getPathname())->getActiveSheet()->toArray();
 
         $this->assertSame([
-            ['company_name', 'position', 'status', 'priority', 'applied_date', 'location', 'notes', 'job_link'],
-            ['Acme', 'Developer', 'offer', 'high', '2026-09-01', null, null, null],
+            ['company_name', 'position', 'status', 'priority', 'applied_date', 'location', 'notes', 'job_link', 'tags'],
+            ['Acme', 'Developer', 'offer', 'high', '2026-09-01', null, null, null, null],
         ], $rows);
+    }
+
+    public function test_export_lists_each_jobs_tags_by_name(): void
+    {
+        $user = User::factory()->create();
+        $job = $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer']);
+        $job->tags()->attach([
+            $user->tags()->create(['name' => 'remote', 'color' => 'blue'])->id,
+            $user->tags()->create(['name' => 'fintech', 'color' => 'red'])->id,
+        ]);
+
+        $response = $this->actingAs($user)->get('/api/job-applications/export')->assertOk();
+
+        $rows = IOFactory::load($response->baseResponse->getFile()->getPathname())->getActiveSheet()->toArray();
+
+        $this->assertSame('tags', $rows[0][8]);
+        $this->assertSame('fintech, remote', $rows[1][8]);
     }
 }

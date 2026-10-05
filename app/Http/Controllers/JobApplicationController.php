@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\JobApplication\BatchUpdateJobApplicationsRequest;
 use App\Http\Requests\JobApplication\JobApplicationImportRequest;
 use App\Http\Requests\JobApplication\ScheduleInterviewRequest;
 use App\Http\Requests\JobApplication\StoreJobApplicationRequest;
+use App\Http\Requests\JobApplication\SyncJobApplicationTagsRequest;
 use App\Http\Requests\JobApplication\UpdateJobApplicationRequest;
 use App\Http\Resources\InterviewResource;
 use App\Http\Resources\JobApplicationResource;
@@ -44,7 +46,7 @@ class JobApplicationController extends Controller
     {
         Gate::authorize('view', $jobApplication);
 
-        return new JobApplicationResource($jobApplication->load('interviews')->loadCount(JobApplication::openTodosCount()));
+        return $this->detailed($jobApplication);
     }
 
     public function update(UpdateJobApplicationRequest $request, JobApplication $jobApplication): JobApplicationResource
@@ -57,8 +59,38 @@ class JobApplicationController extends Controller
             $request->has('delete_open_todos') ? $request->boolean('delete_open_todos') : null,
         );
 
-        // Same shape as show(): interviews so the detail page keeps showing them, plus open_todos_count
-        return new JobApplicationResource($updatedJob->load('interviews')->loadCount(JobApplication::openTodosCount()));
+        return $this->detailed($updatedJob);
+    }
+
+    public function batchUpdate(BatchUpdateJobApplicationsRequest $request): AnonymousResourceCollection
+    {
+        $jobs = $this->jobApplicationService->batchUpdate(
+            $request->user(),
+            $request->validated('ids'),
+            $request->safe()->only(['status', 'is_archived', 'add_tag_ids', 'remove_tag_ids']),
+            $request->has('delete_open_todos') ? $request->boolean('delete_open_todos') : null,
+        );
+
+        return JobApplicationResource::collection($jobs);
+    }
+
+    public function syncTags(SyncJobApplicationTagsRequest $request, JobApplication $jobApplication): JobApplicationResource
+    {
+        Gate::authorize('update', $jobApplication);
+
+        $jobApplication->tags()->sync($request->validated('tag_ids'));
+
+        return $this->detailed($jobApplication);
+    }
+
+    /**
+     * The job page's shape: interviews, tags and open_todos_count, so it can replace its copy after a save.
+     */
+    private function detailed(JobApplication $jobApplication): JobApplicationResource
+    {
+        return new JobApplicationResource(
+            $jobApplication->load(['interviews', 'tags'])->loadCount(JobApplication::openTodosCount())
+        );
     }
 
     public function destroy(JobApplication $jobApplication): Response

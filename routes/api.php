@@ -7,6 +7,7 @@ use App\Http\Controllers\NotesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileLinkController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\TagController;
 use App\Http\Controllers\TodoController;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
@@ -25,12 +26,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/job-applications/stats', [JobApplicationController::class, 'stats']);
     Route::get('/job-applications/export', [JobApplicationController::class, 'export']);
     Route::post('/job-applications/import', [JobApplicationController::class, 'import']);
+    Route::patch('/job-applications/batch', [JobApplicationController::class, 'batchUpdate']);
     Route::apiResource('job-applications', JobApplicationController::class);
     Route::post('/job-applications/{job_application}/interviews', [JobApplicationController::class, 'scheduleInterview']);
+    Route::put('/job-applications/{job_application}/tags', [JobApplicationController::class, 'syncTags']);
 
     Route::apiResource('interviews', InterviewController::class)->only(['index', 'update', 'destroy']);
     Route::apiResource('todos', TodoController::class)->except('show');
     Route::apiResource('notes', NotesController::class)->except('show');
+    Route::apiResource('tags', TagController::class)->except('show');
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);

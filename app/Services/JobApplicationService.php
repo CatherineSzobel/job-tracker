@@ -8,9 +8,12 @@ use App\Exports\JobApplicationsExport;
 use App\Imports\JobApplicationsImport;
 use App\Models\Interview;
 use App\Models\JobApplication;
+use App\Models\Todo;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -47,6 +50,51 @@ class JobApplicationService
             }
 
             return $job;
+        });
+    }
+
+    /**
+     * Apply one set of changes to several of the user's applications, all or nothing.
+     * Any id that isn't one of theirs answers 404 before anything changes. Archiving follows the same
+     * open to-dos rule as update(): only applications going from active to archived.
+     *
+     * @param  list<int>  $ids
+     * @param  array{status?: string, is_archived?: bool, add_tag_ids?: list<int>, remove_tag_ids?: list<int>}  $changes
+     * @return EloquentCollection<int, JobApplication>
+     */
+    public function batchUpdate(User $user, array $ids, array $changes, ?bool $deleteOpenTodos = null): EloquentCollection
+    {
+        return DB::transaction(function () use ($user, $ids, $changes, $deleteOpenTodos) {
+            $jobs = $user->jobApplications()->whereKey($ids)->get();
+            abort_if($jobs->count() !== count($ids), 404);
+
+            $attributes = Arr::only($changes, ['status', 'is_archived']);
+            if ($attributes !== []) {
+                $newlyArchivedIds = ($attributes['is_archived'] ?? false)
+                    ? $jobs->where('is_archived', false)->modelKeys()
+                    : [];
+
+                // A query update, so updated_at moves too (a batch status change counts as an update)
+                $user->jobApplications()->whereKey($ids)->update($attributes);
+
+                if ($newlyArchivedIds !== [] && ($deleteOpenTodos ?? $user->archive_todos === ArchiveTodosAction::Delete)) {
+                    Todo::whereIn('job_application_id', $newlyArchivedIds)->where('done', false)->delete();
+                }
+            }
+
+            foreach ($jobs as $job) {
+                if (! empty($changes['add_tag_ids'])) {
+                    $job->tags()->syncWithoutDetaching($changes['add_tag_ids']);
+                }
+                if (! empty($changes['remove_tag_ids'])) {
+                    $job->tags()->detach($changes['remove_tag_ids']);
+                }
+            }
+
+            return $user->jobApplications()->whereKey($ids)
+                ->with(['interviews', 'tags'])
+                ->withCount(JobApplication::openTodosCount())
+                ->get();
         });
     }
 
@@ -107,7 +155,7 @@ class JobApplicationService
      */
     public function filter(User $user, array $filters = []): Collection
     {
-        $query = $user->jobApplications()->with('interviews')->withCount(JobApplication::openTodosCount());
+        $query = $user->jobApplications()->with(['interviews', 'tags'])->withCount(JobApplication::openTodosCount());
 
         if (! array_key_exists('archived', $filters)) {
             $query->where('is_archived', false);

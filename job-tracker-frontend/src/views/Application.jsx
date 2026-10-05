@@ -3,10 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
+import TagChip from "../components/Tags/TagChip";
+import TagInput from "../components/Tags/TagInput";
+import useTags from "../components/Tags/useTags";
 import JobFollowUps from "../components/Todo/JobFollowUps";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
 import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
+import { useToastStore } from "../stores/useToastStore";
 
 export default function Application() {
   const navigate = useNavigate();
@@ -21,6 +25,9 @@ export default function Application() {
   // "+ Add interview" form (null while closed)
   const [newInterview, setNewInterview] = useState(null);
   const [savingInterview, setSavingInterview] = useState(false);
+
+  const { tags: allTags, createTag } = useTags();
+  const showToast = useToastStore((state) => state.showToast);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -47,7 +54,8 @@ export default function Application() {
   };
 
   const cancelEditing = () => {
-    setJob(originalJob);
+    // Tags save on their own, so keep the current ones
+    setJob((currentJob) => ({ ...originalJob, tags: currentJob.tags }));
     setEditing(false);
   };
 
@@ -93,6 +101,17 @@ export default function Application() {
     }
   };
 
+  // Only the tags are taken from the response, so unsaved edits to other fields stay
+  const saveTags = async (tagIds) => {
+    try {
+      const res = await API.put(`/job-applications/${job.id}/tags`, { tag_ids: tagIds });
+      setJob((currentJob) => ({ ...currentJob, tags: res.data.data.tags }));
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to save tags");
+    }
+  };
+
   if (loading) {
     return <PageLoader text="Loading application..." />;
   }
@@ -100,6 +119,9 @@ export default function Application() {
   if (!job) {
     return <p className="text-center mt-10 text-light-muted dark:text-dark-muted">Not found</p>;
   }
+
+  const jobTags = job.tags ?? [];
+  const jobTagIds = jobTags.map((tag) => tag.id);
 
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-10 bg-light dark:bg-dark-soft rounded-2xl transition-colors">
@@ -128,6 +150,21 @@ export default function Application() {
           ) : (
             <p className="mt-1 text-sm text-light-muted dark:text-dark-muted">{job.company_name}</p>
           )}
+
+          {/* Tags save straight away, also while the other fields are being edited */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {jobTags.map((tag) => (
+              <TagChip key={tag.id} tag={tag} onRemove={() => saveTags(jobTagIds.filter((id) => id !== tag.id))} />
+            ))}
+            <div className="w-full sm:w-64">
+              <TagInput
+                tags={allTags}
+                excludeIds={jobTagIds}
+                onCreate={createTag}
+                onSelect={(tag) => saveTags([...jobTagIds, tag.id])}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-3 sm:mt-2 shrink-0">

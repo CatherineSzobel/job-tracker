@@ -1,26 +1,20 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import { PRIORITY_CLASSES, STATUS_COLORS } from "../../constants/jobs";
-import { useSettingsStore } from "../../stores/useSettingsStore";
 import { useToastStore } from "../../stores/useToastStore";
-import ArchiveTodosPrompt from "./ArchiveTodosPrompt";
+import CardTags from "../Tags/CardTags";
+import useArchiveWithTodos, { archiveChanges } from "./useArchiveWithTodos";
 
-// onRemove(id) is called after the job is archived or deleted so the parent can drop it
-export default function JobCard({ job, onRemove }) {
+// onRemove(id) is called after the job is archived or deleted so the parent can drop it.
+// In select mode (selecting) clicking the card calls onToggleSelect(id) and the action buttons are hidden.
+export default function JobCard({ job, onRemove, selecting = false, selected = false, onToggleSelect }) {
   const navigate = useNavigate();
-  const loadSettings = useSettingsStore((state) => state.loadSettings);
-  const updateSettings = useSettingsStore((state) => state.updateSettings);
   const showToast = useToastStore((state) => state.showToast);
-  const [askingAboutTodos, setAskingAboutTodos] = useState(false);
 
   // deleteOpenTodos: the user's answer, or undefined to let the server follow their setting
   const archive = async (deleteOpenTodos) => {
     try {
-      await API.put(`/job-applications/${job.id}`, {
-        is_archived: true,
-        ...(deleteOpenTodos === undefined ? {} : { delete_open_todos: deleteOpenTodos }),
-      });
+      await API.put(`/job-applications/${job.id}`, archiveChanges(deleteOpenTodos));
       onRemove?.(job.id);
     } catch (err) {
       console.error(err);
@@ -28,37 +22,7 @@ export default function JobCard({ job, onRemove }) {
     }
   };
 
-  const handleArchive = async () => {
-    if (job.open_todos_count > 0) {
-      try {
-        const settings = await loadSettings();
-        if (settings.archive_todos === "ask") {
-          setAskingAboutTodos(true);
-          return;
-        }
-      } catch (err) {
-        // Can't read the setting: ask rather than guess
-        console.error(err);
-        setAskingAboutTodos(true);
-        return;
-      }
-    }
-    archive();
-  };
-
-  const answerTodosPrompt = async (deleteOpenTodos, remember) => {
-    setAskingAboutTodos(false);
-    if (remember) {
-      try {
-        await updateSettings({ archive_todos: deleteOpenTodos ? "delete" : "keep" });
-      } catch (err) {
-        // Archive anyway; only remembering the choice failed
-        console.error(err);
-        showToast("Couldn't remember your choice; you can set it in Settings");
-      }
-    }
-    archive(deleteOpenTodos);
-  };
+  const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archive);
 
   const deleteJob = async () => {
     if (!window.confirm("Delete this job application?")) return;
@@ -72,25 +36,40 @@ export default function JobCard({ job, onRemove }) {
   };
 
   return (
-    <div className="
-      relative flex flex-col justify-between h-full 
-      bg-surface dark:bg-dark-soft border border-border dark:border-dark-subtle 
+    <div
+      onClick={selecting ? () => onToggleSelect(job.id) : undefined}
+      className={`
+      relative flex flex-col justify-between h-full
+      bg-surface dark:bg-dark-soft border border-border dark:border-dark-subtle
       rounded-2xl p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300
-    ">
-      {/* Top Right Archive Button */}
+      ${selecting ? "cursor-pointer" : ""} ${selected ? "ring-2 ring-accent" : ""}
+    `}
+    >
+      {/* Top right: Archive, or the select checkbox in select mode */}
       <div className="absolute top-3 right-3">
-        <button
-          onClick={handleArchive}
-          className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent-soft hover:bg-blue-200 dark:hover:bg-accent text-blue-800 dark:text-surface rounded transition-colors"
-        >
-          Archive
-        </button>
+        {selecting ? (
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => onToggleSelect(job.id)}
+            onClick={(event) => event.stopPropagation()}
+            aria-label={`Select ${job.position} at ${job.company_name}`}
+            className="h-5 w-5 cursor-pointer accent-accent"
+          />
+        ) : (
+          <button
+            onClick={() => requestArchive({ openTodosCount: job.open_todos_count ?? 0 })}
+            className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent-soft hover:bg-blue-200 dark:hover:bg-accent text-blue-800 dark:text-surface rounded transition-colors"
+          >
+            Archive
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col gap-1">
         <h2
-          onClick={() => navigate(`/jobs/${job.id}`)}
-          className="text-lg font-semibold line-clamp-2 pr-20 cursor-pointer text-light-text dark:text-dark-text hover:text-accent transition-colors"
+          onClick={selecting ? undefined : () => navigate(`/jobs/${job.id}`)}
+          className={`text-lg font-semibold line-clamp-2 pr-20 text-light-text dark:text-dark-text transition-colors ${selecting ? "" : "cursor-pointer hover:text-accent"}`}
         >
           {job.position}
         </h2>
@@ -107,6 +86,8 @@ export default function JobCard({ job, onRemove }) {
             {job.priority}
           </span>
         </div>
+
+        <CardTags tags={job.tags} />
       </div>
 
       <div className="mt-4 flex flex-col gap-2 text-sm text-muted dark:text-dark-muted">
@@ -119,6 +100,8 @@ export default function JobCard({ job, onRemove }) {
               href={job.job_link}
               target="_blank"
               rel="noopener noreferrer"
+              // In select mode a click only selects the card
+              onClick={selecting ? (event) => event.preventDefault() : undefined}
               className="text-accent dark:text-accent hover:underline font-medium truncate"
               title={job.job_link}
             >
@@ -132,28 +115,24 @@ export default function JobCard({ job, onRemove }) {
         </span>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        <button
-          onClick={() => navigate(`/jobs/${job.id}`)}
-          className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent hover:bg-blue-200 dark:hover:bg-accent-soft text-blue-800 dark:text-surface rounded transition-colors flex-1"
-        >
-          View Job
-        </button>
-        <button
-          onClick={deleteJob}
-          className="px-3 py-1 text-xs bg-red-100 dark:bg-red-400 hover:bg-red-200 dark:hover:bg-red-300 text-red-700 dark:text-dark-text rounded transition-colors flex-1"
-        >
-          Delete
-        </button>
-      </div>
-
-      {askingAboutTodos && (
-        <ArchiveTodosPrompt
-          openTodosCount={job.open_todos_count}
-          onConfirm={answerTodosPrompt}
-          onCancel={() => setAskingAboutTodos(false)}
-        />
+      {!selecting && (
+        <div className="mt-5 flex flex-wrap gap-2">
+          <button
+            onClick={() => navigate(`/jobs/${job.id}`)}
+            className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent hover:bg-blue-200 dark:hover:bg-accent-soft text-blue-800 dark:text-surface rounded transition-colors flex-1"
+          >
+            View Job
+          </button>
+          <button
+            onClick={deleteJob}
+            className="px-3 py-1 text-xs bg-red-100 dark:bg-red-400 hover:bg-red-200 dark:hover:bg-red-300 text-red-700 dark:text-dark-text rounded transition-colors flex-1"
+          >
+            Delete
+          </button>
+        </div>
       )}
+
+      {archivePrompt}
     </div>
   );
 }

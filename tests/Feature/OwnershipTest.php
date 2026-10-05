@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\JobApplication;
+use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -80,6 +81,7 @@ class OwnershipTest extends TestCase
         $todo = $owner->todos()->create(['text' => 'Mine']);
         $note = $owner->notes()->create(['title' => 'Mine', 'content' => 'Secret']);
         $link = $owner->profile()->create(['name' => 'Owner'])->links()->create(['type' => 'GitHub', 'url' => 'https://github.com/owner']);
+        $tag = Tag::factory()->for($owner)->create(['name' => 'Mine']);
 
         $intruder = User::factory()->create();
         $intruder->profile()->create(['name' => 'Intruder']);
@@ -94,6 +96,9 @@ class OwnershipTest extends TestCase
             ['deleteJson', "/api/notes/{$note->id}"],
             ['putJson', "/api/profile/links/{$link->id}", ['type' => 'Hacked', 'url' => 'https://evil.test']],
             ['deleteJson', "/api/profile/links/{$link->id}"],
+            ['patchJson', "/api/tags/{$tag->id}", ['name' => 'Hacked']],
+            ['deleteJson', "/api/tags/{$tag->id}"],
+            ['putJson', "/api/job-applications/{$job->id}/tags", ['tag_ids' => []]],
         ];
 
         foreach ($requests as $request) {
@@ -108,6 +113,7 @@ class OwnershipTest extends TestCase
         $this->assertFalse((bool) $todo->fresh()->done);
         $this->assertSame('Mine', $note->fresh()->title);
         $this->assertSame('GitHub', $link->fresh()->type);
+        $this->assertSame('Mine', $tag->fresh()->name);
     }
 
     public function test_user_without_profile_gets_404_not_500_on_someone_elses_link(): void

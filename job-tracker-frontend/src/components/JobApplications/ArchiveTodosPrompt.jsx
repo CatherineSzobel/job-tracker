@@ -1,15 +1,23 @@
 import { useState } from "react";
 import Modal from "../UI/Modal";
 
-// Asked when archiving an application that still has open to-dos (setting "ask")
-export default function ArchiveTodosPrompt({ openTodosCount, onConfirm, onCancel }) {
+// Asked when archiving applications that still have open to-dos (setting "ask").
+// For a batch, selectedCount > 1 and applicationCount says how many of them have open to-dos.
+export default function ArchiveTodosPrompt({ openTodosCount, applicationCount = 1, selectedCount = 1, onConfirm, onCancel }) {
   const [remember, setRemember] = useState(false);
+  const isBatch = selectedCount > 1;
+  const todosText = `${openTodosCount} open to-do${openTodosCount === 1 ? "" : "s"}`;
+  const question = isBatch
+    ? `${applicationCount} of these applications ${applicationCount === 1 ? "has" : "have"} ${todosText}. Delete them?`
+    : `This application has ${todosText}. Delete them?`;
 
   return (
-    <Modal title="Archive application" onClose={onCancel} maxWidth="max-w-md">
-      <p className="text-light-text dark:text-dark-text">
-        This application has {openTodosCount} open to-do{openTodosCount === 1 ? "" : "s"}. Delete them?
-      </p>
+    <Modal
+      title={isBatch ? `Archive ${selectedCount} applications` : "Archive application"}
+      onClose={onCancel}
+      maxWidth="max-w-md"
+    >
+      <p className="text-light-text dark:text-dark-text">{question}</p>
 
       <label className="mt-4 flex items-center gap-2 text-sm text-light-muted dark:text-dark-muted">
         <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />

@@ -28,6 +28,8 @@ class ApiResponseShapeTest extends TestCase
 
     private const LINK = ['id', 'type', 'url'];
 
+    private const TAG = ['id', 'name', 'color'];
+
     private User $user;
 
     private JobApplication $job;
@@ -74,9 +76,11 @@ class ApiResponseShapeTest extends TestCase
 
     public function test_job_applications(): void
     {
+        $this->job->tags()->attach($this->user->tags()->create(['name' => 'remote', 'color' => 'blue']));
+
         $list = $this->getJson('/api/job-applications')
             ->assertOk()
-            ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count']]])
+            ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count', 'tags' => [self::TAG]]]])
             ->assertJsonPath('data.0.applied_date', '2026-09-01')
             ->assertJsonPath('data.0.is_archived', false);
         $this->assertHidden($list, 'data.0');
@@ -88,12 +92,16 @@ class ApiResponseShapeTest extends TestCase
 
         $this->getJson("/api/job-applications/{$this->job->id}")
             ->assertOk()
-            ->assertJsonStructure(['data' => [...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count']])
+            ->assertJsonStructure(['data' => [...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count', 'tags' => [self::TAG]]])
             ->assertJsonMissingPath('success');
 
         $this->putJson("/api/job-applications/{$this->job->id}", ['status' => 'offer'])
             ->assertOk()
             ->assertJsonPath('data.status', 'offer');
+
+        $this->putJson("/api/job-applications/{$this->job->id}/tags", ['tag_ids' => []])
+            ->assertOk()
+            ->assertJsonStructure(['data' => [...self::JOB, 'tags']]);
 
         $this->postJson("/api/job-applications/{$this->job->id}/interviews", ['interview_date' => now()->addWeek()->toDateTimeString()])
             ->assertCreated()
@@ -101,6 +109,13 @@ class ApiResponseShapeTest extends TestCase
             ->assertJsonMissingPath('success');
 
         $this->deleteJson("/api/job-applications/{$this->job->id}")->assertNoContent();
+    }
+
+    public function test_batch_update(): void
+    {
+        $this->patchJson('/api/job-applications/batch', ['ids' => [$this->job->id], 'status' => 'offer'])
+            ->assertOk()
+            ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count', 'tags']]]);
     }
 
     public function test_interviews(): void
@@ -135,6 +150,17 @@ class ApiResponseShapeTest extends TestCase
         $response = $this->getJson('/api/settings')->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
         $this->assertHidden($response, 'data');
         $this->putJson('/api/settings', ['archive_todos' => 'keep'])->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
+    }
+
+    public function test_tags(): void
+    {
+        $response = $this->postJson('/api/tags', ['name' => 'remote'])->assertCreated()->assertExactJsonStructure(['data' => self::TAG]);
+        $this->assertHidden($response, 'data');
+        $tagId = $response->json('data.id');
+
+        $this->getJson('/api/tags')->assertOk()->assertExactJsonStructure(['data' => [[...self::TAG, 'applications_count']]]);
+        $this->patchJson("/api/tags/{$tagId}", ['color' => 'pink'])->assertOk()->assertExactJsonStructure(['data' => self::TAG]);
+        $this->deleteJson("/api/tags/{$tagId}")->assertNoContent();
     }
 
     public function test_notes(): void
