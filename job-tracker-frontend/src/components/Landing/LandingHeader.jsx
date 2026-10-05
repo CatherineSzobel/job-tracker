@@ -2,13 +2,14 @@ import { Link } from "react-router-dom";
 import { Moon, Sun } from "lucide-react";
 import { useThemeStore } from "../../stores/useThemeStore";
 
-// The landing page's top bar: the app name, the theme toggle, Log in and Sign up
+// The landing page's top bar: the app name, the theme toggle, Log in and Sign up. It stays at the top while
+// scrolling, with a see-through background so the page shows faintly underneath.
 export default function LandingHeader() {
   const darkMode = useThemeStore((state) => state.darkMode);
   const toggleDarkMode = useThemeStore((state) => state.toggleDarkMode);
 
   return (
-    <header className="flex items-center justify-between gap-4 px-4 sm:px-8 py-4">
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-4 px-4 sm:px-8 py-4 bg-light/85 dark:bg-dark/85 backdrop-blur border-b border-border dark:border-dark-subtle transition-colors">
       <Link to="/" className="text-xl font-bold text-light-text dark:text-dark-text hover:text-accent dark:hover:text-accent-soft">
         Job Tracker
       </Link>

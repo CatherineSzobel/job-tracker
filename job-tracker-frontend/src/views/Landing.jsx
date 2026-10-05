@@ -4,8 +4,10 @@ import Footer from "../components/Footer";
 import FeatureCard from "../components/Landing/FeatureCard";
 import LandingHeader from "../components/Landing/LandingHeader";
 import Screenshot from "../components/Landing/Screenshot";
+import Showcase from "../components/Landing/Showcase";
 import { ABOUT, GITHUB_URL, LANDING_FEATURES, TECH_STACK, screenshotFor } from "../constants/landing";
 import { useAuthStore } from "../stores/useAuthStore";
+import { useThemeStore } from "../stores/useThemeStore";
 import { showToast } from "../stores/useToastStore";
 
 const EXTERNAL_LINK_CLASSES = "text-accent dark:text-accent-muted hover:underline";
@@ -15,8 +17,8 @@ export default function Landing() {
   const navigate = useNavigate();
   const demoLoginAction = useAuthStore((state) => state.demoLoginAction);
   const [loggingIn, setLoggingIn] = useState(false);
-  const dashboardScreenshot = screenshotFor("dashboard.png");
-  const prepScreenshot = screenshotFor("interview-prep.png");
+  const darkMode = useThemeStore((state) => state.darkMode);
+  const dashboardScreenshot = screenshotFor("dashboard.png", darkMode);
 
   const tryDemo = async () => {
     setLoggingIn(true);
@@ -70,15 +72,7 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Highlight */}
-        <section className="max-w-4xl mx-auto w-full">
-          <Screenshot
-            src={prepScreenshot}
-            alt="An interview prep page with its checklist, people and linked bank answers"
-            caption="Prepare for every interview: checklist, people, questions and your bank answers in one place."
-            lazy
-          />
-        </section>
+        <Showcase />
 
         {/* Built with + About */}
         <section className="flex flex-col items-center gap-6 text-center">
