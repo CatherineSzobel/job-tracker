@@ -1,11 +1,15 @@
 <?php
 
-namespace App\Http\Requests\Todo;
+namespace App\Http\Requests\Settings;
 
+use App\Enums\ArchiveTodosAction;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class TodoStoreRequest extends FormRequest
+/**
+ * Each setting is optional, so the Settings page can save one control at a time.
+ */
+class SettingsUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,13 +27,7 @@ class TodoStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'text' => 'required|string|max:255',
-            'due_date' => 'nullable|date_format:Y-m-d',
-            'job_application_id' => [
-                'nullable',
-                'integer',
-                Rule::exists('job_applications', 'id')->where('user_id', $this->user()->id),
-            ],
+            'archive_todos' => ['sometimes', Rule::enum(ArchiveTodosAction::class)],
         ];
     }
 }

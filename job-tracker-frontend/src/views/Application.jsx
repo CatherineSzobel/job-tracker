@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
+import JobFollowUps from "../components/Todo/JobFollowUps";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
 import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
@@ -218,6 +219,9 @@ export default function Application() {
           <p className="text-light-muted dark:text-dark-muted text-sm">No notes yet.</p>
         )}
       </div>
+
+      {/* FOLLOW-UPS */}
+      <JobFollowUps job={job} />
 
       {/* INTERVIEWS */}
       <div className="bg-light-soft dark:bg-dark-soft rounded-xl p-6 transition-colors">

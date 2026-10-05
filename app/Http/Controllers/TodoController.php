@@ -13,14 +13,34 @@ use Illuminate\Support\Facades\Gate;
 
 class TodoController extends Controller
 {
+    /**
+     * Just what the to-do lists show about the linked application.
+     */
+    private const APPLICATION = 'jobApplication:id,company_name,position';
+
+    /**
+     * Open before done, then due date (undated last), then newest. ?job_application_id= limits to one application.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
-        return TodoResource::collection($request->user()->todos()->latest()->get());
+        $todos = $request->user()->todos()
+            ->with(self::APPLICATION)
+            ->when($request->filled('job_application_id'), fn ($query) => $query->where('job_application_id', $request->integer('job_application_id')))
+            ->orderBy('done')
+            ->orderByRaw('due_date is null')
+            ->orderBy('due_date')
+            ->latest()
+            ->latest('id')
+            ->get();
+
+        return TodoResource::collection($todos);
     }
 
     public function store(TodoStoreRequest $request): TodoResource
     {
-        return new TodoResource($request->user()->todos()->create($request->validated()));
+        $todo = $request->user()->todos()->create($request->validated());
+
+        return new TodoResource($todo->load(self::APPLICATION));
     }
 
     public function update(TodoUpdateRequest $request, Todo $todo): TodoResource
@@ -29,7 +49,7 @@ class TodoController extends Controller
 
         $todo->update($request->validated());
 
-        return new TodoResource($todo);
+        return new TodoResource($todo->load(self::APPLICATION));
     }
 
     public function destroy(Todo $todo): Response

@@ -18,6 +18,7 @@ import Links from "./views/Links";
 import Settings from "./views/Settings";
 import Application from "./views/Application";
 import Archive from "./views/Archive";
+import Todos from "./views/Todos";
 
 function App() {
 
@@ -48,6 +49,7 @@ function App() {
         <Route path="interviews" element={<Interviews />} />
         <Route path="jobs/:id" element={<Application />} />
         <Route path="calendar" element={<Calendar />} />
+        <Route path="todos" element={<Todos />} />
         <Route path="profile" element={<Profile />} />
         <Route path="links" element={<Links />} />
         <Route path="settings" element={<Settings />} />

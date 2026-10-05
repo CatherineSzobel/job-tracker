@@ -22,7 +22,7 @@ class ApiResponseShapeTest extends TestCase
 
     private const INTERVIEW = ['id', 'job_application_id', 'interview_date', 'type', 'location', 'notes'];
 
-    private const TODO = ['id', 'text', 'done', 'created_at'];
+    private const TODO = ['id', 'text', 'done', 'due_date', 'job_application', 'created_at'];
 
     private const NOTE = ['id', 'title', 'content', 'is_pinned', 'created_at'];
 
@@ -76,7 +76,7 @@ class ApiResponseShapeTest extends TestCase
     {
         $list = $this->getJson('/api/job-applications')
             ->assertOk()
-            ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW]]]])
+            ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count']]])
             ->assertJsonPath('data.0.applied_date', '2026-09-01')
             ->assertJsonPath('data.0.is_archived', false);
         $this->assertHidden($list, 'data.0');
@@ -88,7 +88,7 @@ class ApiResponseShapeTest extends TestCase
 
         $this->getJson("/api/job-applications/{$this->job->id}")
             ->assertOk()
-            ->assertJsonStructure(['data' => [...self::JOB, 'interviews' => [self::INTERVIEW]]])
+            ->assertJsonStructure(['data' => [...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count']])
             ->assertJsonMissingPath('success');
 
         $this->putJson("/api/job-applications/{$this->job->id}", ['status' => 'offer'])
@@ -128,6 +128,13 @@ class ApiResponseShapeTest extends TestCase
             ->assertExactJsonStructure(['data' => self::TODO])
             ->assertJsonPath('data.done', true);
         $this->deleteJson("/api/todos/{$this->todo->id}")->assertNoContent();
+    }
+
+    public function test_settings(): void
+    {
+        $response = $this->getJson('/api/settings')->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
+        $this->assertHidden($response, 'data');
+        $this->putJson('/api/settings', ['archive_todos' => 'keep'])->assertOk()->assertExactJsonStructure(['data' => ['archive_todos']]);
     }
 
     public function test_notes(): void

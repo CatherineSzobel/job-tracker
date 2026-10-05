@@ -1,4 +1,4 @@
-import { Home, Briefcase, ClipboardList, Calendar } from "lucide-react";
+import { Home, Briefcase, ClipboardList, Calendar, ListTodo } from "lucide-react";
 
 // Main pages, shown in the sidebar (and its mobile menu)
 export const NAV_LINKS = [
@@ -6,6 +6,7 @@ export const NAV_LINKS = [
   { to: "/applications", label: "Applications", icon: Briefcase },
   { to: "/interviews", label: "Interviews", icon: ClipboardList },
   { to: "/calendar", label: "Calendar", icon: Calendar },
+  { to: "/todos", label: "To-dos", icon: ListTodo },
 ];
 
 // Account pages, shown in the navbar's user menu

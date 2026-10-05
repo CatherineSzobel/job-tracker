@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import API from "../api/axios";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useThemeStore } from "../stores/useThemeStore";
+import { useSettingsStore } from "../stores/useSettingsStore";
 import { DEFAULT_GOALS } from "../constants/jobs";
+import { ARCHIVE_TODOS_OPTIONS } from "../constants/todos";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -28,6 +30,33 @@ export default function Settings() {
   const [goalsError, setGoalsError] = useState("");
   const [goalsSuccess, setGoalsSuccess] = useState("");
   const [savingGoals, setSavingGoals] = useState(false);
+
+  // To-dos: saves as soon as an option is picked
+  const settings = useSettingsStore((state) => state.settings);
+  const loadSettings = useSettingsStore((state) => state.loadSettings);
+  const updateSettings = useSettingsStore((state) => state.updateSettings);
+  const [archiveTodosError, setArchiveTodosError] = useState("");
+
+  useEffect(() => {
+    loadSettings().catch((err) => {
+      console.error(err);
+      // Otherwise the options stay disabled with no explanation
+      setArchiveTodosError("Couldn't load this setting. Please refresh the page.");
+    });
+  }, [loadSettings]);
+
+  const changeArchiveTodos = async (value) => {
+    const previous = settings;
+    setArchiveTodosError("");
+    useSettingsStore.setState({ settings: { ...settings, archive_todos: value } });
+    try {
+      await updateSettings({ archive_todos: value });
+    } catch (err) {
+      console.error(err);
+      useSettingsStore.setState({ settings: previous });
+      setArchiveTodosError("Couldn't save. Please try again.");
+    }
+  };
 
   // Appearance
   const darkMode = useThemeStore((state) => state.darkMode);
@@ -239,6 +268,29 @@ export default function Settings() {
             </button>
           </div>
         </form>
+      </section>
+
+      {/* To-dos */}
+      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-4 transition-colors">
+        <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">To-dos</h2>
+        <fieldset disabled={!settings} className="space-y-2">
+          <legend className="text-sm text-light-muted dark:text-dark-muted mb-2">
+            When I archive an application with open to-dos:
+          </legend>
+          {ARCHIVE_TODOS_OPTIONS.map(({ value, label }) => (
+            <label key={value} className="flex items-center gap-2 text-light-text dark:text-dark-text">
+              <input
+                type="radio"
+                name="archive_todos"
+                value={value}
+                checked={settings?.archive_todos === value}
+                onChange={() => changeArchiveTodos(value)}
+              />
+              {label}
+            </label>
+          ))}
+        </fieldset>
+        {archiveTodosError && <p className="text-sm text-red-500 dark:text-red-400">{archiveTodosError}</p>}
       </section>
 
       {/* Appearance */}

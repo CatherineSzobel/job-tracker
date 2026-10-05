@@ -44,17 +44,21 @@ class JobApplicationController extends Controller
     {
         Gate::authorize('view', $jobApplication);
 
-        return new JobApplicationResource($jobApplication->load('interviews'));
+        return new JobApplicationResource($jobApplication->load('interviews')->loadCount(JobApplication::openTodosCount()));
     }
 
     public function update(UpdateJobApplicationRequest $request, JobApplication $jobApplication): JobApplicationResource
     {
         Gate::authorize('update', $jobApplication);
 
-        $updatedJob = $this->jobApplicationService->update($jobApplication, $request->validated());
+        $updatedJob = $this->jobApplicationService->update(
+            $jobApplication,
+            $request->safe()->except('delete_open_todos'),
+            $request->has('delete_open_todos') ? $request->boolean('delete_open_todos') : null,
+        );
 
-        // Include interviews so the detail page keeps showing them after a save
-        return new JobApplicationResource($updatedJob->load('interviews'));
+        // Same shape as show(): interviews so the detail page keeps showing them, plus open_todos_count
+        return new JobApplicationResource($updatedJob->load('interviews')->loadCount(JobApplication::openTodosCount()));
     }
 
     public function destroy(JobApplication $jobApplication): Response
