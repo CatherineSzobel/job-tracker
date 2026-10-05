@@ -7,9 +7,8 @@ import { batchUpdateJobs, mergeBatchResult, tagIdsOf } from "../components/JobAp
 import useSelection from "../components/UI/useSelection";
 import useTags from "../components/Tags/useTags";
 import PageLoader from "../components/UI/PageLoader";
+import SelectModeButtons from "../components/UI/SelectModeButtons";
 import { useToastStore } from "../stores/useToastStore";
-
-const SELECT_BUTTON_CLASSES = "px-4 py-2 rounded-lg border border-light-muted dark:border-dark-subtle text-light-text dark:text-dark-text hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors";
 
 export default function Archive() {
     const navigate = useNavigate();
@@ -60,20 +59,15 @@ export default function Archive() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <h1 className="text-2xl sm:text-3xl font-bold text-light-text dark:text-dark-text">Archive</h1>
                 <div className="flex flex-wrap gap-2">
-                    {archivedJobs.length > 0 && (selecting ? (
-                        <>
-                            <button className={SELECT_BUTTON_CLASSES} onClick={() => selectMany(archivedJobs.map((job) => job.id))}>
-                                Select all ({archivedJobs.length})
-                            </button>
-                            <button className={SELECT_BUTTON_CLASSES} onClick={exitSelecting}>
-                                Cancel
-                            </button>
-                        </>
-                    ) : (
-                        <button className={SELECT_BUTTON_CLASSES} onClick={startSelecting}>
-                            Select
-                        </button>
-                    ))}
+                    {archivedJobs.length > 0 && (
+                        <SelectModeButtons
+                            selecting={selecting}
+                            visibleCount={archivedJobs.length}
+                            onStart={startSelecting}
+                            onSelectAll={() => selectMany(archivedJobs.map((job) => job.id))}
+                            onCancel={exitSelecting}
+                        />
+                    )}
                     <button
                         className="bg-accent hover:bg-accent-soft dark:bg-accent dark:hover:bg-accent-soft text-surface px-5 py-2 rounded-lg transition shadow"
                         onClick={() => navigate("/applications")}

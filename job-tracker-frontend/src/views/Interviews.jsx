@@ -32,24 +32,37 @@ export default function Interviews() {
   const [view, changeView] = useSavedView("interviews-view");
   const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany } = useSelection();
   const [deleting, setDeleting] = useState(false);
+  // The interviews couldn't be loaded: show that (with Try again) instead of "No interviews scheduled."
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
+  // The job list only fills the Add form, so the interviews still show when only that request fails
   useEffect(() => {
-    Promise.all([API.get("/job-applications"), API.get("/interviews")])
-      .then(([jobsRes, interviewsRes]) => {
-        setJobs(jobsRes.data.data);
-        setInterviews(interviewsRes.data.data);
-      })
-      .catch((err) => {
-        console.error(err);
-        showToast("Couldn't load your interviews");
+    Promise.allSettled([API.get("/job-applications"), API.get("/interviews")])
+      .then(([jobsResult, interviewsResult]) => {
+        if (jobsResult.status === "fulfilled") {
+          setJobs(jobsResult.value.data.data);
+        } else {
+          console.error(jobsResult.reason);
+          showToast("Couldn't load your applications for the Add form");
+        }
+
+        if (interviewsResult.status === "fulfilled") {
+          setInterviews(interviewsResult.value.data.data);
+          setLoadFailed(false);
+        } else {
+          console.error(interviewsResult.reason);
+          setLoadFailed(true);
+        }
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [loadAttempt]);
 
   const visibleInterviews = filterInterviews(interviews, { when, search });
   const visibleIds = visibleInterviews.map((interview) => interview.id);
+  const visibleIdSet = new Set(visibleIds);
   // Only selected cards that are still visible count: changing a filter hides some without unselecting them
-  const visibleSelectedIds = selectedIds.filter((id) => visibleIds.includes(id));
+  const visibleSelectedIds = selectedIds.filter((id) => visibleIdSet.has(id));
 
   const clearFilters = () => {
     setWhen("upcoming");
@@ -120,7 +133,14 @@ export default function Interviews() {
       exitSelecting();
     } catch (err) {
       console.error(err);
-      showToast(err.response?.data?.message || "Failed to delete the selected interviews");
+      if (err.response?.status === 404) {
+        // One of them is already gone (deleted in another tab): nothing was deleted, so show the real list
+        exitSelecting();
+        setLoadAttempt((attempt) => attempt + 1);
+        showToast("Some of those interviews were already deleted, so nothing was deleted. The list was reloaded.");
+      } else {
+        showToast(err.response?.data?.message || "Failed to delete the selected interviews");
+      }
     } finally {
       setDeleting(false);
     }
@@ -186,7 +206,7 @@ export default function Interviews() {
               resetForm();
               setShowForm(true);
             }}
-            className="bg-accent hover:bg-accent-soft text-surface px-5 py-2 rounded-lg transition shadow"
+            className="btn-primary shadow"
           >
             + Add Interview
           </button>
@@ -219,7 +239,14 @@ export default function Interviews() {
         </div>
       )}
 
-      {interviews.length === 0 ? (
+      {loadFailed ? (
+        <div className="card text-center text-light-muted dark:text-dark-muted">
+          Couldn&apos;t load your interviews.{" "}
+          <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="text-accent dark:text-accent-muted hover:underline">
+            Try again
+          </button>
+        </div>
+      ) : interviews.length === 0 ? (
         <div className="card text-center text-light-muted dark:text-dark-muted">No interviews scheduled.</div>
       ) : visibleInterviews.length === 0 ? (
         <div className="card text-center text-light-muted dark:text-dark-muted">
@@ -230,6 +257,8 @@ export default function Interviews() {
         </div>
       ) : view === "grouped" ? (
         <DateGroups
+          // A new filter starts the sections fresh, so its first year and month are open again
+          key={when}
           items={visibleInterviews}
           getDateString={(interview) => interview.interview_date}
           order={sortOrderFor(when)}

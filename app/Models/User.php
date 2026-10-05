@@ -85,6 +85,11 @@ class User extends Authenticatable
         return $this->hasMany(Todo::class);
     }
 
+    public function interviews(): HasMany
+    {
+        return $this->hasMany(Interview::class);
+    }
+
     public function notes(): HasMany
     {
         return $this->hasMany(Note::class);

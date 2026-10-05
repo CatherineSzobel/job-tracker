@@ -100,10 +100,10 @@ class InterviewController extends Controller
         $ids = $request->validated('ids');
 
         DB::transaction(function () use ($request, $ids) {
-            $interviews = Interview::where('user_id', $request->user()->id)->whereKey($ids)->get();
+            $interviews = $request->user()->interviews()->whereKey($ids);
             abort_if($interviews->count() !== count($ids), 404);
 
-            Interview::whereKey($interviews->modelKeys())->delete();
+            $interviews->delete();
         });
 
         return response()->noContent();
