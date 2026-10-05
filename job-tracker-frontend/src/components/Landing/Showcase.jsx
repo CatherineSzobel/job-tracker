@@ -35,8 +35,9 @@ export default function Showcase() {
         screenshot
       ) : (
         <div>
-          {/* On a phone the tab bar scrolls sideways instead of squashing the labels */}
-          <div className="overflow-x-auto">
+          {/* On a phone the tab bar scrolls sideways instead of squashing the labels (pt-1 keeps the
+              keyboard focus ring inside the scroller, which would otherwise clip it) */}
+          <div className="overflow-x-auto pt-1">
             <Tabs
               tabs={AVAILABLE_SLIDES}
               activeTab={activeSlide.id}

@@ -6,6 +6,15 @@ import API from '../api/axios'
 export const DEMO_EMAIL = 'test@example.com'
 const DEMO_PASSWORD = 'secret123'
 
+// After logging in or registering: load the user, and fail if that didn't work (fetchUser swallows its
+// error because it also checks remembered sessions), e.g. a session cookie the browser didn't keep
+const loadUserAfterAuth = async (get) => {
+    await get().fetchUser()
+    if (!get().user) {
+        throw new Error('Could not load your account after logging in')
+    }
+}
+
 export const useAuthStore = create(
     persist(
         (set, get) => ({
@@ -27,7 +36,7 @@ export const useAuthStore = create(
                     await API.post('/login', { email, password })
 
                     // fetch the full user after login
-                    await get().fetchUser()
+                    await loadUserAfterAuth(get)
                 } catch (err) {
                     set({
                         error: err.response?.data?.message || 'Login failed',
@@ -52,7 +61,7 @@ export const useAuthStore = create(
                         password_confirmation: passwordConfirmation,
                     })
 
-                    await get().fetchUser()
+                    await loadUserAfterAuth(get)
                 } catch (err) {
                     set({
                         error: err.response?.data?.message || 'Registration failed',

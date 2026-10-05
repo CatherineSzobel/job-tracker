@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Footer from "../components/Footer";
 import FeatureCard from "../components/Landing/FeatureCard";
 import LandingHeader from "../components/Landing/LandingHeader";
@@ -14,7 +14,6 @@ const EXTERNAL_LINK_CLASSES = "text-accent dark:text-accent-muted hover:underlin
 
 // What Job Tracker is and does, for visitors who aren't logged in (shown at "/" by ProtectedRoute)
 export default function Landing() {
-  const navigate = useNavigate();
   const demoLoginAction = useAuthStore((state) => state.demoLoginAction);
   const [loggingIn, setLoggingIn] = useState(false);
   const darkMode = useThemeStore((state) => state.darkMode);
@@ -23,8 +22,8 @@ export default function Landing() {
   const tryDemo = async () => {
     setLoggingIn(true);
     try {
+      // Once the user is set, ProtectedRoute shows the Dashboard at "/" by itself
       await demoLoginAction();
-      navigate("/");
     } catch (err) {
       console.error(err);
       showToast(err.response?.data?.message || "Demo login failed");

@@ -5,6 +5,8 @@ import { useAuthStore } from "./stores/useAuthStore";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layouts/Layout";
 import AuthLayout from "./components/Layouts/AuthLayout";
+import ConfirmDialog from "./components/UI/ConfirmDialog";
+import Toaster from "./components/UI/Toaster";
 
 // Views
 import Register from "./views/Register";
@@ -31,6 +33,7 @@ function App() {
     checkSession()
   }, [checkSession])
   return (
+    <>
     <Routes>
 
       <Route element={<AuthLayout />}>
@@ -64,6 +67,11 @@ function App() {
 
       <Route path="*" element={<p className="text-center mt-10">Page not found</p>} />
     </Routes>
+
+    {/* Toasts and confirm dialogs work on every page: the app, login/register and the landing page */}
+    <Toaster />
+    <ConfirmDialog />
+    </>
   );
 }
 
