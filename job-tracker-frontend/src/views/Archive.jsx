@@ -38,14 +38,14 @@ export default function Archive() {
         setArchivedJobs((currentJobs) => currentJobs.filter((job) => job.id !== restoredJobId));
     };
 
-    // The selection stays after saving tag changes; restored cards leave the list, so restoring ends
-    // select mode. Returns whether it worked (BatchBar keeps unsaved changes when it didn't).
+    // Any successful batch change (Save, Restore) ends select mode, which also drops the saved changes;
+    // on failure the selection and the unsaved changes stay, so it can be tried again. Returns whether it worked.
     const applyBatch = async (changes) => {
         setBatchBusy(true);
         try {
             const updatedJobs = await batchUpdateJobs(selectedIds, changes);
             setArchivedJobs((currentJobs) => mergeBatchResult(currentJobs, updatedJobs, true));
-            if ("is_archived" in changes) exitSelecting();
+            exitSelecting();
             return true;
         } catch (err) {
             console.error(err);

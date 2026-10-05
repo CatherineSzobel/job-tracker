@@ -45,9 +45,9 @@ export default function BatchBar({ count, actions, tags, removableTagIds = [], c
     setTagMode(null);
   };
 
-  // On failure the changes stay, so Save can be pressed again
+  // Success ends select mode on the page (which clears the changes); on failure they stay for another try
   const save = async () => {
-    if (await onApply(changes.toRequest())) changes.clear();
+    await onApply(changes.toRequest());
   };
 
   return (

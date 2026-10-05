@@ -125,14 +125,14 @@ export default function Applications() {
   // Only selected cards that are still visible count: changing a filter hides some without unselecting them
   const visibleSelectedIds = selectedIds.filter((id) => visibleIds.includes(id));
 
-  // The selection stays after saving status and tag changes (so more can follow);
-  // archived cards leave the list, so archiving ends select mode. Returns whether it worked.
+  // Any successful batch change (Save, Archive) ends select mode, which also drops the saved changes;
+  // on failure the selection and the unsaved changes stay, so it can be tried again. Returns whether it worked.
   const sendBatch = async (changes) => {
     setBatchBusy(true);
     try {
       const updatedJobs = await batchUpdateJobs(visibleSelectedIds, changes);
       setJobs((currentJobs) => mergeBatchResult(currentJobs, updatedJobs, false));
-      if ("is_archived" in changes) exitSelecting();
+      exitSelecting();
       return true;
     } catch (err) {
       console.error(err);
