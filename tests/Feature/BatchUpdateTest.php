@@ -40,6 +40,14 @@ class BatchUpdateTest extends TestCase
         return $this->patchJson('/api/job-applications/batch', $body);
     }
 
+    /**
+     * @param  array<int, array<string, mixed>>  $changes
+     */
+    private function saveChanges(array $changes): TestResponse
+    {
+        return $this->patchJson('/api/job-applications/batch-changes', ['changes' => $changes]);
+    }
+
     public function test_changes_the_status_of_every_selected_application_only(): void
     {
         $user = User::factory()->create();
@@ -221,5 +229,100 @@ class BatchUpdateTest extends TestCase
         $this->actingAs($user)->batch(['ids' => [$job->id], 'status' => 'offer', 'delete_open_todos' => true])->assertOk();
 
         $this->assertSame(1, $job->todos()->count());
+    }
+
+    public function test_saves_a_different_status_for_each_application(): void
+    {
+        $user = User::factory()->create();
+        [$first, $second, $third] = $this->jobsFor($user, 3);
+        $untouched = $this->jobsFor($user, 1)->first();
+
+        $this->actingAs($user)->saveChanges([
+            ['id' => $first->id, 'status' => 'interview'],
+            ['id' => $second->id, 'status' => 'interview'],
+            ['id' => $third->id, 'status' => 'rejected'],
+        ])->assertOk()->assertJsonCount(3, 'data');
+
+        $this->assertSame(JobStatus::Interview, $first->fresh()->status);
+        $this->assertSame(JobStatus::Interview, $second->fresh()->status);
+        $this->assertSame(JobStatus::Rejected, $third->fresh()->status);
+        $this->assertSame(JobStatus::Applied, $untouched->fresh()->status);
+    }
+
+    public function test_saves_tag_changes_per_application(): void
+    {
+        $user = User::factory()->create();
+        [$first, $second] = $this->jobsFor($user);
+        $remote = Tag::factory()->for($user)->create(['name' => 'remote']);
+        $fintech = Tag::factory()->for($user)->create(['name' => 'fintech']);
+        $second->tags()->attach($fintech);
+
+        $this->actingAs($user)->saveChanges([
+            ['id' => $first->id, 'add_tag_ids' => [$remote->id]],
+            ['id' => $second->id, 'add_tag_ids' => [$remote->id], 'remove_tag_ids' => [$fintech->id], 'status' => 'offer'],
+        ])->assertOk();
+
+        $this->assertSame(['remote'], $first->tags()->pluck('name')->all());
+        $this->assertSame(['remote'], $second->tags()->pluck('name')->all());
+        $this->assertSame(JobStatus::Applied, $first->fresh()->status);
+        $this->assertSame(JobStatus::Offer, $second->fresh()->status);
+    }
+
+    public function test_a_change_for_an_application_that_is_not_the_users_is_not_found_and_nothing_is_saved(): void
+    {
+        $user = User::factory()->create();
+        $mine = $this->jobsFor($user, 1)->first();
+        $theirs = $this->jobsFor(User::factory()->create(), 1)->first();
+
+        $this->actingAs($user)->saveChanges([
+            ['id' => $mine->id, 'status' => 'rejected'],
+            ['id' => $theirs->id, 'status' => 'rejected'],
+        ])->assertNotFound();
+
+        $this->assertSame(JobStatus::Applied, $mine->fresh()->status);
+        $this->assertSame(JobStatus::Applied, $theirs->fresh()->status);
+    }
+
+    public function test_a_saved_status_change_counts_as_an_update(): void
+    {
+        $user = User::factory()->create();
+        $this->travelTo(now()->subDays(3));
+        $job = $this->jobsFor($user, 1)->first();
+        $this->travelBack();
+
+        $this->actingAs($user)->saveChanges([['id' => $job->id, 'status' => 'interview']])->assertOk();
+
+        $this->assertTrue($job->fresh()->updated_at->isToday());
+    }
+
+    /**
+     * @return array<string, array{Closure(int, int, int): array<int, array<string, mixed>>, string}>
+     */
+    public static function invalidChanges(): array
+    {
+        return [
+            'no changes' => [static fn (int $jobId, int $tagId, int $theirTagId): array => [], 'changes'],
+            'more than 200 changes' => [static fn (int $jobId, int $tagId, int $theirTagId): array => array_map(fn (int $id) => ['id' => $id, 'status' => 'offer'], range(1, 201)), 'changes'],
+            'the same application twice' => [static fn (int $jobId, int $tagId, int $theirTagId): array => [['id' => $jobId, 'status' => 'offer'], ['id' => $jobId, 'status' => 'rejected']], 'changes.0.id'],
+            'an entry without a change' => [static fn (int $jobId, int $tagId, int $theirTagId): array => [['id' => $jobId]], 'changes.0'],
+            'unknown status' => [static fn (int $jobId, int $tagId, int $theirTagId): array => [['id' => $jobId, 'status' => 'hired']], 'changes.0.status'],
+            'same tag added and removed' => [static fn (int $jobId, int $tagId, int $theirTagId): array => [['id' => $jobId, 'add_tag_ids' => [$tagId], 'remove_tag_ids' => [$tagId]]], 'changes.0.remove_tag_ids'],
+            'another users tag' => [static fn (int $jobId, int $tagId, int $theirTagId): array => [['id' => $jobId, 'add_tag_ids' => [$theirTagId]]], 'changes.0.add_tag_ids.0'],
+            'tag ids that are lists' => [static fn (int $jobId, int $tagId, int $theirTagId): array => [['id' => $jobId, 'add_tag_ids' => [[$tagId]], 'remove_tag_ids' => [[$tagId]]]], 'changes.0.add_tag_ids.0'],
+        ];
+    }
+
+    #[DataProvider('invalidChanges')]
+    public function test_invalid_changes_return_422_and_save_nothing(Closure $changes, string $errorKey): void
+    {
+        $user = User::factory()->create();
+        $job = $this->jobsFor($user, 1)->first();
+        $tag = Tag::factory()->for($user)->create();
+        $theirTag = Tag::factory()->create();
+
+        $this->actingAs($user)->saveChanges($changes($job->id, $tag->id, $theirTag->id))->assertJsonValidationErrors($errorKey);
+
+        $this->assertSame(JobStatus::Applied, $job->fresh()->status);
+        $this->assertFalse($job->tags()->exists());
     }
 }

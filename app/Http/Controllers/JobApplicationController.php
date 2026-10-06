@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\JobApplication\BatchUpdateJobApplicationsRequest;
 use App\Http\Requests\JobApplication\JobApplicationImportRequest;
+use App\Http\Requests\JobApplication\SaveJobApplicationChangesRequest;
 use App\Http\Requests\JobApplication\ScheduleInterviewRequest;
 use App\Http\Requests\JobApplication\StoreJobApplicationRequest;
 use App\Http\Requests\JobApplication\SyncJobApplicationTagsRequest;
@@ -70,6 +71,13 @@ class JobApplicationController extends Controller
             $request->safe()->only(['status', 'is_archived', 'add_tag_ids', 'remove_tag_ids']),
             $request->has('delete_open_todos') ? $request->boolean('delete_open_todos') : null,
         );
+
+        return JobApplicationResource::collection($jobs);
+    }
+
+    public function saveChanges(SaveJobApplicationChangesRequest $request): AnonymousResourceCollection
+    {
+        $jobs = $this->jobApplicationService->saveChanges($request->user(), $request->validated('changes'));
 
         return JobApplicationResource::collection($jobs);
     }

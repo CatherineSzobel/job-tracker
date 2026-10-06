@@ -102,6 +102,43 @@ class JobApplicationService
     }
 
     /**
+     * Save a different change for each of the user's applications, all or nothing.
+     * Any id that isn't one of theirs answers 404 before anything changes.
+     *
+     * @param  list<array{id: int, status?: string, add_tag_ids?: list<int>, remove_tag_ids?: list<int>}>  $changes
+     * @return EloquentCollection<int, JobApplication>
+     */
+    public function saveChanges(User $user, array $changes): EloquentCollection
+    {
+        $ids = array_column($changes, 'id');
+
+        return DB::transaction(function () use ($user, $changes, $ids) {
+            $jobs = $user->jobApplications()->whereKey($ids)->get()->keyBy('id');
+            abort_if($jobs->count() !== count($ids), 404);
+
+            foreach ($changes as $change) {
+                $job = $jobs[$change['id']];
+
+                // A model update, so updated_at moves (a status change counts as an update)
+                if (isset($change['status'])) {
+                    $job->update(['status' => $change['status']]);
+                }
+                if (! empty($change['add_tag_ids'])) {
+                    $job->tags()->syncWithoutDetaching($change['add_tag_ids']);
+                }
+                if (! empty($change['remove_tag_ids'])) {
+                    $job->tags()->detach($change['remove_tag_ids']);
+                }
+            }
+
+            return $user->jobApplications()->whereKey($ids)
+                ->with(['interviews', 'tags'])
+                ->withCount(JobApplication::openTodosCount())
+                ->get();
+        });
+    }
+
+    /**
      * Delete a job application
      */
     public function delete(JobApplication $job): void
