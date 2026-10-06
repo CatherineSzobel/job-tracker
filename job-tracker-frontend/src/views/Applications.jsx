@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import BatchBar from "../components/JobApplications/BatchBar";
-import { batchUpdateJobs, mergeBatchResult, tagIdsOf } from "../components/JobApplications/batchUpdate";
+import { batchUpdateJobs, mergeBatchResult, saveJobChanges, tagIdsOf } from "../components/JobApplications/batchUpdate";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
 import useArchiveWithTodos, { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
@@ -40,9 +40,9 @@ export default function Applications() {
   const [showManageTags, setShowManageTags] = useState(false);
   const [view, changeView] = useSavedView("applications-view");
   const { tags, reloadTags, createTag, updateTag, deleteTag } = useTags();
-  // Unsaved status and tag changes for the selection; leaving select mode (any way) drops them
+  // Unsaved status and tag changes, per application; leaving select mode (any way) drops them
   const batchChanges = useBatchChanges();
-  const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany } = useSelection({ onExit: batchChanges.clear });
+  const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany, clearSelection } = useSelection({ onExit: batchChanges.clear });
   const [batchBusy, setBatchBusy] = useState(false);
   const showToast = useToastStore((state) => state.showToast);
 
@@ -126,22 +126,24 @@ export default function Applications() {
   const visibleSelectedIds = selectedIds.filter((id) => visibleIds.includes(id));
 
   // Any successful batch change (Save, Archive) ends select mode, which also drops the saved changes;
-  // on failure the selection and the unsaved changes stay, so it can be tried again. Returns whether it worked.
-  const sendBatch = async (changes) => {
+  // on failure the selection and the unsaved changes stay, so it can be tried again.
+  // sendRequest() resolves to the updated applications.
+  const sendBatch = async (sendRequest) => {
     setBatchBusy(true);
     try {
-      const updatedJobs = await batchUpdateJobs(visibleSelectedIds, changes);
+      const updatedJobs = await sendRequest();
       setJobs((currentJobs) => mergeBatchResult(currentJobs, updatedJobs, false));
       exitSelecting();
-      return true;
     } catch (err) {
       console.error(err);
       showToast(err.response?.data?.message || "Failed to update the selected applications");
-      return false;
     } finally {
       setBatchBusy(false);
     }
   };
+
+  // Every pending change, including ones on cards a filter now hides (they were made on purpose)
+  const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
 
   // deleteOpenTodos: the answer from the to-dos prompt, or undefined when it wasn't asked
   // (then confirm here, and the server follows the user's setting)
@@ -151,16 +153,13 @@ export default function Applications() {
     if (!wasAsked && !(await confirmAction({ message: `Archive ${count} application${count === 1 ? "" : "s"}?`, confirmLabel: "Archive" }))) {
       return;
     }
-    sendBatch(archiveChanges(deleteOpenTodos));
+    sendBatch(() => batchUpdateJobs(visibleSelectedIds, archiveChanges(deleteOpenTodos)));
   };
 
   const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archiveSelected);
 
-  // Status and tag changes are saved together (BatchBar's Save); archiving asks first (the to-dos prompt)
-  const applyBatch = (changes) => {
-    if (!changes.is_archived) {
-      return sendBatch(changes);
-    }
+  // The bar's Archive asks about open to-dos first (the to-dos prompt)
+  const applyBatch = () => {
     const withOpenTodos = jobs.filter((job) => visibleSelectedIds.includes(job.id) && job.open_todos_count > 0);
     requestArchive({
       openTodosCount: withOpenTodos.reduce((total, job) => total + job.open_todos_count, 0),
@@ -177,7 +176,7 @@ export default function Applications() {
       selecting={selecting}
       selected={selectedIds.includes(job.id)}
       onToggleSelect={toggleSelected}
-      pendingChanges={batchChanges.hasChanges && selectedIds.includes(job.id) ? batchChanges : null}
+      pendingChanges={batchChanges.forJob(job.id)}
     />
   );
 
@@ -379,14 +378,17 @@ export default function Applications() {
         <ManageTagsModal tags={tags} onCreate={createTag} onUpdate={updateTag} onDelete={removeTag} onClose={closeManageTags} />
       )}
 
-      {selecting && visibleSelectedIds.length > 0 && (
+      {/* Stays open with nothing selected while changes wait, so Save is still there */}
+      {selecting && (visibleSelectedIds.length > 0 || batchChanges.hasChanges) && (
         <BatchBar
-          count={visibleSelectedIds.length}
+          selectedIds={visibleSelectedIds}
           actions={["status", "tags", "archive"]}
           tags={tags}
           removableTagIds={tagIdsOf(jobs.filter((job) => visibleSelectedIds.includes(job.id)))}
           changes={batchChanges}
+          onSave={saveBatchChanges}
           onApply={applyBatch}
+          onClearSelection={clearSelection}
           onCreateTag={createTag}
           onCancel={exitSelecting}
           busy={batchBusy}

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import ArchivedJobCard from "../components/JobApplications/ArchivedJobCard";
 import BatchBar from "../components/JobApplications/BatchBar";
-import { batchUpdateJobs, mergeBatchResult, tagIdsOf } from "../components/JobApplications/batchUpdate";
+import { batchUpdateJobs, mergeBatchResult, saveJobChanges, tagIdsOf } from "../components/JobApplications/batchUpdate";
 import useBatchChanges from "../components/JobApplications/useBatchChanges";
 import useSelection from "../components/UI/useSelection";
 import useTags from "../components/Tags/useTags";
@@ -18,9 +18,9 @@ export default function Archive() {
     const [loading, setLoading] = useState(true);
     const [batchBusy, setBatchBusy] = useState(false);
     const { tags, createTag } = useTags();
-    // Unsaved tag changes for the selection; leaving select mode (any way) drops them
+    // Unsaved tag changes, per application; leaving select mode (any way) drops them
     const batchChanges = useBatchChanges();
-    const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany } = useSelection({ onExit: batchChanges.clear });
+    const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany, clearSelection } = useSelection({ onExit: batchChanges.clear });
     const showToast = useToastStore((state) => state.showToast);
 
     useEffect(() => {
@@ -39,18 +39,17 @@ export default function Archive() {
     };
 
     // Any successful batch change (Save, Restore) ends select mode, which also drops the saved changes;
-    // on failure the selection and the unsaved changes stay, so it can be tried again. Returns whether it worked.
-    const applyBatch = async (changes) => {
+    // on failure the selection and the unsaved changes stay, so it can be tried again.
+    // sendRequest() resolves to the updated applications.
+    const sendBatch = async (sendRequest) => {
         setBatchBusy(true);
         try {
-            const updatedJobs = await batchUpdateJobs(selectedIds, changes);
+            const updatedJobs = await sendRequest();
             setArchivedJobs((currentJobs) => mergeBatchResult(currentJobs, updatedJobs, true));
             exitSelecting();
-            return true;
         } catch (err) {
             console.error(err);
             showToast(err.response?.data?.message || "Failed to update the selected applications");
-            return false;
         } finally {
             setBatchBusy(false);
         }
@@ -98,20 +97,23 @@ export default function Archive() {
                             selecting={selecting}
                             selected={selectedIds.includes(job.id)}
                             onToggleSelect={toggleSelected}
-                            pendingChanges={batchChanges.hasChanges && selectedIds.includes(job.id) ? batchChanges : null}
+                            pendingChanges={batchChanges.forJob(job.id)}
                         />
                     ))}
                 </div>
             )}
 
-            {selecting && selectedIds.length > 0 && (
+            {/* Stays open with nothing selected while changes wait, so Save is still there */}
+            {selecting && (selectedIds.length > 0 || batchChanges.hasChanges) && (
                 <BatchBar
-                    count={selectedIds.length}
+                    selectedIds={selectedIds}
                     actions={["restore", "tags"]}
                     tags={tags}
                     removableTagIds={tagIdsOf(archivedJobs.filter((job) => selectedIds.includes(job.id)))}
                     changes={batchChanges}
-                    onApply={applyBatch}
+                    onSave={() => sendBatch(() => saveJobChanges(batchChanges.toRequest()))}
+                    onApply={(changes) => sendBatch(() => batchUpdateJobs(selectedIds, changes))}
+                    onClearSelection={clearSelection}
                     onCreateTag={createTag}
                     onCancel={exitSelecting}
                     busy={batchBusy}

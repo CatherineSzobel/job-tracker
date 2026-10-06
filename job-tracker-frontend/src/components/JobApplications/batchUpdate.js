@@ -7,6 +7,13 @@ export async function batchUpdateJobs(ids, changes) {
   return res.data.data;
 }
 
+// PATCH /api/job-applications/batch-changes: a different change for each application, all or nothing.
+// changes: [{ id, status?, add_tag_ids?, remove_tag_ids? }]. Resolves to the updated applications.
+export async function saveJobChanges(changes) {
+  const res = await API.patch("/job-applications/batch-changes", { changes });
+  return res.data.data;
+}
+
 // Puts the updated applications into the list and drops those that left it
 // (archived on the Applications page, restored on the Archive page).
 export function mergeBatchResult(currentJobs, updatedJobs, listShowsArchived) {

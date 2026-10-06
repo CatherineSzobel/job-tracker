@@ -12,6 +12,14 @@ const TAG_MODES = {
 
 const statusLabel = (value) => JOB_STATUSES.find((status) => status.value === value)?.label ?? value;
 
+const applicationCount = (count) => `${count} application${count === 1 ? "" : "s"}`;
+
+// A summary line's text: "Status: Applied", "+ remote", "− fintech"
+const summaryLabel = (line) => {
+  if (line.kind === "status") return `Status: ${statusLabel(line.status)}`;
+  return `${line.kind === "add" ? "+" : "−"} ${line.tag.name}`;
+};
+
 // One change waiting to be saved, with an × to drop it
 function PendingChange({ label, onUndo }) {
   return (
@@ -25,39 +33,48 @@ function PendingChange({ label, onUndo }) {
 }
 
 // The select bar for applications (Applications and Archive). actions: which controls to show, from
-// "status", "tags", "archive", "restore". Status and tag changes go into `changes` (useBatchChanges, owned
-// by the page so the selected cards can preview them) and are listed here until Save sends them in one
-// request; Cancel leaves select mode, which drops them. Archive and Restore act straight away, since they
-// ask first. onApply(request) returns whether it worked.
+// "status", "tags", "archive", "restore". A status or tag change is recorded in `changes` (useBatchChanges,
+// owned by the page so the cards can preview them) on the applications selected when it's made, and then
+// the selection is cleared (onClearSelection) so the next change starts from a fresh pick; the summary lists
+// them until Save (onSave) sends all of them in one request. Cancel leaves select mode, which drops them. Archive and Restore (onApply(request)) act on the
+// selection straight away, since they ask first, and wait until unsaved changes are saved or undone.
 // removableTagIds: tags at least one selected application has; "Remove tag" only suggests those.
-export default function BatchBar({ count, actions, tags, removableTagIds = [], changes, onApply, onCreateTag, onCancel, busy = false }) {
+export default function BatchBar({ selectedIds, actions, tags, removableTagIds = [], changes, onSave, onApply, onClearSelection, onCreateTag, onCancel, busy = false }) {
   // "add" or "remove" while the tag field is open
   const [tagMode, setTagMode] = useState(null);
+  const nothingSelected = selectedIds.length === 0;
   // Removing only offers tags that at least one selected application has
   const tagChoices = tagMode === "remove" ? tags.filter((tag) => removableTagIds.includes(tag.id)) : tags;
 
+  const pickStatus = (status) => {
+    if (!status) return;
+    changes.setStatus(selectedIds, status);
+    onClearSelection();
+  };
+
   const pickTag = (tag) => {
     if (tagMode === "add") {
-      changes.addTag(tag);
+      changes.addTag(selectedIds, tag);
     } else {
-      changes.removeTag(tag);
+      changes.removeTag(selectedIds, tag);
     }
     setTagMode(null);
+    onClearSelection();
   };
 
-  // Success ends select mode on the page (which clears the changes); on failure they stay for another try
-  const save = async () => {
-    await onApply(changes.toRequest());
-  };
+  // Archive and Restore end select mode, which would drop the unsaved changes
+  const actsNowDisabled = busy || nothingSelected || changes.hasChanges;
+  const actsNowTitle = changes.hasChanges ? "Save or undo your changes first" : undefined;
 
   return (
-    <SelectionBar count={count} onCancel={onCancel}>
+    <SelectionBar count={selectedIds.length} onCancel={onCancel}>
       {actions.includes("status") && (
+        // Always shows "Status…": each pick is applied to the current selection
         <select
-          value={changes.status}
-          disabled={busy}
-          onChange={(event) => changes.setStatus(event.target.value)}
-          aria-label="Change status"
+          value=""
+          disabled={busy || nothingSelected}
+          onChange={(event) => pickStatus(event.target.value)}
+          aria-label="Change status of the selected applications"
           className="input-field w-auto py-1 text-sm"
         >
           <option value="">Status…</option>
@@ -81,28 +98,28 @@ export default function BatchBar({ count, actions, tags, removableTagIds = [], c
           </div>
         ) : (
           <>
-            <button type="button" disabled={busy} onClick={() => setTagMode("add")} className="btn-bar">
+            <button type="button" disabled={busy || nothingSelected} onClick={() => setTagMode("add")} className="btn-bar">
               Add tag
             </button>
-            <button type="button" disabled={busy} onClick={() => setTagMode("remove")} className="btn-bar">
+            <button type="button" disabled={busy || nothingSelected} onClick={() => setTagMode("remove")} className="btn-bar">
               Remove tag
             </button>
           </>
         ))}
 
       {actions.includes("archive") && (
-        <button type="button" disabled={busy} onClick={() => onApply({ is_archived: true })} className="btn-bar">
+        <button type="button" disabled={actsNowDisabled} title={actsNowTitle} onClick={() => onApply({ is_archived: true })} className="btn-bar">
           Archive
         </button>
       )}
       {actions.includes("restore") && (
-        <button type="button" disabled={busy} onClick={() => onApply({ is_archived: false })} className="btn-bar">
+        <button type="button" disabled={actsNowDisabled} title={actsNowTitle} onClick={() => onApply({ is_archived: false })} className="btn-bar">
           Restore
         </button>
       )}
 
       {(actions.includes("status") || actions.includes("tags")) && (
-        <button type="button" disabled={busy || !changes.hasChanges} onClick={save} className="btn-bar-primary">
+        <button type="button" disabled={busy || !changes.hasChanges} onClick={onSave} className="btn-bar-primary">
           {busy ? "Saving…" : "Save"}
         </button>
       )}
@@ -111,12 +128,8 @@ export default function BatchBar({ count, actions, tags, removableTagIds = [], c
       {changes.hasChanges && (
         <div className="order-last w-full flex flex-wrap items-center gap-2 pt-1">
           <span className="text-xs text-light-muted dark:text-dark-muted">Not saved yet:</span>
-          {changes.status && <PendingChange label={`Status: ${statusLabel(changes.status)}`} onUndo={() => changes.setStatus("")} />}
-          {changes.tagsToAdd.map((tag) => (
-            <PendingChange key={`add-${tag.id}`} label={`+ ${tag.name}`} onUndo={() => changes.undoAddTag(tag)} />
-          ))}
-          {changes.tagsToRemove.map((tag) => (
-            <PendingChange key={`remove-${tag.id}`} label={`− ${tag.name}`} onUndo={() => changes.undoRemoveTag(tag)} />
+          {changes.summary.map((line) => (
+            <PendingChange key={line.key} label={`${summaryLabel(line)} · ${applicationCount(line.count)}`} onUndo={() => changes.undoLine(line)} />
           ))}
         </div>
       )}

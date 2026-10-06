@@ -8,7 +8,7 @@ import useArchiveWithTodos, { archiveChanges } from "./useArchiveWithTodos";
 
 // onRemove(id) is called after the job is archived or deleted so the parent can drop it.
 // In select mode (selecting) clicking the card calls onToggleSelect(id) and the action buttons are hidden.
-// pendingChanges (useBatchChanges, only for a selected card): unsaved batch changes to preview on the card.
+// pendingChanges (useBatchChanges().forJob): this application's unsaved batch change to preview, or null.
 export default function JobCard({ job, onRemove, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
   const navigate = useNavigate();
   const showToast = useToastStore((state) => state.showToast);
@@ -98,7 +98,7 @@ export default function JobCard({ job, onRemove, selecting = false, selected = f
           removedTagIds={pendingChanges?.tagsToRemove.map((tag) => tag.id)}
         />
 
-        {pendingChanges?.hasChanges && (
+        {pendingChanges && (
           <p className="mt-1 text-xs italic text-accent dark:text-accent-muted">Not saved yet</p>
         )}
       </div>

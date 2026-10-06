@@ -39,5 +39,14 @@ export default function useSelection({ onExit } = {}) {
   // Adds all of these, e.g. "Select all" for the visible list or one month
   const selectMany = (ids) => setSelectedIds((currentIds) => [...new Set([...currentIds, ...ids])]);
 
-  return { selecting, startSelecting: () => setSelecting(true), exitSelecting, selectedIds, toggleSelected, selectMany };
+  return {
+    selecting,
+    startSelecting: () => setSelecting(true),
+    exitSelecting,
+    selectedIds,
+    toggleSelected,
+    selectMany,
+    // Unselects everything but stays in select mode (onExit doesn't run)
+    clearSelection: () => setSelectedIds([]),
+  };
 }
