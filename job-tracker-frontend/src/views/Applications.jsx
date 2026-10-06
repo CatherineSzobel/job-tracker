@@ -2,11 +2,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import BatchBar from "../components/JobApplications/BatchBar";
-import { batchUpdateJobs, mergeBatchResult, saveJobChanges, tagIdsOf } from "../components/JobApplications/batchUpdate";
+import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
 import useArchiveWithTodos, { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
 import useBatchChanges from "../components/JobApplications/useBatchChanges";
+import useSendBatch from "../components/JobApplications/useSendBatch";
 import ManageTagsModal from "../components/Tags/ManageTagsModal";
 import TagChip from "../components/Tags/TagChip";
 import useTags from "../components/Tags/useTags";
@@ -43,7 +44,7 @@ export default function Applications() {
   // Unsaved status and tag changes, per application; leaving select mode (any way) drops them
   const batchChanges = useBatchChanges();
   const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany, clearSelection } = useSelection({ onExit: batchChanges.clear });
-  const [batchBusy, setBatchBusy] = useState(false);
+  const { sendBatch, busy: batchBusy } = useSendBatch({ setJobs, listShowsArchived: false, onDone: exitSelecting });
   const showToast = useToastStore((state) => state.showToast);
 
   const [newJob, setNewJob] = useState(EMPTY_JOB);
@@ -124,23 +125,7 @@ export default function Applications() {
   const visibleIds = filteredJobs.map((job) => job.id);
   // Only selected cards that are still visible count: changing a filter hides some without unselecting them
   const visibleSelectedIds = selectedIds.filter((id) => visibleIds.includes(id));
-
-  // Any successful batch change (Save, Archive) ends select mode, which also drops the saved changes;
-  // on failure the selection and the unsaved changes stay, so it can be tried again.
-  // sendRequest() resolves to the updated applications.
-  const sendBatch = async (sendRequest) => {
-    setBatchBusy(true);
-    try {
-      const updatedJobs = await sendRequest();
-      setJobs((currentJobs) => mergeBatchResult(currentJobs, updatedJobs, false));
-      exitSelecting();
-    } catch (err) {
-      console.error(err);
-      showToast(err.response?.data?.message || "Failed to update the selected applications");
-    } finally {
-      setBatchBusy(false);
-    }
-  };
+  const visibleSelectedJobs = filteredJobs.filter((job) => selectedIds.includes(job.id));
 
   // Every pending change, including ones on cards a filter now hides (they were made on purpose)
   const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
@@ -381,10 +366,9 @@ export default function Applications() {
       {/* Stays open with nothing selected while changes wait, so Save is still there */}
       {selecting && (visibleSelectedIds.length > 0 || batchChanges.hasChanges) && (
         <BatchBar
-          selectedIds={visibleSelectedIds}
+          selectedJobs={visibleSelectedJobs}
           actions={["status", "tags", "archive"]}
           tags={tags}
-          removableTagIds={tagIdsOf(jobs.filter((job) => visibleSelectedIds.includes(job.id)))}
           changes={batchChanges}
           onSave={saveBatchChanges}
           onApply={applyBatch}

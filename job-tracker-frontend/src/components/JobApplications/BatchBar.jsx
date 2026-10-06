@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import TagInput from "../Tags/TagInput";
 import SelectionBar from "../UI/SelectionBar";
 import { JOB_STATUSES } from "../../constants/jobs";
+import { tagIdsOf } from "./batchUpdate";
 
 // How the tag field behaves when adding vs removing a tag
 const TAG_MODES = {
@@ -32,31 +33,39 @@ function PendingChange({ label, onUndo }) {
   );
 }
 
-// The select bar for applications (Applications and Archive). actions: which controls to show, from
-// "status", "tags", "archive", "restore". A status or tag change is recorded in `changes` (useBatchChanges,
-// owned by the page so the cards can preview them) on the applications selected when it's made, and then
-// the selection is cleared (onClearSelection) so the next change starts from a fresh pick; the summary lists
-// them until Save (onSave) sends all of them in one request. Cancel leaves select mode, which drops them. Archive and Restore (onApply(request)) act on the
-// selection straight away, since they ask first, and wait until unsaved changes are saved or undone.
-// removableTagIds: tags at least one selected application has; "Remove tag" only suggests those.
-export default function BatchBar({ selectedIds, actions, tags, removableTagIds = [], changes, onSave, onApply, onClearSelection, onCreateTag, onCancel, busy = false }) {
+// The select bar for applications (Applications and Archive). selectedJobs: the selected applications.
+// actions: which controls to show, from "status", "tags", "archive", "restore".
+// A status or tag change is recorded in `changes` (useBatchChanges, owned by the page so the cards can
+// preview them) on the applications selected when it's made, and then the selection is cleared
+// (onClearSelection) so the next change starts from a fresh pick. The summary lists the changes until Save
+// (onSave) sends all of them in one request; Cancel leaves select mode, which drops them. Archive and
+// Restore (onApply(request)) act on the selection straight away, since they ask first, and wait until
+// unsaved changes are saved or undone.
+export default function BatchBar({ selectedJobs, actions, tags, changes, onSave, onApply, onClearSelection, onCreateTag, onCancel, busy = false }) {
   // "add" or "remove" while the tag field is open
   const [tagMode, setTagMode] = useState(null);
-  const nothingSelected = selectedIds.length === 0;
+  const nothingSelected = selectedJobs.length === 0;
+
+  // Unselecting the last card closes the tag field, so a pick can't silently apply to nothing
+  if (tagMode && nothingSelected) {
+    setTagMode(null);
+  }
+
   // Removing only offers tags that at least one selected application has
+  const removableTagIds = tagIdsOf(selectedJobs);
   const tagChoices = tagMode === "remove" ? tags.filter((tag) => removableTagIds.includes(tag.id)) : tags;
 
   const pickStatus = (status) => {
     if (!status) return;
-    changes.setStatus(selectedIds, status);
+    changes.setStatus(selectedJobs, status);
     onClearSelection();
   };
 
   const pickTag = (tag) => {
     if (tagMode === "add") {
-      changes.addTag(selectedIds, tag);
+      changes.addTag(selectedJobs, tag);
     } else {
-      changes.removeTag(selectedIds, tag);
+      changes.removeTag(selectedJobs, tag);
     }
     setTagMode(null);
     onClearSelection();
@@ -67,7 +76,7 @@ export default function BatchBar({ selectedIds, actions, tags, removableTagIds =
   const actsNowTitle = changes.hasChanges ? "Save or undo your changes first" : undefined;
 
   return (
-    <SelectionBar count={selectedIds.length} onCancel={onCancel}>
+    <SelectionBar count={selectedJobs.length} onCancel={onCancel}>
       {actions.includes("status") && (
         // Always shows "Status…": each pick is applied to the current selection
         <select

@@ -1,6 +1,6 @@
 import API from "../../api/axios";
 
-// PATCH /api/job-applications/batch: one set of changes for several applications, all or nothing.
+// PATCH /api/job-applications/batch: archive or restore several applications, all or nothing.
 // Resolves to the updated applications.
 export async function batchUpdateJobs(ids, changes) {
   const res = await API.patch("/job-applications/batch", { ids, ...changes });

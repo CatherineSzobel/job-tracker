@@ -14,7 +14,6 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -57,47 +56,29 @@ class JobApplicationService
     }
 
     /**
-     * Apply one set of changes to several of the user's applications, all or nothing.
+     * Archive or restore several of the user's applications, all or nothing.
      * Any id that isn't one of theirs answers 404 before anything changes. Archiving follows the same
      * open to-dos rule as update(): only applications going from active to archived.
      *
      * @param  list<int>  $ids
-     * @param  array{status?: string, is_archived?: bool, add_tag_ids?: list<int>, remove_tag_ids?: list<int>}  $changes
      * @return EloquentCollection<int, JobApplication>
      */
-    public function batchUpdate(User $user, array $ids, array $changes, ?bool $deleteOpenTodos = null): EloquentCollection
+    public function batchUpdate(User $user, array $ids, bool $isArchived, ?bool $deleteOpenTodos = null): EloquentCollection
     {
-        return DB::transaction(function () use ($user, $ids, $changes, $deleteOpenTodos) {
+        return DB::transaction(function () use ($user, $ids, $isArchived, $deleteOpenTodos) {
             $jobs = $user->jobApplications()->whereKey($ids)->get();
             abort_if($jobs->count() !== count($ids), 404);
 
-            $attributes = Arr::only($changes, ['status', 'is_archived']);
-            if ($attributes !== []) {
-                $newlyArchivedIds = ($attributes['is_archived'] ?? false)
-                    ? $jobs->where('is_archived', false)->modelKeys()
-                    : [];
+            $newlyArchivedIds = $isArchived ? $jobs->where('is_archived', false)->modelKeys() : [];
 
-                // A query update, so updated_at moves too (a batch status change counts as an update)
-                $user->jobApplications()->whereKey($ids)->update($attributes);
+            // A query update, so updated_at moves too (archiving counts as an update)
+            $user->jobApplications()->whereKey($ids)->update(['is_archived' => $isArchived]);
 
-                if ($newlyArchivedIds !== [] && ($deleteOpenTodos ?? $user->archive_todos === ArchiveTodosAction::Delete)) {
-                    Todo::whereIn('job_application_id', $newlyArchivedIds)->where('done', false)->delete();
-                }
+            if ($newlyArchivedIds !== [] && ($deleteOpenTodos ?? $user->archive_todos === ArchiveTodosAction::Delete)) {
+                Todo::whereIn('job_application_id', $newlyArchivedIds)->where('done', false)->delete();
             }
 
-            foreach ($jobs as $job) {
-                if (! empty($changes['add_tag_ids'])) {
-                    $job->tags()->syncWithoutDetaching($changes['add_tag_ids']);
-                }
-                if (! empty($changes['remove_tag_ids'])) {
-                    $job->tags()->detach($changes['remove_tag_ids']);
-                }
-            }
-
-            return $user->jobApplications()->whereKey($ids)
-                ->with(['interviews', 'tags'])
-                ->withCount(JobApplication::openTodosCount())
-                ->get();
+            return $this->withListDetails($user, $ids);
         });
     }
 
@@ -110,19 +91,23 @@ class JobApplicationService
      */
     public function saveChanges(User $user, array $changes): EloquentCollection
     {
+        // Validated as integers, which still lets through strings like "+4"; cast so they match the keys below
+        $changes = array_map(fn (array $change) => ['id' => (int) $change['id']] + $change, $changes);
         $ids = array_column($changes, 'id');
 
         return DB::transaction(function () use ($user, $changes, $ids) {
             $jobs = $user->jobApplications()->whereKey($ids)->get()->keyBy('id');
             abort_if($jobs->count() !== count($ids), 404);
 
+            // One query per status, not per application. A query update, so updated_at moves too
+            // (a status change counts as an update)
+            collect($changes)->whereNotNull('status')->groupBy('status')
+                ->each(fn (Collection $group, string $status) => $user->jobApplications()
+                    ->whereKey($group->pluck('id'))
+                    ->update(['status' => $status]));
+
             foreach ($changes as $change) {
                 $job = $jobs[$change['id']];
-
-                // A model update, so updated_at moves (a status change counts as an update)
-                if (isset($change['status'])) {
-                    $job->update(['status' => $change['status']]);
-                }
                 if (! empty($change['add_tag_ids'])) {
                     $job->tags()->syncWithoutDetaching($change['add_tag_ids']);
                 }
@@ -131,11 +116,22 @@ class JobApplicationService
                 }
             }
 
-            return $user->jobApplications()->whereKey($ids)
-                ->with(['interviews', 'tags'])
-                ->withCount(JobApplication::openTodosCount())
-                ->get();
+            return $this->withListDetails($user, $ids);
         });
+    }
+
+    /**
+     * The user's applications with these ids, in the list shape (interviews, tags, open_todos_count).
+     *
+     * @param  list<int>  $ids
+     * @return EloquentCollection<int, JobApplication>
+     */
+    private function withListDetails(User $user, array $ids): EloquentCollection
+    {
+        return $user->jobApplications()->whereKey($ids)
+            ->with(['interviews', 'tags'])
+            ->withCount(JobApplication::openTodosCount())
+            ->get();
     }
 
     /**

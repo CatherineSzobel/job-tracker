@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import ArchivedJobCard from "../components/JobApplications/ArchivedJobCard";
 import BatchBar from "../components/JobApplications/BatchBar";
-import { batchUpdateJobs, mergeBatchResult, saveJobChanges, tagIdsOf } from "../components/JobApplications/batchUpdate";
+import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
 import useBatchChanges from "../components/JobApplications/useBatchChanges";
+import useSendBatch from "../components/JobApplications/useSendBatch";
 import useSelection from "../components/UI/useSelection";
 import useTags from "../components/Tags/useTags";
 import ListPageHeader from "../components/UI/ListPageHeader";
@@ -16,11 +17,11 @@ export default function Archive() {
     const navigate = useNavigate();
     const [archivedJobs, setArchivedJobs] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [batchBusy, setBatchBusy] = useState(false);
     const { tags, createTag } = useTags();
     // Unsaved tag changes, per application; leaving select mode (any way) drops them
     const batchChanges = useBatchChanges();
     const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany, clearSelection } = useSelection({ onExit: batchChanges.clear });
+    const { sendBatch, busy: batchBusy } = useSendBatch({ setJobs: setArchivedJobs, listShowsArchived: true, onDone: exitSelecting });
     const showToast = useToastStore((state) => state.showToast);
 
     useEffect(() => {
@@ -38,22 +39,10 @@ export default function Archive() {
         setArchivedJobs((currentJobs) => currentJobs.filter((job) => job.id !== restoredJobId));
     };
 
-    // Any successful batch change (Save, Restore) ends select mode, which also drops the saved changes;
-    // on failure the selection and the unsaved changes stay, so it can be tried again.
-    // sendRequest() resolves to the updated applications.
-    const sendBatch = async (sendRequest) => {
-        setBatchBusy(true);
-        try {
-            const updatedJobs = await sendRequest();
-            setArchivedJobs((currentJobs) => mergeBatchResult(currentJobs, updatedJobs, true));
-            exitSelecting();
-        } catch (err) {
-            console.error(err);
-            showToast(err.response?.data?.message || "Failed to update the selected applications");
-        } finally {
-            setBatchBusy(false);
-        }
-    };
+    const selectedJobs = archivedJobs.filter((job) => selectedIds.includes(job.id));
+    const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
+    // The bar's Restore
+    const applyBatch = (changes) => sendBatch(() => batchUpdateJobs(selectedIds, changes));
 
     if (loading) {
         return <PageLoader text="Loading archives..." />;
@@ -106,13 +95,12 @@ export default function Archive() {
             {/* Stays open with nothing selected while changes wait, so Save is still there */}
             {selecting && (selectedIds.length > 0 || batchChanges.hasChanges) && (
                 <BatchBar
-                    selectedIds={selectedIds}
+                    selectedJobs={selectedJobs}
                     actions={["restore", "tags"]}
                     tags={tags}
-                    removableTagIds={tagIdsOf(archivedJobs.filter((job) => selectedIds.includes(job.id)))}
                     changes={batchChanges}
-                    onSave={() => sendBatch(() => saveJobChanges(batchChanges.toRequest()))}
-                    onApply={(changes) => sendBatch(() => batchUpdateJobs(selectedIds, changes))}
+                    onSave={saveBatchChanges}
+                    onApply={applyBatch}
                     onClearSelection={clearSelection}
                     onCreateTag={createTag}
                     onCancel={exitSelecting}

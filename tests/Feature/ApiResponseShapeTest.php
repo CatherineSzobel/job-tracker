@@ -122,7 +122,7 @@ class ApiResponseShapeTest extends TestCase
 
     public function test_batch_update(): void
     {
-        $this->patchJson('/api/job-applications/batch', ['ids' => [$this->job->id], 'status' => 'offer'])
+        $this->patchJson('/api/job-applications/batch', ['ids' => [$this->job->id], 'is_archived' => false])
             ->assertOk()
             ->assertJsonStructure(['data' => [[...self::JOB, 'interviews' => [self::INTERVIEW], 'open_todos_count', 'tags']]]);
     }

@@ -68,7 +68,7 @@ class JobApplicationController extends Controller
         $jobs = $this->jobApplicationService->batchUpdate(
             $request->user(),
             $request->validated('ids'),
-            $request->safe()->only(['status', 'is_archived', 'add_tag_ids', 'remove_tag_ids']),
+            $request->boolean('is_archived'),
             $request->has('delete_open_todos') ? $request->boolean('delete_open_todos') : null,
         );
 

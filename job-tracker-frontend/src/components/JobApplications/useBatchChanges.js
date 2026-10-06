@@ -4,6 +4,8 @@ const NO_CHANGES = { status: "", tagsToAdd: [], tagsToRemove: [] };
 
 const withoutTag = (tagList, tag) => tagList.filter((existing) => existing.id !== tag.id);
 
+const hasTag = (job, tag) => (job.tags ?? []).some((existing) => existing.id === tag.id);
+
 const isEmpty = (change) => change.status === "" && change.tagsToAdd.length === 0 && change.tagsToRemove.length === 0;
 
 // For each kind of summary line: how it's taken off one application's change
@@ -33,44 +35,44 @@ export default function useBatchChanges() {
   // { [applicationId]: { status, tagsToAdd, tagsToRemove } }, only applications with a change
   const [changesById, setChangesById] = useState({});
 
-  // update(change) for each id (or, with ids null, every changed application), dropping those left with none
-  const updateEach = (ids, update) => {
+  // update(change, job) for each of these applications (or, with jobs null, every changed one),
+  // dropping those left with no change
+  const updateEach = (jobs, update) => {
     setChangesById((current) => {
       const next = { ...current };
-      (ids ?? Object.keys(current)).forEach((id) => {
-        const updated = update(current[id] ?? NO_CHANGES);
+      (jobs ?? Object.keys(current).map((id) => ({ id }))).forEach((job) => {
+        const updated = update(current[job.id] ?? NO_CHANGES, job);
         if (isEmpty(updated)) {
-          delete next[id];
+          delete next[job.id];
         } else {
-          next[id] = updated;
+          next[job.id] = updated;
         }
       });
       return next;
     });
   };
 
-  const changedCount = Object.keys(changesById).length;
-
   return {
-    hasChanges: changedCount > 0,
-    changedCount,
+    hasChanges: Object.keys(changesById).length > 0,
     // One application's pending change for its card preview, or null
     forJob: (id) => changesById[id] ?? null,
     summary: summarize(changesById),
-    // A later status replaces an earlier one; picking a tag again moves it between "add" and "remove"
-    // (the backend refuses a tag that's both added and removed)
-    setStatus: (ids, status) => updateEach(ids, (change) => ({ ...change, status })),
-    addTag: (ids, tag) =>
-      updateEach(ids, (change) => ({
+    // Each takes the selected applications, and skips what wouldn't change one (its current status, a tag
+    // it already has or doesn't have), so the summary counts only real changes. A later status replaces an
+    // earlier one; picking a tag again moves it between "add" and "remove" (the backend refuses a tag that's
+    // both added and removed)
+    setStatus: (jobs, status) => updateEach(jobs, (change, job) => ({ ...change, status: status === job.status ? "" : status })),
+    addTag: (jobs, tag) =>
+      updateEach(jobs, (change, job) => ({
         ...change,
         tagsToRemove: withoutTag(change.tagsToRemove, tag),
-        tagsToAdd: [...withoutTag(change.tagsToAdd, tag), tag],
+        tagsToAdd: hasTag(job, tag) ? withoutTag(change.tagsToAdd, tag) : [...withoutTag(change.tagsToAdd, tag), tag],
       })),
-    removeTag: (ids, tag) =>
-      updateEach(ids, (change) => ({
+    removeTag: (jobs, tag) =>
+      updateEach(jobs, (change, job) => ({
         ...change,
         tagsToAdd: withoutTag(change.tagsToAdd, tag),
-        tagsToRemove: [...withoutTag(change.tagsToRemove, tag), tag],
+        tagsToRemove: hasTag(job, tag) ? [...withoutTag(change.tagsToRemove, tag), tag] : withoutTag(change.tagsToRemove, tag),
       })),
     // Undo one summary line on every application that has it
     undoLine: (line) => updateEach(null, (change) => UNDO_BY_KIND[line.kind](line, change)),
