@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ArchiveTodosAction;
 use App\Enums\InterviewType;
 use App\Enums\JobStatus;
+use App\Enums\Priority;
 use App\Exports\JobApplicationsExport;
 use App\Imports\JobApplicationsImport;
 use App\Models\Interview;
@@ -205,12 +206,13 @@ class JobApplicationService
             $query->where('is_archived', $archived);
         }
 
-        if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+        // Unknown values are ignored, like the question bank's ?category=
+        if ($status = JobStatus::tryFrom((string) ($filters['status'] ?? ''))) {
+            $query->where('status', $status);
         }
 
-        if (! empty($filters['priority'])) {
-            $query->where('priority', $filters['priority']);
+        if ($priority = Priority::tryFrom((string) ($filters['priority'] ?? ''))) {
+            $query->where('priority', $priority);
         }
 
         if (! empty($filters['applied_date'])) {

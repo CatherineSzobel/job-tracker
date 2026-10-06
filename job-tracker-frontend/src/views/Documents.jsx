@@ -9,15 +9,14 @@ import DocumentForm from "../components/Documents/DocumentForm";
 import OpenDocumentButton from "../components/Documents/OpenDocumentButton";
 import { apiErrorMessage, formatFileSize, linkDomain } from "../components/Documents/documentUtils";
 import { CATEGORY_BY_VALUE, DOCUMENT_CATEGORIES } from "../constants/documents";
+import { countOf } from "../utils/plural";
+import { filterChipClasses } from "../components/UI/filterChipClasses";
 
 const ADD_TABS = [
   { value: "file", label: "Upload file" },
   { value: "link", label: "Add link" },
 ];
 
-const CHIP_CLASSES = "px-3 py-1 rounded-full text-sm transition-colors";
-const ACTIVE_CHIP = "bg-accent text-white";
-const INACTIVE_CHIP = "bg-light dark:bg-dark-soft text-light-muted dark:text-dark-muted border border-border dark:border-dark-subtle hover:text-accent";
 
 export default function Documents() {
   const [documents, setDocuments] = useState([]);
@@ -53,7 +52,7 @@ export default function Documents() {
   const deleteDocument = async (item) => {
     const count = item.applications_count;
     const message = count > 0
-      ? `"${item.name}" is attached to ${count} application${count === 1 ? "" : "s"}, so it will be archived instead of deleted. It stays visible on those applications and you can restore it later.`
+      ? `"${item.name}" is attached to ${countOf(count, "application")}, so it will be archived instead of deleted. It stays visible on those applications and you can restore it later.`
       : `Delete "${item.name}"? This can't be undone.`;
     if (!(await confirmAction({ message, confirmLabel: count > 0 ? "Archive" : "Delete", danger: count === 0 }))) return;
 
@@ -106,7 +105,7 @@ export default function Documents() {
       <div className="flex flex-wrap items-center gap-2 mb-6">
         <button
           onClick={() => setCategoryFilter("all")}
-          className={`${CHIP_CLASSES} ${categoryFilter === "all" ? ACTIVE_CHIP : INACTIVE_CHIP}`}
+          className={filterChipClasses(categoryFilter === "all")}
         >
           All
         </button>
@@ -114,7 +113,7 @@ export default function Documents() {
           <button
             key={value}
             onClick={() => setCategoryFilter(value)}
-            className={`${CHIP_CLASSES} ${categoryFilter === value ? ACTIVE_CHIP : INACTIVE_CHIP}`}
+            className={filterChipClasses(categoryFilter === value)}
           >
             {label}
           </button>
@@ -188,7 +187,7 @@ export default function Documents() {
               <button
                 key={value}
                 onClick={() => setAddTab(value)}
-                className={`${CHIP_CLASSES} ${addTab === value ? ACTIVE_CHIP : INACTIVE_CHIP}`}
+                className={filterChipClasses(addTab === value)}
               >
                 {label}
               </button>

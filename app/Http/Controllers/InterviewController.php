@@ -9,6 +9,7 @@ use App\Http\Requests\Interview\InterviewUpdateRequest;
 use App\Http\Resources\InterviewDetailResource;
 use App\Http\Resources\InterviewResource;
 use App\Models\Interview;
+use App\Models\JobApplication;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -20,12 +21,12 @@ class InterviewController extends Controller
     /**
      * Only the job fields the interview pages show.
      */
-    private const JOB = 'job:id,company_name,position';
+    private const JOB = 'job:'.JobApplication::SUMMARY_COLUMNS;
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $interviews = Interview::with(self::JOB)
-            ->where('user_id', $request->user()->id)
+        $interviews = $request->user()->interviews()
+            ->with(self::JOB)
             ->latest()
             ->get();
 

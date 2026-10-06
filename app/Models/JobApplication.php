@@ -12,6 +12,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JobApplication extends Model
 {
+    /**
+     * The columns other lists show about an application (interviews, to-dos, reminders), for eager loads
+     * like 'job:'.JobApplication::SUMMARY_COLUMNS.
+     */
+    public const SUMMARY_COLUMNS = 'id,company_name,position';
+
     protected $fillable = [
         'user_id',
         'company_name',

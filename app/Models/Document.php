@@ -18,6 +18,11 @@ class Document extends Model
     /** @use HasFactory<\Database\Factories\DocumentFactory> */
     use HasFactory;
 
+    /**
+     * How many documents (archived included: they still take up storage) the shared demo account may keep.
+     */
+    public const DEMO_LIMIT = 10;
+
     protected $fillable = [
         'kind',
         'category',

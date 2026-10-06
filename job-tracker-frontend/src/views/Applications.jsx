@@ -22,6 +22,7 @@ import useSelection from "../components/UI/useSelection";
 import { EMPTY_JOB, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
 import { confirmAction } from "../stores/useConfirmStore";
 import { useToastStore } from "../stores/useToastStore";
+import { countOf } from "../utils/plural";
 
 export default function Applications() {
   const fileInputRef = useRef(null);
@@ -135,7 +136,7 @@ export default function Applications() {
   const archiveSelected = async (deleteOpenTodos) => {
     const count = visibleSelectedIds.length;
     const wasAsked = deleteOpenTodos !== undefined;
-    if (!wasAsked && !(await confirmAction({ message: `Archive ${count} application${count === 1 ? "" : "s"}?`, confirmLabel: "Archive" }))) {
+    if (!wasAsked && !(await confirmAction({ message: `Archive ${countOf(count, "application")}?`, confirmLabel: "Archive" }))) {
       return;
     }
     sendBatch(() => batchUpdateJobs(visibleSelectedIds, archiveChanges(deleteOpenTodos)));

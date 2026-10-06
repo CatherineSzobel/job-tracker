@@ -1,5 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { groupByDate } from "../../utils/groupByDate";
+import { countOf } from "../../utils/plural";
 
 const GRID_CLASSES = "grid gap-6 mt-3 mb-2 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3";
 const SECTION_CLASSES = "group/year rounded-xl bg-surface dark:bg-dark-soft p-3 sm:p-4 shadow-sm border border-border dark:border-dark-subtle transition-colors";
@@ -13,7 +14,7 @@ const COUNT_CLASSES = "px-2 py-0.5 rounded-full text-xs font-medium bg-light-sof
 // onSelectAll(items), when given (select mode), adds a "Select all" button to each month header.
 export default function DateGroups({ items, getDateString, order = "newest", itemLabel, renderItem, onSelectAll }) {
   const groups = groupByDate(items, getDateString, order);
-  const countLabel = (count) => `${count} ${itemLabel}${count === 1 ? "" : "s"}`;
+  const countLabel = (count) => countOf(count, itemLabel);
 
   // A button inside <summary> must preventDefault, or clicking it also opens/closes the section
   const selectAllButton = (groupItems) =>

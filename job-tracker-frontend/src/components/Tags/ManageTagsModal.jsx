@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import Modal from "../UI/Modal";
 import TagChip from "./TagChip";
 import { TAG_COLORS, TAG_COLOR_CLASSES, TAG_NAME_MAX } from "../../constants/tags";
+import { countOf } from "../../utils/plural";
 
 // Create, rename, recolour and delete tags; every change saves straight away.
 // onCreate(name) returns the new tag, or null when it failed.
@@ -79,7 +80,7 @@ function ManagedTagRow({ tag, onUpdate, onDelete }) {
 
   const confirmDelete = async () => {
     const question = usageCount > 0
-      ? `Remove "${tag.name}" from ${usageCount} application${usageCount === 1 ? "" : "s"} and delete it?`
+      ? `Remove "${tag.name}" from ${countOf(usageCount, "application")} and delete it?`
       : `Delete "${tag.name}"?`;
     if (await confirmAction({ message: question, confirmLabel: "Delete", danger: true })) onDelete(tag);
   };

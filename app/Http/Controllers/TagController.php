@@ -7,7 +7,6 @@ use App\Http\Requests\Tag\TagStoreRequest;
 use App\Http\Requests\Tag\TagUpdateRequest;
 use App\Http\Resources\TagResource;
 use App\Models\Tag;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -26,7 +25,8 @@ class TagController extends Controller
     {
         $tag = $request->user()->tags()->create([
             'name' => $request->validated('name'),
-            'color' => $request->validated('color') ?? $this->nextColor($request->user()),
+            'color' => $request->validated('color')
+                ?? TagColor::nextAfter($request->user()->tags()->toBase()->pluck('color')->all()),
         ]);
 
         return new TagResource($tag);
@@ -48,21 +48,5 @@ class TagController extends Controller
         $tag->delete();
 
         return response()->noContent();
-    }
-
-    /**
-     * The first palette colour the user doesn't use yet; once all are used, cycle through them by tag count.
-     */
-    private function nextColor(User $user): TagColor
-    {
-        $usedColors = $user->tags()->toBase()->pluck('color')->all();
-
-        foreach (TagColor::cases() as $color) {
-            if (! in_array($color->value, $usedColors, true)) {
-                return $color;
-            }
-        }
-
-        return TagColor::cases()[count($usedColors) % count(TagColor::cases())];
     }
 }

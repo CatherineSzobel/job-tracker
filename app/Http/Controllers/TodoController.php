@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Todo\TodoStoreRequest;
 use App\Http\Requests\Todo\TodoUpdateRequest;
 use App\Http\Resources\TodoResource;
+use App\Models\JobApplication;
 use App\Models\Todo;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -16,7 +17,7 @@ class TodoController extends Controller
     /**
      * Just what the to-do lists show about the linked application.
      */
-    private const APPLICATION = 'jobApplication:id,company_name,position';
+    private const APPLICATION = 'jobApplication:'.JobApplication::SUMMARY_COLUMNS;
 
     /**
      * Open before done, then due date (undated last), then newest. ?job_application_id= limits to one application.

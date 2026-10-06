@@ -16,6 +16,7 @@ import useSelection from "../components/UI/useSelection";
 import { EMPTY_INTERVIEW } from "../constants/jobs";
 import { useToastStore } from "../stores/useToastStore";
 import { toDateTimeInputValue } from "../utils/dateInput";
+import { countOf } from "../utils/plural";
 
 const showToast = (message) => useToastStore.getState().showToast(message);
 
@@ -125,7 +126,7 @@ export default function Interviews() {
 
   const deleteSelected = async () => {
     const count = visibleSelectedIds.length;
-    const question = `Delete ${count} interview${count === 1 ? "" : "s"}? Their prep and debrief are deleted too. Your bank questions stay in the bank.`;
+    const question = `Delete ${countOf(count, "interview")}? Their prep and debrief are deleted too. Your bank questions stay in the bank.`;
     if (!(await confirmAction({ message: question, confirmLabel: "Delete", danger: true }))) return;
 
     setDeleting(true);

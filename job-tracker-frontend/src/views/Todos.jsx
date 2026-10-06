@@ -5,6 +5,7 @@ import TodoItem from "../components/Todo/TodoItem";
 import useTodos from "../components/Todo/useTodos";
 import { EMPTY_TODO_DRAFT } from "../constants/todos";
 import { describeDueDate } from "../utils/dueDate";
+import { filterChipClasses } from "../components/UI/filterChipClasses";
 
 const FILTERS = [
   { value: "all", label: "All" },
@@ -20,9 +21,6 @@ const SECTIONS = [
   { state: "none", title: "No date" },
 ];
 
-const CHIP_CLASSES = "px-3 py-1 rounded-full text-sm transition-colors";
-const ACTIVE_CHIP = "bg-accent text-white";
-const INACTIVE_CHIP = "bg-light dark:bg-dark-soft text-light-muted dark:text-dark-muted border border-border dark:border-dark-subtle hover:text-accent";
 
 export default function Todos() {
   const { todos, loading, addTodo, updateTodo, deleteTodo } = useTodos();
@@ -63,7 +61,7 @@ export default function Todos() {
           <button
             key={value}
             onClick={() => setFilter(value)}
-            className={`${CHIP_CLASSES} ${filter === value ? ACTIVE_CHIP : INACTIVE_CHIP}`}
+            className={filterChipClasses(filter === value)}
           >
             {label}
           </button>

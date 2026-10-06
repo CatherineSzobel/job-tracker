@@ -37,11 +37,11 @@ class User extends Authenticatable
     protected $attributes = [
         'daily_goal' => 5,
         'weekly_goal' => 20,
-        'archive_todos' => 'ask',
+        'archive_todos' => ArchiveTodosAction::Ask->value,
         'reminders_in_app' => false,
         'reminders_email' => false,
         'reminder_days' => 7,
-        'reminder_dismiss_mode' => 'today',
+        'reminder_dismiss_mode' => ReminderDismissMode::Today->value,
     ];
 
     protected $hidden = [

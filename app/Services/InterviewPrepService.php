@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\InterviewType;
+use App\Models\Interview;
 use App\Models\User;
 
 /**
@@ -12,30 +13,13 @@ use App\Models\User;
 class InterviewPrepService
 {
     /**
-     * Items with type null apply to every interview; the others only to that type.
+     * The user's own template, or the built-in default (Interview::DEFAULT_PREP_TEMPLATE).
      *
-     * @return list<array{text: string, type: ?string}>
-     */
-    public function defaultTemplate(): array
-    {
-        return [
-            ['text' => 'Research the company', 'type' => null],
-            ['text' => 'Re-read the job ad', 'type' => null],
-            ['text' => 'Prepare answers to likely questions', 'type' => null],
-            ['text' => 'Prepare questions to ask', 'type' => null],
-            ['text' => 'Have CV and job ad to hand', 'type' => null],
-            ['text' => 'Test camera, mic and the video link', 'type' => InterviewType::Online->value],
-            ['text' => 'Plan route and arrival time', 'type' => InterviewType::Onsite->value],
-            ['text' => 'Find a quiet spot and charge phone', 'type' => InterviewType::Phone->value],
-        ];
-    }
-
-    /**
      * @return list<array{text: string, type: ?string}>
      */
     public function templateFor(User $user): array
     {
-        return $user->prep_template ?? $this->defaultTemplate();
+        return $user->prep_template ?? Interview::DEFAULT_PREP_TEMPLATE;
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Http\Requests\Document;
 
 use App\Enums\DocumentCategory;
 use App\Enums\DocumentKind;
+use App\Models\Document;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -11,8 +12,6 @@ use Illuminate\Validation\Validator;
 // kind=file needs an uploaded file, kind=link a URL; the other field is excluded from validated()
 class DocumentStoreRequest extends FormRequest
 {
-    private const DEMO_DOCUMENT_LIMIT = 10;
-
     public function authorize(): bool
     {
         return true;
@@ -27,8 +26,8 @@ class DocumentStoreRequest extends FormRequest
             'kind' => ['required', Rule::enum(DocumentKind::class)],
             'name' => 'required|string|max:255',
             'category' => ['required', Rule::enum(DocumentCategory::class)],
-            'file' => 'exclude_unless:kind,file|required|file|max:10240|mimes:pdf,doc,docx,odt,txt,png,jpg,jpeg',
-            'url' => 'exclude_unless:kind,link|required|url:http,https|max:255',
+            'file' => 'exclude_unless:kind,'.DocumentKind::File->value.'|required|file|max:10240|mimes:pdf,doc,docx,odt,txt,png,jpg,jpeg',
+            'url' => 'exclude_unless:kind,'.DocumentKind::Link->value.'|required|url:http,https|max:255',
         ];
     }
 
@@ -39,9 +38,8 @@ class DocumentStoreRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
-                // Archived documents count too: they still take up storage
-                if ($this->user()->isDemo() && $this->user()->documents()->count() >= self::DEMO_DOCUMENT_LIMIT) {
-                    $validator->errors()->add('document', 'The demo account can keep up to '.self::DEMO_DOCUMENT_LIMIT.' documents.');
+                if ($this->user()->isDemo() && $this->user()->documents()->count() >= Document::DEMO_LIMIT) {
+                    $validator->errors()->add('document', 'The demo account can keep up to '.Document::DEMO_LIMIT.' documents.');
                 }
             },
         ];

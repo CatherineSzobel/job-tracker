@@ -7,6 +7,7 @@ import filterBankQuestions from "../components/InterviewPrep/filterBankQuestions
 import useBankQuestions from "../components/InterviewPrep/useBankQuestions";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
+import { countOf } from "../utils/plural";
 
 export default function QuestionBank() {
   const { questions, loading, createQuestion, updateQuestion, deleteQuestion } = useBankQuestions();
@@ -24,7 +25,7 @@ export default function QuestionBank() {
   const confirmDelete = async (question) => {
     const usedIn =
       question.interviews_count > 0
-        ? `Used in ${question.interviews_count} interview${question.interviews_count === 1 ? "" : "s"} — it will be removed from them.\n\n`
+        ? `Used in ${countOf(question.interviews_count, "interview")} — it will be removed from them.\n\n`
         : "";
     if (await confirmAction({ message: `${usedIn}Delete "${question.question}"?`, confirmLabel: "Delete", danger: true })) deleteQuestion(question);
   };

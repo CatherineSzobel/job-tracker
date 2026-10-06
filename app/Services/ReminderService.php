@@ -20,7 +20,7 @@ class ReminderService
     {
         return [
             'applications' => $user->jobApplications()->needsReminder($user->reminder_days)->oldest('updated_at')->get(),
-            'todos' => $user->todos()->dueForReminder()->with('jobApplication:id,company_name,position')->orderBy('due_date')->get(),
+            'todos' => $user->todos()->dueForReminder()->with('jobApplication:'.JobApplication::SUMMARY_COLUMNS)->orderBy('due_date')->get(),
         ];
     }
 

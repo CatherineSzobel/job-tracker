@@ -4,6 +4,7 @@ import TagInput from "../Tags/TagInput";
 import SelectionBar from "../UI/SelectionBar";
 import { JOB_STATUSES } from "../../constants/jobs";
 import { tagIdsOf } from "./batchUpdate";
+import { countOf } from "../../utils/plural";
 
 // How the tag field behaves when adding vs removing a tag
 const TAG_MODES = {
@@ -12,8 +13,6 @@ const TAG_MODES = {
 };
 
 const statusLabel = (value) => JOB_STATUSES.find((status) => status.value === value)?.label ?? value;
-
-const applicationCount = (count) => `${count} application${count === 1 ? "" : "s"}`;
 
 // A summary line's text: "Status: Applied", "+ remote", "− fintech"
 const summaryLabel = (line) => {
@@ -138,7 +137,7 @@ export default function BatchBar({ selectedJobs, actions, tags, changes, onSave,
         <div className="order-last w-full flex flex-wrap items-center gap-2 pt-1">
           <span className="text-xs text-light-muted dark:text-dark-muted">Not saved yet:</span>
           {changes.summary.map((line) => (
-            <PendingChange key={line.key} label={`${summaryLabel(line)} · ${applicationCount(line.count)}`} onUndo={() => changes.undoLine(line)} />
+            <PendingChange key={line.key} label={`${summaryLabel(line)} · ${countOf(line.count, "application")}`} onUndo={() => changes.undoLine(line)} />
           ))}
         </div>
       )}
