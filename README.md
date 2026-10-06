@@ -2,8 +2,6 @@
 
 A full-stack app for running a job search: every application, interview, follow-up and document in one place, with prep pages for interviews and a daily reminder email.
 
-Built by **Catherine Szobel** with Laravel 12 and React 19, as a portfolio project and to run my own job search.
-
 ![The Job Tracker dashboard](job-tracker-frontend/src/assets/landing/dashboard.png)
 
 ---
