@@ -1,104 +1,105 @@
 # Job Tracker
 
-Job Tracker is a modern full-stack web application designed to help job seekers efficiently manage their job applications, interviews, notes, and resources throughout their job search journey.
+A full-stack app for running a job search: every application, interview, follow-up and document in one place, with prep pages for interviews and a daily reminder email.
 
-## 🚀 Project Status
+Built by **Catherine Szobel** with Laravel 12 and React 19, as a portfolio project and to run my own job search.
 
-**⚠️ Work In Progress** - Core features are functional, but additional features and refinements are planned. See [Planned Features](#planned-features) for upcoming additions.
-
----
-
-## 📋 Overview
-
-Job Tracker helps you:
-
-* Track all job applications in one central location
-* Schedule and manage interview appointments
-* Keep detailed notes on companies and interviews
-* Maintain a to-do list for job search tasks
-* Organize important links and resources for each application
+![The Job Tracker dashboard](job-tracker-frontend/src/assets/landing/dashboard.png)
 
 ---
 
-## 🛠️ Technology Stack
+## ✨ Features
 
-### Backend
+**Applications**
+- Track company, position, status, priority, location, link, notes and applied date.
+- Grid view or grouped by date, with status, priority and tag filters.
+- Coloured tags, managed from one dialog.
+- Select mode for batch edits: give different applications different status and tag changes, preview them on the cards, and save them all at once. Batch archive and restore.
+- Archive with a choice of what happens to the open to-dos. Excel import and export.
 
-* **Framework:** Laravel 12 (PHP 8.2+)
-* **Authentication:** Laravel Sanctum (API token-based)
-* **Database:** MySQL/PostgreSQL with Eloquent ORM
-* **Testing:** PHPUnit
-* **Code Quality:** Laravel Pint
+**Interviews and prep**
+- Upcoming, past and all interviews, with search, a grouped view and batch delete.
+- A prep page for each interview: a checklist built from your own template (with items per interview type), the people you'll meet, questions to ask, and a debrief with a rating. It saves as you type.
+- **Question bank:** prepared answers by category, linked into any interview with a per-interview note.
 
-### Frontend
+**Staying on top of it**
+- **Dashboard:** a *Today* tab (coming up, reminders, quick to-dos, notes) and an *Insights* tab (goals, charts).
+- **To-dos** with due dates, optionally linked to an application, plus quick follow-up shortcuts.
+- **Reminders** for applications with no update for a set number of days and for due to-dos: in the app and/or as a daily 08:00 email.
+- **Calendar** of interviews and to-dos.
+- **Documents:** CVs, cover letters and portfolio or LinkedIn links, attached to the applications you sent them with.
 
-* **Framework:** React 19 with JSX
-* **Routing:** React Router v7
-* **Styling:** Tailwind CSS v4
-* **Build Tool:** Vite v7
-* **HTTP Client:** Axios
-* **Charting:** Recharts
-* **Date Handling:** date-fns v4
-
----
-
-## ✨ Current Features
-
-### Core Functionality
-
-* **Job Applications:** Track positions with status, priority, dates, and location info
-* **Interviews:** Schedule and manage interview appointments
-* **Notes:** Attach comprehensive notes to applications
-* **To-Do List:** Personal task management
-* **Links:** Store and organize useful resources
-
-### User Experience
-
-* **Dashboard:** Overview of job search progress
-* **Authentication:** User registration, login, and profile management
-* **Archive:** Keep old applications organized
-* **Calendar View:** Visual representation of scheduled interviews
-* **Responsive Design:** Works across desktop and mobile devices
+**Account and app**
+- Landing page for visitors, with a one-click demo login.
+- Settings: goals, reminders, the archive to-dos rule, the prep checklist template, email, password, and account deletion.
+- Light and dark mode, and it works at phone width.
 
 ---
 
-## 📦 Project Structure
+## 🛠️ Tech stack
+
+| | |
+|---|---|
+| **Backend** | Laravel 12 · PHP 8.4 · MySQL · Laravel Sanctum (SPA cookie sessions) · Maatwebsite Excel |
+| **Frontend** | React 19 · React Router 7 · Vite · Tailwind CSS v4 · zustand · Axios · date-fns · ECharts · lucide-react |
+| **Quality** | PHPUnit (260+ feature tests) · Laravel Pint · ESLint |
+
+### How it's put together
+
+- **API:** a JSON API under `/api`. Controllers stay thin: validation lives in Form Requests, multi-step logic in `app/Services`, and responses go through API Resources.
+- **Ownership:** every record belongs to a user. Single-record routes use policies (`app/Policies`) that answer 404 for someone else's data, and lists are always queried through the logged-in user.
+- **Enums:** statuses, priorities, interview types, document kinds and the other fixed value sets are PHP enums (`app/Enums`), used in casts, validation and queries.
+- **All-or-nothing batch endpoints:** batch changes, archive or restore, and interview delete run in a transaction, and any id that isn't yours means a 404 with nothing changed.
+- **Frontend structure:** pages are in `src/views`, shared pieces in `src/components/UI`, fixed values in `src/constants`, and app-wide state (auth, theme, toasts, confirm dialogs) in zustand stores.
+
+---
+
+## 📦 Project structure
 
 ```
 job-tracker/
-├── app/                 # Laravel backend
-│   ├── Http/Controllers/  # API controllers
-│   └── Models/           # Database models
-├── database/
-│   ├── migrations/       # Database schema
-│   └── factories/        # Test data factories
-├── routes/               # API routes
-├── job-tracker-frontend/ # React frontend
-│   ├── src/
-│   │   ├── components/  # React components
-│   │   ├── views/       # Page components
-│   │   └── api/         # API integration
-│   └── vite.config.js   # Vite configuration
-└── config/              # Application configuration
+├── app/
+│   ├── Enums/                 # Fixed value sets (JobStatus, InterviewType, …)
+│   ├── Http/Controllers/      # API controllers
+│   ├── Http/Requests/         # Validation, per feature
+│   ├── Http/Resources/        # JSON shapes
+│   ├── Models/
+│   ├── Notifications/         # Daily reminders email
+│   ├── Policies/              # Ownership checks
+│   └── Services/              # Job applications, interview prep, reminders, documents
+├── database/                  # Migrations, factories, seeders (incl. the demo account)
+├── routes/api.php             # The API
+├── routes/console.php         # Scheduled reminders:send (08:00 daily)
+├── tests/Feature/             # PHPUnit feature tests
+└── job-tracker-frontend/      # React app
+    └── src/
+        ├── api/               # Axios instance
+        ├── components/        # Feature components + shared UI
+        ├── constants/
+        ├── stores/            # zustand
+        ├── utils/
+        └── views/             # Pages
 ```
 
 ---
 
-## ⚙️ Setup & Running
+## ⚙️ Running it locally
 
-1. **Backend**
+**Requirements:** PHP 8.2+, Composer, MySQL, Node 20+. Developed with [Laravel Herd](https://herd.laravel.com), which serves the API at `http://job-tracker.test`.
+
+**1. Backend**
 
 ```bash
-cd job-tracker
 composer install
 cp .env.example .env
 php artisan key:generate
-php artisan migrate
-php artisan db:seed # optional
-php artisan serve
+# set DB_* in .env, then:
+php artisan migrate --seed      # the seed creates the demo account and sample data
 ```
 
-2. **Frontend**
+With Herd, the API is now at `http://job-tracker.test`. Without Herd, run `php artisan serve` and point the proxy `target` in `job-tracker-frontend/vite.config.js` at `http://127.0.0.1:8000`.
+
+**2. Frontend**
 
 ```bash
 cd job-tracker-frontend
@@ -106,87 +107,37 @@ npm install
 npm run dev
 ```
 
-Visit `http://localhost:3000` to use the app.
+Open **http://localhost:5173**. Vite proxies `/api` and `/sanctum` to the backend, so the session cookie works on one origin.
+
+**Demo account:** `test@example.com` / `secret123`, or use **Try the demo** on the landing page. Its email, password and account can't be changed, and its uploads are capped.
+
+**Reminder emails:** run `php artisan schedule:work` locally. With `MAIL_MAILER=log` (the default) the emails go to `storage/logs/laravel.log`. `FRONTEND_URL` sets where the links in the email point, and `APP_TIMEZONE` sets what "today" and 08:00 mean.
+
+**Tests**
+
+```bash
+php artisan test                         # backend
+cd job-tracker-frontend && npm run lint  # frontend
+```
 
 ---
 
-## 📋 Database Models
+## 📝 API overview
 
-* **User:** Application users with authentication
-* **JobApplication:** Job positions tracked with company, status, and dates
-* **Interview:** Interview scheduling and management
-* **Note:** Detailed notes attached to applications
-* **Todo:** Task list items
-* **Link:** Resource URLs and important links
+All routes are under `/api` and need a logged-in session, except `register` and `login`. The SPA first calls `GET /sanctum/csrf-cookie`.
 
----
-
-## 🎯 Planned Features
-
-1. **Reminder System ⏰**
-
-   * Automatic reminders for pending applications
-   * Configurable thresholds
-   * notification alerts
-
-2. **Settings Page ⚙️**
-
-   * User preferences and profile customization
-   * Notification and privacy settings
-   * Theme options (light/dark)
-   * Data export/import
-
-3. **Enhanced Links Management 🔗**
-
-   * Store and organize documents like resumes, cover letters, LinkedIn, GitHub, portfolio, certifications
-   * Quick access from job application detail view
-
-**Future Enhancements:**
-
-* Interview preparation resources
-* Batch operations, custom tags, real-time notifications
-* Proper To-Do implementation, currently it is in but nothing is being done with it yet
-* Add proper testing
-* More to be added...
+| Area | Endpoints |
+|---|---|
+| Auth & account | `POST register`, `POST login`, `POST logout`, `GET user`, `PUT account/email`, `PUT account/password`, `PUT account/goals`, `DELETE account` |
+| Applications | `apiResource job-applications`, `GET job-applications/stats`, `GET …/export`, `POST …/import`, `PATCH …/batch` (archive/restore), `PATCH …/batch-changes` (per-application status/tags), `PUT …/{id}/tags`, `PUT …/{id}/documents`, `POST …/{id}/interviews`, `POST …/{id}/dismiss-reminder` |
+| Interviews | `GET interviews`, `GET/PUT/DELETE interviews/{id}`, `PUT …/{id}/prep`, `PUT …/{id}/bank-questions`, `DELETE interviews/batch` |
+| Prep & bank | `GET/PUT/DELETE interview-prep-template`, `apiResource bank-questions` |
+| Everything else | `apiResource todos`, `notes`, `tags`, `documents` (+ `GET …/{id}/download`, `POST …/{id}/restore`), `GET reminders`, `GET/PUT settings`, `GET/PUT profile` |
 
 ---
 
-## 📝 API Documentation
+## 🗺️ What's next
 
-RESTful API endpoints using Laravel Sanctum for authentication.
-
-**Key Endpoints:**
-
-* `POST /api/auth/register` - Register new user
-* `POST /api/auth/login` - User login
-* `GET /api/job-applications` - List all job applications
-* `POST /api/job-applications` - Create new application
-* `GET /api/interviews` - List interviews
-* `GET /api/notes` - List notes
-* `GET /api/todos` - List to-do items
-* `GET /api/links` - List resource links
-
----
-
-## 🤝 Contributing
-
-Contributions and suggestions are welcome! You can:
-
-* Report bugs
-* Suggest features
-* Submit pull requests
-
----
-
-## 📄 License
-
-MIT License. See LICENSE file for details.
-
----
-
-## 👤 Author
-
-Created as a personal project to streamline job search management.
-
-**Last Updated:** January 2026
-**Current Version:** 0.1.0 (
+- Server data through TanStack Query, plus pagination for long lists
+- A general API rate limit (60 requests a minute per user)
+- Deployment: one origin for the app and the API, file storage for uploads, a mail provider, and a nightly reset of the demo data
