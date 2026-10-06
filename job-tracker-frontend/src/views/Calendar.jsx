@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import API from "../api/axios";
 import {
   format,
@@ -11,14 +12,18 @@ import {
   addMonths,
   subMonths
 } from "date-fns";
+import { SquareCheck } from "lucide-react";
 import PageLoader from "../components/UI/PageLoader";
 import Modal from "../components/UI/Modal";
+import TodoItem from "../components/Todo/TodoItem";
+import useTodos from "../components/Todo/useTodos";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function Calendar() {
   const [interviews, setInterviews] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingInterviews, setLoadingInterviews] = useState(true);
+  const { todos, loading: loadingTodos, updateTodo, deleteTodo } = useTodos();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -28,7 +33,7 @@ export default function Calendar() {
     API.get("/interviews")
       .then(res => setInterviews(res.data.data))
       .catch(err => console.error(err))
-      .finally(() => setLoading(false));
+      .finally(() => setLoadingInterviews(false));
   }, []);
 
   const days = eachDayOfInterval({
@@ -41,6 +46,10 @@ export default function Calendar() {
   const getInterviewsForDay = (day) =>
     interviews.filter(i => isSameDay(parseISO(i.interview_date), day));
 
+  // Only dated to-dos appear; done ones stay visible (ticked) on their day
+  const getTodosForDay = (day) =>
+    todos.filter(todo => todo.due_date && isSameDay(parseISO(todo.due_date), day));
+
   const handleDayClick = (day) => {
     setSelectedDay(day);
     setShowModal(true);
@@ -49,14 +58,14 @@ export default function Calendar() {
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
 
-  if (loading) {
+  if (loadingInterviews || loadingTodos) {
     return <PageLoader text="Loading Calendar..."/>
   }
 
   return (
     <div className="max-w-6xl mx-auto mt-4 sm:mt-10 p-3 sm:p-4 rounded-2xl shadow-lg bg-light dark:bg-dark transition-colors">
       <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 bg-accent text-surface rounded-lg p-2">
-        Interview Calendar
+        Calendar
       </h1>
 
       {/* Navigation */}
@@ -98,6 +107,7 @@ export default function Calendar() {
 
         {days.map(day => {
           const dayInterviews = getInterviewsForDay(day);
+          const dayTodos = getTodosForDay(day);
           const isToday = isSameDay(day, new Date());
 
           return (
@@ -112,17 +122,30 @@ export default function Calendar() {
                 {format(day, "d")}
               </div>
 
-              {dayInterviews.length > 0 && (
-                <div className={`text-xs sm:text-sm font-medium ${isToday ? "text-secondary" : "text-primary-text"}`}>
-                  {/* Phones: just the count; wider screens: "2 interviews" */}
-                  <span className="sm:hidden inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-accent text-surface">
-                    {dayInterviews.length}
-                  </span>
-                  <span className="hidden sm:inline">
-                    {dayInterviews.length} interview{dayInterviews.length > 1 ? "s" : ""}
-                  </span>
-                </div>
-              )}
+              {/* Phones: side by side (the 48px-tall cell can't stack both); stacked from sm up */}
+              <div className="flex flex-row items-center gap-1 sm:flex-col sm:items-start sm:gap-0.5">
+                {dayInterviews.length > 0 && (
+                  <div className={`text-xs sm:text-sm font-medium ${isToday ? "text-secondary" : "text-primary-text"}`}>
+                    {/* Phones: just the count; wider screens: "2 interviews" */}
+                    <span className="sm:hidden inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-accent text-surface">
+                      {dayInterviews.length}
+                    </span>
+                    <span className="hidden sm:inline">
+                      {dayInterviews.length} interview{dayInterviews.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                )}
+
+                {dayTodos.length > 0 && (
+                  <div className={`flex items-center gap-1 text-xs sm:text-sm font-medium ${isToday ? "text-surface" : "text-emerald-700 dark:text-emerald-400"}`}>
+                    <SquareCheck size={14} aria-hidden="true" />
+                    <span className="sm:hidden">{dayTodos.length}</span>
+                    <span className="hidden sm:inline">
+                      {dayTodos.length} to-do{dayTodos.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
@@ -131,12 +154,13 @@ export default function Calendar() {
       {/* Modal */}
       {showModal && selectedDay && (
         <Modal
-          title={`Interviews on ${format(selectedDay, "MMMM d, yyyy")}`}
+          title={format(selectedDay, "MMMM d, yyyy")}
           onClose={() => setShowModal(false)}
           maxWidth="max-w-md"
         >
+            <h3 className="text-sm font-semibold uppercase tracking-wide mb-2 text-light-muted dark:text-dark-muted">Interviews</h3>
             {getInterviewsForDay(selectedDay).length === 0 ? (
-              <p className="text-secondary-text dark:text-dark-muted">No interviews scheduled.</p>
+              <p className="text-light-muted dark:text-dark-muted">No interviews scheduled.</p>
             ) : (
               <div className="flex flex-col gap-3">
                 {getInterviewsForDay(selectedDay).map(i => (
@@ -148,9 +172,28 @@ export default function Calendar() {
                     <p className="text-sm text-dark-soft dark:text-dark-muted">{i.job?.company_name}</p>
                     <p className="text-sm text-dark dark:text-light">Type: {i.type}</p>
                     <p className="text-sm text-dark dark:text-light">Location: {i.location}</p>
+                    <Link to={`/interviews/${i.id}`} className="inline-block mt-1 text-sm text-accent dark:text-accent-muted hover:underline">
+                      Open prep →
+                    </Link>
                   </div>
                 ))}
               </div>
+            )}
+
+            <h3 className="text-sm font-semibold uppercase tracking-wide mt-6 mb-2 text-light-muted dark:text-dark-muted">To-dos</h3>
+            {getTodosForDay(selectedDay).length === 0 ? (
+              <p className="text-light-muted dark:text-dark-muted">No to-dos due.</p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {getTodosForDay(selectedDay).map(todo => (
+                  <TodoItem
+                    key={todo.id}
+                    todo={todo}
+                    onUpdate={updateTodo}
+                    onDelete={deleteTodo}
+                  />
+                ))}
+              </ul>
             )}
 
             <div className="flex justify-end mt-6">

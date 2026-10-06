@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Todo;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TodoUpdateRequest extends FormRequest
 {
@@ -22,7 +23,15 @@ class TodoUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'text' => 'sometimes|required|string|max:255',
             'done' => 'sometimes|boolean',
+            'due_date' => 'sometimes|nullable|date_format:Y-m-d',
+            'job_application_id' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                Rule::exists('job_applications', 'id')->where('user_id', $this->user()->id),
+            ],
         ];
     }
 }

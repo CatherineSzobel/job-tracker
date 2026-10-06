@@ -2,6 +2,19 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import API from '../api/axios'
 
+// The seeded demo account offered on the landing and login pages (see database/seeders/DatabaseSeeder.php)
+export const DEMO_EMAIL = 'test@example.com'
+const DEMO_PASSWORD = 'secret123'
+
+// After logging in or registering: load the user, and fail if that didn't work (fetchUser swallows its
+// error because it also checks remembered sessions), e.g. a session cookie the browser didn't keep
+const loadUserAfterAuth = async (get) => {
+    await get().fetchUser()
+    if (!get().user) {
+        throw new Error('Could not load your account after logging in')
+    }
+}
+
 export const useAuthStore = create(
     persist(
         (set, get) => ({
@@ -23,7 +36,7 @@ export const useAuthStore = create(
                     await API.post('/login', { email, password })
 
                     // fetch the full user after login
-                    await get().fetchUser()
+                    await loadUserAfterAuth(get)
                 } catch (err) {
                     set({
                         error: err.response?.data?.message || 'Login failed',
@@ -32,6 +45,9 @@ export const useAuthStore = create(
                     throw err
                 }
             },
+
+            // Logs in with the shared demo account; throws like loginAction when it fails
+            demoLoginAction: () => get().loginAction(DEMO_EMAIL, DEMO_PASSWORD),
 
             // Safely registers a new user and logs them in immediately
             registerAction: async (name, email, password, passwordConfirmation) => {
@@ -45,7 +61,7 @@ export const useAuthStore = create(
                         password_confirmation: passwordConfirmation,
                     })
 
-                    await get().fetchUser()
+                    await loadUserAfterAuth(get)
                 } catch (err) {
                     set({
                         error: err.response?.data?.message || 'Registration failed',

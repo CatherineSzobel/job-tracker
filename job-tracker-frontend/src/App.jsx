@@ -1,10 +1,12 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthStore } from "./stores/useAuthStore";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layouts/Layout";
 import AuthLayout from "./components/Layouts/AuthLayout";
+import ConfirmDialog from "./components/UI/ConfirmDialog";
+import Toaster from "./components/UI/Toaster";
 
 // Views
 import Register from "./views/Register";
@@ -12,12 +14,16 @@ import Login from "./views/Login";
 import Dashboard from "./views/Dashboard";
 import Applications from "./views/Applications";
 import Interviews from "./views/Interviews";
+import Interview from "./views/Interview";
+import QuestionBank from "./views/QuestionBank";
 import Calendar from "./views/Calendar";
 import Profile from "./views/Profile";
-import Links from "./views/Links";
+import Documents from "./views/Documents";
 import Settings from "./views/Settings";
 import Application from "./views/Application";
 import Archive from "./views/Archive";
+import Todos from "./views/Todos";
+import Landing from "./views/Landing";
 
 function App() {
 
@@ -27,6 +33,7 @@ function App() {
     checkSession()
   }, [checkSession])
   return (
+    <>
     <Routes>
 
       <Route element={<AuthLayout />}>
@@ -37,7 +44,7 @@ function App() {
       <Route
         path="/*"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute guestHome={<Landing />}>
             <Layout />
           </ProtectedRoute>
         }
@@ -46,16 +53,25 @@ function App() {
         <Route index element={<Dashboard />} />
         <Route path="applications" element={<Applications />} />
         <Route path="interviews" element={<Interviews />} />
+        <Route path="interviews/:id" element={<Interview />} />
+        <Route path="question-bank" element={<QuestionBank />} />
         <Route path="jobs/:id" element={<Application />} />
         <Route path="calendar" element={<Calendar />} />
+        <Route path="todos" element={<Todos />} />
         <Route path="profile" element={<Profile />} />
-        <Route path="links" element={<Links />} />
+        <Route path="documents" element={<Documents />} />
+        <Route path="links" element={<Navigate to="/documents" replace />} />
         <Route path="settings" element={<Settings />} />
         <Route path="archives" element={<Archive />} />
       </Route>
 
       <Route path="*" element={<p className="text-center mt-10">Page not found</p>} />
     </Routes>
+
+    {/* Toasts and confirm dialogs work on every page: the app, login/register and the landing page */}
+    <Toaster />
+    <ConfirmDialog />
+    </>
   );
 }
 

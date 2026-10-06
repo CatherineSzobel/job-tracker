@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { StickyNote } from "lucide-react";
 import API from "../api/axios";
+import { showToast } from "../stores/useToastStore";
 import PageLoader from "./UI/PageLoader";
 
 export default function Notes() {
@@ -63,7 +65,7 @@ export default function Notes() {
             setShowAddForm(false); // collapse after adding
         } catch (err) {
             console.error("Failed to add note:", err.response?.data || err.message);
-            alert("Failed to add note");
+            showToast("Failed to add note");
         }
     };
 
@@ -73,8 +75,17 @@ export default function Notes() {
             setNotes((prev) => prev.filter((n) => n.id !== id));
         } catch (err) {
             console.error(err);
-            alert("Failed to delete note");
+            showToast("Failed to delete note");
         }
+    };
+
+    const startEditing = (note) => {
+        setEditingId(note.id);
+        setEditingNote({
+            title: note.title,
+            content: note.content,
+            is_pinned: note.is_pinned,
+        });
     };
 
     const saveEdit = async (id) => {
@@ -88,7 +99,7 @@ export default function Notes() {
             setEditingId(null);
         } catch (err) {
             console.error(err);
-            alert("Failed to update note");
+            showToast("Failed to update note");
         }
     };
 
@@ -104,7 +115,7 @@ export default function Notes() {
             );
         } catch (err) {
             console.error(err);
-            alert("Failed to update pinned state");
+            showToast("Failed to update pinned state");
         }
     };
 
@@ -116,15 +127,16 @@ export default function Notes() {
         <div className="flex flex-col gap-4">
             {/* Header */}
             <div className="flex justify-between items-center">
-                <h2 className="text-sm font-semibold text-light-text dark:text-dark-muted">
+                <h2 className="card-title">
+                    <StickyNote size={18} aria-hidden="true" />
                     Notes
                 </h2>
 
                 <button
                     onClick={() => setShowAddForm((prev) => !prev)}
-                    className="text-xs px-3 py-1.5 bg-accent text-white rounded-md hover:opacity-90 transition"
+                    className="btn-small"
                 >
-                    {showAddForm ? "Cancel" : "Add Note"}
+                    {showAddForm ? "Cancel" : "Add note"}
                 </button>
             </div>
 
@@ -210,37 +222,21 @@ export default function Notes() {
 
                                 <div className="flex gap-1 shrink-0">
                                     <button
-                                        className="text-xs px-2 py-1 rounded-md bg-light-soft hover:bg-border dark:bg-dark-subtle dark:hover:bg-dark-subtle/80 transition"
+                                        className="btn-small"
                                         onClick={() => togglePinned(note)}
                                     >
                                         {note.is_pinned ? "Unpin" : "Pin"}
                                     </button>
 
-                                    {editingId === note.id ? (
-                                        <button
-                                            className="text-xs px-2 py-1 rounded-md bg-green-500 text-white hover:bg-green-600 transition"
-                                            onClick={() => saveEdit(note.id)}
-                                        >
-                                            Save
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className="text-xs px-2 py-1 rounded-md bg-accent text-white hover:bg-accent-soft transition"
-                                            onClick={() => {
-                                                setEditingId(note.id);
-                                                setEditingNote({
-                                                    title: note.title,
-                                                    content: note.content,
-                                                    is_pinned: note.is_pinned,
-                                                });
-                                            }}
-                                        >
-                                            Edit
-                                        </button>
-                                    )}
+                                    <button
+                                        className="btn-small"
+                                        onClick={() => (editingId === note.id ? saveEdit(note.id) : startEditing(note))}
+                                    >
+                                        {editingId === note.id ? "Save" : "Edit"}
+                                    </button>
 
                                     <button
-                                        className="text-xs px-2 py-1 rounded-md bg-red-500 text-white hover:bg-red-600 transition"
+                                        className="btn-small-danger"
                                         onClick={() => deleteNote(note.id)}
                                     >
                                         Delete

@@ -29,6 +29,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | Where the React SPA is served (also the allowed CORS origin).
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
@@ -65,6 +76,11 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
+
+    /*
+    | Where the React app lives, for links in emails (e.g. http://localhost:5173 locally).
+    */
+    'frontend_url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost')),
 
     /*
     |--------------------------------------------------------------------------

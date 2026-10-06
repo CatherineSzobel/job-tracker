@@ -45,20 +45,16 @@ class UrlValidationTest extends TestCase
     }
 
     #[DataProvider('unsafeUrls')]
-    public function test_profile_link_rejects_non_http_urls(string $url): void
+    public function test_document_link_rejects_non_http_urls(string $url): void
     {
-        $user = User::factory()->create();
-        $user->profile()->create(['name' => $user->name]);
-
-        $this->actingAs($user)
-            ->postJson('/api/profile/links', ['type' => 'GitHub', 'url' => $url])
+        $this->actingAs(User::factory()->create())
+            ->postJson('/api/documents', ['kind' => 'link', 'name' => 'GitHub', 'category' => 'github', 'url' => $url])
             ->assertJsonValidationErrors('url');
     }
 
     public function test_https_links_are_accepted(): void
     {
         $user = User::factory()->create();
-        $user->profile()->create(['name' => $user->name]);
 
         $this->actingAs($user)
             ->postJson('/api/job-applications', [
@@ -69,7 +65,7 @@ class UrlValidationTest extends TestCase
             ->assertCreated();
 
         $this->actingAs($user)
-            ->postJson('/api/profile/links', ['type' => 'GitHub', 'url' => 'https://github.com/me'])
+            ->postJson('/api/documents', ['kind' => 'link', 'name' => 'GitHub', 'category' => 'github', 'url' => 'https://github.com/me'])
             ->assertCreated();
     }
 }

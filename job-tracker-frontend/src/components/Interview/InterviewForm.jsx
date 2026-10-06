@@ -89,11 +89,11 @@ export default function InterviewForm({
             {/* Notes */}
             <div>
                 <label className="input-label">
-                    Notes
+                    Prep notes
                 </label>
                 <textarea
                     name="notes"
-                    placeholder="Notes about this interview..."
+                    placeholder="What to prepare, what to remember..."
                     value={newInterview.notes}
                     onChange={handleChange}
                     rows={4}

@@ -1,120 +1,71 @@
-import { useEffect, useState } from "react";
-import API from "../api/axios";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { CalendarPlus } from "lucide-react";
 import TodoInput from "./Todo/TodoInput";
 import TodoItem from "./Todo/TodoItem";
 import TodoEmptyState from "./Todo/TodoEmptyState";
+import Modal from "./UI/Modal";
 import PageLoader from "./UI/PageLoader";
+import { DASHBOARD_TODO_LIMIT, EMPTY_TODO_DRAFT } from "../constants/todos";
 
-// utils
-function formatTodoDate(dateString) {
-    const date = new Date(dateString);
-    const today = new Date();
+// Dashboard widget: the next open to-dos. "Add to-do" opens the full form (text, date, application) in a dialog.
+// Takes useTodos()'s result as props: the Dashboard shares the same list with Coming up.
+export default function TodoList({ todos, loading, addTodo, updateTodo, deleteTodo }) {
+  const [draft, setDraft] = useState(EMPTY_TODO_DRAFT);
+  const [showDetails, setShowDetails] = useState(false);
+  const openTodos = todos.filter((todo) => !todo.done).slice(0, DASHBOARD_TODO_LIMIT);
 
-    date.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
+  // Close the dialog only when the save worked, so a failed add keeps what was entered
+  const addFromDetails = async (payload) => {
+    const saved = await addTodo(payload);
+    if (saved) setShowDetails(false);
+    return saved;
+  };
 
-    const diffDays = Math.round(
-        (today - date) / (1000 * 60 * 60 * 24)
-    );
+  if (loading) {
+    return <PageLoader text="Loading to-dos..." compact />;
+  }
 
-    if (diffDays === 0) return "today";
-    if (diffDays === 1) return "yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
+  return (
+    <div className="flex flex-col gap-4">
+      <button
+        type="button"
+        onClick={() => setShowDetails(true)}
+        className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-soft text-surface px-4 py-2 rounded-lg transition-colors"
+      >
+        <CalendarPlus size={18} aria-hidden="true" />
+        Add to-do
+      </button>
 
-    return date.toLocaleDateString("en-CA"); // YYYY-MM-DD
-}
-
-export default function TodoList() {
-    const [todos, setTodos] = useState([]);
-    const [newTodo, setNewTodo] = useState("");
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        API.get("/todos")
-            .then(res => setTodos(res.data.data))
-            .catch(err => console.error(err))
-            .finally(() => setLoading(false));
-    }, []);
-
-    const addTodo = async () => {
-        if (!newTodo.trim()) return;
-
-        try {
-            const res = await API.post("/todos", {
-                text: newTodo,
-            });
-
-            setTodos(prev => [res.data.data, ...prev]);
-            setNewTodo("");
-        } catch (err) {
-            console.error("Failed to add todo:", err.response?.data || err.message);
-            alert("Failed to add todo");
-        }
-
-    };
-
-    const toggleTodo = async todo => {
-        const previousTodos = [...todos];
-
-        setTodos(prev =>
-            prev.map(t =>
-                t.id === todo.id ? { ...t, done: !t.done } : t
-            )
-        );
-
-        try {
-            await API.put(`/todos/${todo.id}`, {
-                done: !todo.done,
-            });
-        } catch (err) {
-            console.error(err);
-            setTodos(previousTodos);
-            alert("Failed to update todo");
-        }
-    };
-
-    const deleteTodo = async id => {
-        try {
-            await API.delete(`/todos/${id}`);
-            setTodos(prev => prev.filter(t => t.id !== id));
-        } catch (err) {
-            console.error(err);
-            alert("Failed to delete todo");
-        }
-    };
-
-    const sortedTodos = [...todos].sort((a, b) => {
-        if (a.done === b.done) return 0;
-        return a.done ? 1 : -1; 
-    });
-
-    if (loading) {
-        return <PageLoader text="Loading todos..." compact />
-    }
-
-    return (
-        <div className="flex flex-col gap-4">
-            <TodoInput
-                value={newTodo}
-                onChange={setNewTodo}
-                onAdd={addTodo}
+      {openTodos.length === 0 ? (
+        todos.length > 0 ? (
+          // Only done to-dos left: "No todos yet" would be wrong
+          <p className="text-sm text-light-muted dark:text-dark-muted text-center py-6">✅ All done. Nice work.</p>
+        ) : (
+          <TodoEmptyState />
+        )
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {openTodos.map((todo) => (
+            <TodoItem
+              key={todo.id}
+              todo={todo}
+              onUpdate={updateTodo}
+              onDelete={deleteTodo}
             />
+          ))}
+        </ul>
+      )}
 
-            {todos.length === 0 ? (
-                <TodoEmptyState />
-            ) : (
-                <ul className="flex flex-col gap-2 max-h-52 overflow-y-auto">
-                    {sortedTodos.map(todo => (
-                        <TodoItem
-                            key={todo.id}
-                            todo={todo}
-                            onToggle={toggleTodo}
-                            onDelete={deleteTodo}
-                            formatDate={formatTodoDate}
-                        />
-                    ))}
-                </ul>
-            )}
-        </div >
-    );
+      <Link to="/todos" className="self-end text-sm text-accent hover:text-accent-soft transition-colors">
+        View all →
+      </Link>
+
+      {showDetails && (
+        <Modal title="New to-do" onClose={() => setShowDetails(false)} maxWidth="max-w-lg">
+          <TodoInput draft={draft} onDraftChange={setDraft} onAdd={addFromDetails} />
+        </Modal>
+      )}
+    </div>
+  );
 }

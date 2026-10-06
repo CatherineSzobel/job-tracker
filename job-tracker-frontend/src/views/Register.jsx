@@ -39,6 +39,9 @@ export default function Register() {
                  text-light-text dark:text-white
                  transition-colors"
     >
+      <Link to="/" className="inline-block mb-4 text-sm text-accent dark:text-accent-muted hover:underline">
+        ← Back to the home page
+      </Link>
       <h2 className="text-2xl font-bold text-center mb-2">
         Create your account 🚀
       </h2>

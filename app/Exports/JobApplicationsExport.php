@@ -15,6 +15,7 @@ class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadi
         return Auth::user()
             ->jobApplications()
             ->select([
+                'id', // needed to load the tags
                 'company_name',
                 'position',
                 'status',
@@ -24,6 +25,7 @@ class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadi
                 'notes',
                 'job_link',
             ])
+            ->with('tags')
             ->orderBy('applied_date', 'desc')
             ->get();
     }
@@ -39,6 +41,7 @@ class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadi
             'location',
             'notes',
             'job_link',
+            'tags',
         ];
     }
 
@@ -53,6 +56,7 @@ class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadi
             $job->location,
             $this->cleanText($job->notes),
             $job->job_link,
+            $job->tags->pluck('name')->implode(', ') ?: null,
         ];
     }
 

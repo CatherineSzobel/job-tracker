@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import API from "../api/axios";
+import PrepTemplateEditor from "../components/InterviewPrep/PrepTemplateEditor";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useThemeStore } from "../stores/useThemeStore";
+import { useSettingsStore } from "../stores/useSettingsStore";
 import { DEFAULT_GOALS } from "../constants/jobs";
+import { ARCHIVE_TODOS_OPTIONS } from "../constants/todos";
+import { REMINDER_DAYS_MAX, REMINDER_DAYS_MIN, REMINDER_DISMISS_OPTIONS } from "../constants/reminders";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -19,6 +23,11 @@ export default function Settings() {
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
 
+  const [emailForm, setEmailForm] = useState({ email: "", current_password: "" });
+  const [emailError, setEmailError] = useState("");
+  const [emailSuccess, setEmailSuccess] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
+
   // Goals
   const user = useAuthStore((state) => state.user);
   const [goalsForm, setGoalsForm] = useState({
@@ -29,6 +38,44 @@ export default function Settings() {
   const [goalsSuccess, setGoalsSuccess] = useState("");
   const [savingGoals, setSavingGoals] = useState(false);
 
+  // To-dos and Reminders: each control saves as soon as it changes
+  const settings = useSettingsStore((state) => state.settings);
+  const loadSettings = useSettingsStore((state) => state.loadSettings);
+  const updateSettings = useSettingsStore((state) => state.updateSettings);
+  const [archiveTodosError, setArchiveTodosError] = useState("");
+  const [reminderError, setReminderError] = useState("");
+  // While the number field is being edited; saved on blur
+  const [reminderDaysDraft, setReminderDaysDraft] = useState(null);
+
+  useEffect(() => {
+    loadSettings().catch((err) => {
+      console.error(err);
+      // Otherwise the options stay disabled with no explanation
+      setArchiveTodosError("Couldn't load this setting. Please refresh the page.");
+    });
+  }, [loadSettings]);
+
+  // The store shows the change at once and undoes it on failure; setError is the section's error setter
+  const saveSettings = async (changes, setError) => {
+    setError("");
+    try {
+      await updateSettings(changes);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || "Couldn't save. Please try again.");
+    }
+  };
+
+  // An emptied or unchanged field just goes back to the saved number, without an error
+  const saveReminderDays = () => {
+    const draft = reminderDaysDraft;
+    setReminderDaysDraft(null);
+    if (draft === null || draft.trim() === "") return;
+    const days = Number(draft);
+    if (!Number.isInteger(days) || days === settings.reminder_days) return;
+    saveSettings({ reminder_days: days }, setReminderError);
+  };
+
   // Appearance
   const darkMode = useThemeStore((state) => state.darkMode);
   const toggleDarkMode = useThemeStore((state) => state.toggleDarkMode);
@@ -38,6 +85,32 @@ export default function Settings() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
+
+  // Each input's name is the form field it fills
+  const changeEmailForm = (event) =>
+    setEmailForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+
+  const submitEmailChange = async (event) => {
+    event.preventDefault();
+    setEmailError("");
+    setEmailSuccess("");
+    setSavingEmail(true);
+    try {
+      const res = await API.put("/account/email", emailForm);
+      // Everything that shows the email (e.g. the reminders line below) reads it from the stored user
+      useAuthStore.setState({ user: res.data.data });
+      setEmailSuccess("Email updated.");
+      setEmailForm({ email: "", current_password: "" });
+    } catch (err) {
+      setEmailError(err.response?.data?.message || "Failed to update email");
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
+  // Each input's name is the form field it fills
+  const changePasswordForm = (event) =>
+    setPasswordForm((current) => ({ ...current, [event.target.name]: event.target.value }));
 
   const submitPasswordChange = async (e) => {
     e.preventDefault();
@@ -82,7 +155,8 @@ export default function Settings() {
     try {
       await API.delete("/account", { data: { password: deletePassword } });
       useAuthStore.setState({ user: null, isAuthenticated: false });
-      navigate("/login");
+      // Back to the landing page
+      navigate("/");
     } catch (err) {
       setDeleteError(err.response?.data?.message || "Failed to delete account");
     } finally {
@@ -100,10 +174,65 @@ export default function Settings() {
       </div>
 
       {/* Account & security */}
-      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-4 transition-colors">
+      <section className="settings-section space-y-4">
         <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">
           Account &amp; security
         </h2>
+
+        {/* Email */}
+        <div className="space-y-3 pb-4 border-b border-border dark:border-dark-subtle">
+          <p className="text-sm text-light-muted dark:text-dark-muted">
+            Email: <span className="font-medium text-light-text dark:text-dark-text">{user?.email}</span>
+          </p>
+
+          {user?.is_demo ? (
+            <p className="text-sm text-light-muted dark:text-dark-muted">The demo account&apos;s email can&apos;t be changed.</p>
+          ) : (
+            <>
+              {emailError && (
+                <div className="text-red-700 bg-red-100 border border-red-300 p-3 rounded-lg text-sm">{emailError}</div>
+              )}
+              {emailSuccess && (
+                <div className="text-green-700 bg-green-100 border border-green-300 p-3 rounded-lg text-sm">{emailSuccess}</div>
+              )}
+
+              <form onSubmit={submitEmailChange} className="space-y-4">
+                <div>
+                  <label className="input-label">New email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    className="input-field"
+                    value={emailForm.email}
+                    onChange={changeEmailForm}
+                    maxLength={255}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="input-label">Current password</label>
+                  <input
+                    type="password"
+                    name="current_password"
+                    className="input-field"
+                    value={emailForm.current_password}
+                    onChange={changeEmailForm}
+                    required
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={savingEmail}
+                  >
+                    {savingEmail ? "Updating..." : "Update email"}
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
+        </div>
 
         {passwordError && (
           <div className="text-red-700 bg-red-100 border border-red-300 p-3 rounded-lg text-sm">
@@ -123,11 +252,10 @@ export default function Settings() {
             </label>
             <input
               type="password"
+              name="current_password"
               className="input-field"
               value={passwordForm.current_password}
-              onChange={(e) =>
-                setPasswordForm((prev) => ({ ...prev, current_password: e.target.value }))
-              }
+              onChange={changePasswordForm}
               required
             />
           </div>
@@ -138,11 +266,10 @@ export default function Settings() {
             </label>
             <input
               type="password"
+              name="password"
               className="input-field"
               value={passwordForm.password}
-              onChange={(e) =>
-                setPasswordForm((prev) => ({ ...prev, password: e.target.value }))
-              }
+              onChange={changePasswordForm}
               minLength={8}
               required
             />
@@ -154,11 +281,10 @@ export default function Settings() {
             </label>
             <input
               type="password"
+              name="password_confirmation"
               className="input-field"
               value={passwordForm.password_confirmation}
-              onChange={(e) =>
-                setPasswordForm((prev) => ({ ...prev, password_confirmation: e.target.value }))
-              }
+              onChange={changePasswordForm}
               minLength={8}
               required
             />
@@ -167,7 +293,7 @@ export default function Settings() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+              className="btn-primary"
               disabled={savingPassword}
             >
               {savingPassword ? "Updating..." : "Update password"}
@@ -177,7 +303,7 @@ export default function Settings() {
       </section>
 
       {/* Goals */}
-      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 space-y-4 transition-colors">
+      <section className="settings-section space-y-4">
         <div>
           <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">Goals</h2>
           <p className="text-sm text-light-muted dark:text-dark-muted">
@@ -232,7 +358,7 @@ export default function Settings() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+              className="btn-primary"
               disabled={savingGoals}
             >
               {savingGoals ? "Saving..." : "Save goals"}
@@ -241,8 +367,33 @@ export default function Settings() {
         </form>
       </section>
 
+      {/* To-dos */}
+      <section className="settings-section space-y-4">
+        <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">To-dos</h2>
+        <fieldset disabled={!settings} className="space-y-2">
+          <legend className="text-sm text-light-muted dark:text-dark-muted mb-2">
+            When I archive an application with open to-dos:
+          </legend>
+          {ARCHIVE_TODOS_OPTIONS.map(({ value, label }) => (
+            <label key={value} className="flex items-center gap-2 text-light-text dark:text-dark-text">
+              <input
+                type="radio"
+                name="archive_todos"
+                value={value}
+                checked={settings?.archive_todos === value}
+                onChange={() => saveSettings({ archive_todos: value }, setArchiveTodosError)}
+              />
+              {label}
+            </label>
+          ))}
+        </fieldset>
+        {archiveTodosError && <p className="text-sm text-red-500 dark:text-red-400">{archiveTodosError}</p>}
+      </section>
+
+      <PrepTemplateEditor />
+
       {/* Appearance */}
-      <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 transition-colors">
+      <section className="settings-section">
         <h2 className="text-lg font-semibold text-light-text dark:text-dark-text mb-4">
           Appearance
         </h2>
@@ -265,6 +416,66 @@ export default function Settings() {
         </div>
       </section>
 
+      {/* Reminders */}
+      <section className="settings-section space-y-4">
+        <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">Reminders</h2>
+        <fieldset disabled={!settings} className="space-y-4">
+          <label className="flex items-center gap-3 text-light-text dark:text-dark-text">
+            <input
+              type="checkbox"
+              checked={settings?.reminders_in_app ?? false}
+              onChange={(event) => saveSettings({ reminders_in_app: event.target.checked }, setReminderError)}
+              className="h-5 w-5 accent-accent"
+            />
+            In-app reminders (on the dashboard)
+          </label>
+
+          <div>
+            <label className="flex items-center gap-3 text-light-text dark:text-dark-text">
+              <input
+                type="checkbox"
+                checked={settings?.reminders_email ?? false}
+                onChange={(event) => saveSettings({ reminders_email: event.target.checked }, setReminderError)}
+                className="h-5 w-5 accent-accent"
+              />
+              Email reminders
+            </label>
+            <p className="ml-8 text-sm text-light-muted dark:text-dark-muted">Sent daily at 8:00 to {user?.email}</p>
+          </div>
+
+          <label className="flex flex-wrap items-center gap-2 text-light-text dark:text-dark-text">
+            Remind me after
+            <input
+              type="number"
+              min={REMINDER_DAYS_MIN}
+              max={REMINDER_DAYS_MAX}
+              value={reminderDaysDraft ?? settings?.reminder_days ?? ""}
+              onChange={(event) => setReminderDaysDraft(event.target.value)}
+              onBlur={saveReminderDays}
+              className="input-field w-20 py-1"
+            />
+            days without an update
+          </label>
+
+          <div className="space-y-2">
+            <p className="text-sm text-light-muted dark:text-dark-muted">Dismiss hides a reminder:</p>
+            {REMINDER_DISMISS_OPTIONS.map(({ value, label }) => (
+              <label key={value} className="flex items-center gap-2 text-light-text dark:text-dark-text">
+                <input
+                  type="radio"
+                  name="reminder_dismiss_mode"
+                  value={value}
+                  checked={settings?.reminder_dismiss_mode === value}
+                  onChange={() => saveSettings({ reminder_dismiss_mode: value }, setReminderError)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        {reminderError && <p className="text-sm text-red-500 dark:text-red-400">{reminderError}</p>}
+      </section>
+
       {/* Danger zone */}
       <section className="bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-red-300 dark:border-red-800 p-6 space-y-4 transition-colors">
         <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">Danger zone</h2>
@@ -284,7 +495,7 @@ export default function Settings() {
         ) : (
           <form onSubmit={submitDeleteAccount} className="space-y-4">
             <p className="text-sm text-light-muted dark:text-dark-muted">
-              This will permanently delete your account, profile, links, job applications,
+              This will permanently delete your account, profile, documents, job applications,
               interviews, notes, and to-dos. Enter your password to confirm.
             </p>
 

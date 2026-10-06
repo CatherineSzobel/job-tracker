@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
+import { showToast } from "../stores/useToastStore";
 import PageLoader from "../components/UI/PageLoader";
 
 export default function Profile() {
@@ -27,7 +28,7 @@ export default function Profile() {
       setEditing(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to save profile");
+      showToast("Failed to save profile");
     } finally {
       setSaving(false);
     }

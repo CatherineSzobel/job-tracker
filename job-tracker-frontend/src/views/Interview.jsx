@@ -1,0 +1,331 @@
+import { useEffect, useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { format } from "date-fns";
+import API from "../api/axios";
+import Tabs, { TabPanel } from "../components/UI/Tabs";
+import Modal from "../components/UI/Modal";
+import PageLoader from "../components/UI/PageLoader";
+import InterviewForm from "../components/Interview/InterviewForm";
+import BankQuestionForm from "../components/InterviewPrep/BankQuestionForm";
+import BankQuestionsSection from "../components/InterviewPrep/BankQuestionsSection";
+import EditableList from "../components/InterviewPrep/EditableList";
+import PeopleList from "../components/InterviewPrep/PeopleList";
+import PrepChecklist from "../components/InterviewPrep/PrepChecklist";
+import RatingInput from "../components/InterviewPrep/RatingInput";
+import SaveStatus from "../components/InterviewPrep/SaveStatus";
+import useAutosave, { combineAutosaves } from "../components/InterviewPrep/useAutosave";
+import { createBankQuestion } from "../components/InterviewPrep/useBankQuestions";
+import { normaliseQuestion, toSavablePrep } from "../components/InterviewPrep/prepDocument";
+import { interviewTypeLabel } from "../constants/jobs";
+import { BANK_LINKS_MAX, EMPTY_BANK_QUESTION, PREP_LIMITS, PREP_TABS } from "../constants/interviewPrep";
+import { useToastStore } from "../stores/useToastStore";
+import { toDateTimeInputValue } from "../utils/dateInput";
+
+const showToast = (message) => useToastStore.getState().showToast(message);
+
+// Keyed by id: opening another interview starts a fresh page, so a save still waiting goes to the
+// interview it was typed on
+export default function Interview() {
+  const { id } = useParams();
+  return <InterviewPage key={id} interviewId={id} />;
+}
+
+function InterviewPage({ interviewId }) {
+  const [interview, setInterview] = useState(null);
+  // The prep document as shown, plus rating and debrief notes (saved together)
+  const [prep, setPrep] = useState(null);
+  const [notes, setNotes] = useState("");
+  // null, "not_found" (404) or "failed" (anything else; the page offers to try again)
+  const [loadError, setLoadError] = useState(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [activeTab, setActiveTab] = useState("prep");
+  // The edit dialog's form, or null when it's closed
+  const [editForm, setEditForm] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  // Linked bank questions: [{ id, question, answer, category, note }]
+  const [bankLinks, setBankLinks] = useState([]);
+  // The question text being saved to the bank from the debrief, or null
+  const [savingToBank, setSavingToBank] = useState(null);
+  // The latest prep and bank links, so a change that lands after a request (the template loading,
+  // a question saved to the bank) builds on what's on screen now, not on what was there when it started
+  const latestPrep = useRef(null);
+  const latestBankLinks = useRef([]);
+
+  const showPrep = (nextPrep) => {
+    latestPrep.current = nextPrep;
+    setPrep(nextPrep);
+  };
+
+  const showBankLinks = (nextLinks) => {
+    latestBankLinks.current = nextLinks;
+    setBankLinks(nextLinks);
+  };
+
+  const prepAutosave = useAutosave((document) => API.put(`/interviews/${interviewId}/prep`, document));
+  const notesAutosave = useAutosave((value) => API.put(`/interviews/${interviewId}`, { notes: value || null }));
+
+  // A 422 means a linked question no longer exists (e.g. deleted on the bank page in another tab):
+  // show what's really linked now instead of retrying the same list forever
+  const saveBankLinks = async (links) => {
+    try {
+      await API.put(`/interviews/${interviewId}/bank-questions`, {
+        questions: links.map((link) => ({ id: link.id, note: link.note?.trim() || null })),
+      });
+    } catch (err) {
+      if (err.response?.status !== 422) throw err;
+      const res = await API.get(`/interviews/${interviewId}`);
+      showBankLinks(res.data.data.bank_questions);
+      showToast("A linked question was deleted elsewhere, so the list was reloaded");
+    }
+  };
+
+  const bankAutosave = useAutosave(saveBankLinks);
+  const saveState = combineAutosaves([prepAutosave, notesAutosave, bankAutosave]);
+
+  useEffect(() => {
+    API.get(`/interviews/${interviewId}`)
+      .then((res) => {
+        const loaded = res.data.data;
+        setInterview(loaded);
+        showPrep({ ...loaded.prep, rating: loaded.rating, debrief_notes: loaded.debrief_notes });
+        setNotes(loaded.notes ?? "");
+        showBankLinks(loaded.bank_questions ?? []);
+        setActiveTab(new Date(loaded.interview_date) > new Date() ? "prep" : "debrief");
+        setLoadError(null);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (err.response?.status === 404) {
+          setLoadError("not_found");
+        } else {
+          setLoadError("failed");
+          showToast("Couldn't load this interview");
+        }
+      });
+  }, [interviewId, loadAttempt]);
+
+  const updatePrep = (changes) => {
+    const nextPrep = { ...latestPrep.current, ...changes };
+    showPrep(nextPrep);
+    prepAutosave.schedule(toSavablePrep(nextPrep));
+  };
+
+  const changeNotes = (event) => {
+    setNotes(event.target.value);
+    notesAutosave.schedule(event.target.value);
+  };
+
+  const updateBankLinks = (nextLinks) => {
+    showBankLinks(nextLinks);
+    bankAutosave.schedule(nextLinks);
+  };
+
+  // A question they asked counts as in the bank when one with the same text is linked here
+  const linkedQuestionTexts = bankLinks.map((link) => normaliseQuestion(link.question));
+
+  const saveToBank = async (values) => {
+    const saved = await createBankQuestion(values);
+    if (!saved) return;
+    updateBankLinks([...latestBankLinks.current, { ...saved, note: "" }]);
+    setSavingToBank(null);
+  };
+
+  // Next to a question they asked: "✓ In bank" when it's linked here, otherwise a Save to bank button
+  const bankActionFor = (question) => {
+    if (!question.trim()) return null;
+    if (linkedQuestionTexts.includes(normaliseQuestion(question))) {
+      return <span className="text-xs whitespace-nowrap text-green-600 dark:text-green-400">✓ In bank</span>;
+    }
+    if (bankLinks.length >= BANK_LINKS_MAX) return null;
+    return (
+      <button type="button" onClick={() => setSavingToBank(question.trim())} className="btn-small whitespace-nowrap">
+        Save to bank
+      </button>
+    );
+  };
+
+  const startEditing = () =>
+    setEditForm({
+      job_id: interview.job_application_id,
+      type: interview.type ?? "",
+      interview_date: toDateTimeInputValue(interview.interview_date),
+      location: interview.location ?? "",
+      notes,
+    });
+
+  const changeEditForm = (event) => setEditForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+
+  const saveEdit = async (event) => {
+    event.preventDefault();
+    setSavingEdit(true);
+    try {
+      const res = await API.put(`/interviews/${interviewId}`, {
+        type: editForm.type || "online",
+        interview_date: editForm.interview_date,
+        location: editForm.location,
+        notes: editForm.notes || null,
+      });
+      setInterview(res.data.data);
+      setNotes(res.data.data.notes ?? "");
+      setEditForm(null);
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || "Failed to save the interview");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  if (loadError === "not_found") {
+    return (
+      <div className="max-w-3xl mx-auto mt-10 text-center space-y-3">
+        <p className="text-light-text dark:text-dark-text">This interview doesn&apos;t exist or was deleted.</p>
+        <Link to="/interviews" className="text-accent hover:underline">
+          Back to interviews
+        </Link>
+      </div>
+    );
+  }
+
+  if (loadError === "failed") {
+    return (
+      <div className="max-w-3xl mx-auto mt-10 text-center space-y-3">
+        <p className="text-light-text dark:text-dark-text">Couldn&apos;t load this interview.</p>
+        <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="btn-small">
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (!interview) {
+    return <PageLoader text="Loading interview..." />;
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto mt-4 sm:mt-10 sm:px-4 space-y-6">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-light-text dark:text-dark-text">
+            <Link to={`/jobs/${interview.job.id}`} className="hover:underline">
+              {interview.job.company_name} · {interview.job.position}
+            </Link>
+          </h1>
+          <p className="text-sm text-light-muted dark:text-dark-muted">
+            {format(new Date(interview.interview_date), "EEE d MMM yyyy, HH:mm")} · {interviewTypeLabel(interview.type)} ·{" "}
+            {interview.location || "Location TBD"}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <SaveStatus status={saveState.status} onRetry={saveState.retry} />
+          <button type="button" onClick={startEditing} className="btn-small">
+            Edit
+          </button>
+        </div>
+      </header>
+
+      <Tabs tabs={PREP_TABS} activeTab={activeTab} onChange={setActiveTab} idPrefix="interview" label="Interview prep" />
+
+      {activeTab === "prep" ? (
+        <TabPanel idPrefix="interview" tabId="prep" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <section className="card">
+            <h2 className="card-title mb-4">Checklist</h2>
+            <PrepChecklist items={prep.checklist} interviewType={interview.type} onChange={(checklist) => updatePrep({ checklist })} />
+          </section>
+
+          <section className="card">
+            <h2 className="card-title mb-4">People you&apos;re meeting</h2>
+            <PeopleList people={prep.people} onChange={(people) => updatePrep({ people })} />
+          </section>
+
+          <section className="card">
+            <h2 className="card-title mb-4">Questions to ask them</h2>
+            <EditableList
+              items={prep.questions_to_ask}
+              onChange={(questionsToAsk) => updatePrep({ questions_to_ask: questionsToAsk })}
+              placeholder="Add a question"
+              itemLabel="Question to ask"
+              maxItems={PREP_LIMITS.questionsToAsk}
+            />
+          </section>
+
+          <section className="card lg:col-span-2">
+            <h2 className="card-title mb-4">Answers from your question bank</h2>
+            <BankQuestionsSection links={bankLinks} onChange={updateBankLinks} />
+          </section>
+
+          <section className="card">
+            <h2 className="card-title mb-4">Prep notes</h2>
+            <textarea
+              value={notes}
+              onChange={changeNotes}
+              rows={8}
+              aria-label="Prep notes"
+              placeholder="Anything else to remember"
+              className="input-field"
+            />
+          </section>
+        </TabPanel>
+      ) : (
+        <TabPanel idPrefix="interview" tabId="debrief" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <section className="card">
+            <h2 className="card-title mb-4">How did it go?</h2>
+            <RatingInput value={prep.rating} onChange={(rating) => updatePrep({ rating })} />
+            <p className="mt-2 text-xs text-light-muted dark:text-dark-muted">1 = rough, 5 = great. Click your rating again to clear it.</p>
+          </section>
+
+          <section className="card">
+            <h2 className="card-title mb-4">Questions they asked</h2>
+            <EditableList
+              items={prep.questions_asked}
+              onChange={(questionsAsked) => updatePrep({ questions_asked: questionsAsked })}
+              placeholder="Add a question they asked"
+              itemLabel="Question they asked"
+              maxItems={PREP_LIMITS.questionsAsked}
+              renderActions={bankActionFor}
+            />
+          </section>
+
+          <section className="card lg:col-span-2">
+            <h2 className="card-title mb-4">Debrief notes</h2>
+            <textarea
+              value={prep.debrief_notes ?? ""}
+              onChange={(event) => updatePrep({ debrief_notes: event.target.value })}
+              rows={8}
+              maxLength={10000}
+              aria-label="Debrief notes"
+              placeholder="What went well, what to do differently"
+              className="input-field"
+            />
+          </section>
+        </TabPanel>
+      )}
+
+      {savingToBank !== null && (
+        <Modal title="Save to your question bank" onClose={() => setSavingToBank(null)} maxWidth="max-w-lg">
+          <BankQuestionForm
+            initialValues={{ ...EMPTY_BANK_QUESTION, question: savingToBank }}
+            submitLabel="Save to bank"
+            onSubmit={saveToBank}
+            onCancel={() => setSavingToBank(null)}
+          />
+        </Modal>
+      )}
+
+      {editForm && (
+        <Modal title="Edit interview" onClose={() => setEditForm(null)}>
+          <InterviewForm
+            handleSubmit={saveEdit}
+            handleChange={changeEditForm}
+            saving={savingEdit}
+            newInterview={editForm}
+            jobs={[interview.job]}
+            editingInterview={interview}
+            lockJob
+            onCancel={() => setEditForm(null)}
+          />
+        </Modal>
+      )}
+    </div>
+  );
+}

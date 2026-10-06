@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
+import { confirmAction } from "../stores/useConfirmStore";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axios";
+import AttachedDocuments from "../components/Documents/AttachedDocuments";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
+import TagChip from "../components/Tags/TagChip";
+import TagInput from "../components/Tags/TagInput";
+import useTags from "../components/Tags/useTags";
+import JobFollowUps from "../components/Todo/JobFollowUps";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
 import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
+import { useToastStore } from "../stores/useToastStore";
 
 export default function Application() {
   const navigate = useNavigate();
@@ -20,6 +27,9 @@ export default function Application() {
   // "+ Add interview" form (null while closed)
   const [newInterview, setNewInterview] = useState(null);
   const [savingInterview, setSavingInterview] = useState(false);
+
+  const { tags: allTags, createTag } = useTags();
+  const showToast = useToastStore((state) => state.showToast);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -46,7 +56,8 @@ export default function Application() {
   };
 
   const cancelEditing = () => {
-    setJob(originalJob);
+    // Tags and documents save on their own, so Cancel keeps the current ones
+    setJob((currentJob) => ({ ...originalJob, tags: currentJob.tags, documents: currentJob.documents }));
     setEditing(false);
   };
 
@@ -58,7 +69,7 @@ export default function Application() {
       setEditing(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to save changes");
+      showToast("Failed to save changes");
     } finally {
       setSaving(false);
     }
@@ -74,21 +85,32 @@ export default function Application() {
       setNewInterview(null);
     } catch (err) {
       console.error(err);
-      alert("Failed to add interview. Make sure all fields are valid.");
+      showToast("Failed to add interview. Make sure all fields are valid.");
     } finally {
       setSavingInterview(false);
     }
   };
 
   const deleteJob = async () => {
-    if (!window.confirm("Delete this job application?")) return;
+    if (!(await confirmAction({ message: "Delete this job application?", confirmLabel: "Delete", danger: true }))) return;
 
     try {
       await API.delete(`/job-applications/${job.id}`);
       navigate("/applications");
     } catch (err) {
       console.error(err);
-      alert("Failed to delete job");
+      showToast("Failed to delete job");
+    }
+  };
+
+  // Only the tags are taken from the response, so unsaved edits to other fields stay
+  const saveTags = async (tagIds) => {
+    try {
+      const res = await API.put(`/job-applications/${job.id}/tags`, { tag_ids: tagIds });
+      setJob((currentJob) => ({ ...currentJob, tags: res.data.data.tags }));
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to save tags");
     }
   };
 
@@ -99,6 +121,9 @@ export default function Application() {
   if (!job) {
     return <p className="text-center mt-10 text-light-muted dark:text-dark-muted">Not found</p>;
   }
+
+  const jobTags = job.tags ?? [];
+  const jobTagIds = jobTags.map((tag) => tag.id);
 
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-10 bg-light dark:bg-dark-soft rounded-2xl transition-colors">
@@ -127,6 +152,24 @@ export default function Application() {
           ) : (
             <p className="mt-1 text-sm text-light-muted dark:text-dark-muted">{job.company_name}</p>
           )}
+
+          {/* Tags save straight away, also while the other fields are being edited */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {jobTags.map((tag) => (
+              <TagChip key={tag.id} tag={tag} onRemove={() => saveTags(jobTagIds.filter((id) => id !== tag.id))} />
+            ))}
+            <div className="w-full sm:w-64">
+              <TagInput
+                tags={allTags}
+                excludeIds={jobTagIds}
+                onCreate={createTag}
+                // Typing the name of a tag the job already has selects it too; adding it twice would fail
+                onSelect={(tag) => {
+                  if (!jobTagIds.includes(tag.id)) saveTags([...jobTagIds, tag.id]);
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-3 sm:mt-2 shrink-0">
@@ -218,6 +261,16 @@ export default function Application() {
           <p className="text-light-muted dark:text-dark-muted text-sm">No notes yet.</p>
         )}
       </div>
+
+      {/* FOLLOW-UPS */}
+      <JobFollowUps job={job} />
+
+      {/* DOCUMENTS */}
+      <AttachedDocuments
+        jobId={job.id}
+        documents={job.documents ?? []}
+        onChange={(documents) => setJob((prev) => ({ ...prev, documents }))}
+      />
 
       {/* INTERVIEWS */}
       <div className="bg-light-soft dark:bg-dark-soft rounded-xl p-6 transition-colors">

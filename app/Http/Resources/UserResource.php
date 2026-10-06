@@ -19,6 +19,8 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'daily_goal' => $this->daily_goal,
             'weekly_goal' => $this->weekly_goal,
+            // The shared demo login: the frontend hides what it can't change (email, password, deletion)
+            'is_demo' => $this->isDemo(),
         ];
     }
 }

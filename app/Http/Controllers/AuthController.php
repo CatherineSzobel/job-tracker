@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\ChangeEmailRequest;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\DeleteAccountRequest;
 use App\Http\Requests\Auth\LoginRequest;
@@ -9,6 +10,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\UpdateGoalsRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\DocumentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +19,8 @@ use Illuminate\Support\Facades\DB;
 // Session (cookie) auth for the SPA, so the 'web' guard is named explicitly throughout
 class AuthController extends Controller
 {
+    public function __construct(private DocumentService $documentService) {}
+
     public function register(RegisterRequest $request): UserResource
     {
         // User and profile are created together or not at all
@@ -71,6 +75,14 @@ class AuthController extends Controller
         ]);
     }
 
+    // Demo-account, current-password and unique-email checks happen in ChangeEmailRequest
+    public function updateEmail(ChangeEmailRequest $request): UserResource
+    {
+        $request->user()->update(['email' => $request->validated('email')]);
+
+        return new UserResource($request->user());
+    }
+
     public function updateGoals(UpdateGoalsRequest $request): UserResource
     {
         $request->user()->update($request->validated());
@@ -86,6 +98,7 @@ class AuthController extends Controller
         // Log out first: logout() saves a new remember token, which would re-insert a deleted user
         Auth::guard('web')->logout();
         $user->delete();
+        $this->documentService->deleteFilesFor($user);
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

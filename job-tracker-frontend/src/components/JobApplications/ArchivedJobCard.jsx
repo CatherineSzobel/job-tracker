@@ -1,35 +1,53 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
+import { useToastStore } from "../../stores/useToastStore";
+import CardTags from "../Tags/CardTags";
 
-export default function ArchivedJobCard({ job, onRestore }) {
+// In select mode (selecting) clicking the card calls onToggleSelect(id) and Restore is replaced by a checkbox.
+// pendingChanges (useBatchChanges().forJob): this application's unsaved batch change to preview, or null.
+export default function ArchivedJobCard({ job, onRestore, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
     const navigate = useNavigate();
+    const showToast = useToastStore((state) => state.showToast);
 
     const handleRestore = async () => {
         try {
             await API.put(`/job-applications/${job.id}`, { is_archived: false });
-            if (onRestore) onRestore(job.id);
+            onRestore?.(job.id);
         } catch (err) {
             console.error(err);
-            alert("Failed to restore job");
+            showToast("Failed to restore job");
         }
     };
 
     return (
-        <div className="relative bg-light dark:bg-dark-soft rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+        <div
+            onClick={selecting ? () => onToggleSelect(job.id) : undefined}
+            className={`relative bg-light dark:bg-dark-soft rounded-xl p-4 shadow-sm hover:shadow-md transition-all ${selecting ? "cursor-pointer" : ""} ${selected ? "ring-2 ring-accent" : ""}`}
+        >
             <div className="flex justify-between items-start mb-2">
                 <h2
-                    onClick={() => navigate(`/jobs/${job.id}`)}
-                    className="font-semibold text-light-text dark:text-dark-text hover:underline cursor-pointer truncate max-w-[70%]"
+                    onClick={selecting ? undefined : () => navigate(`/jobs/${job.id}`)}
+                    className={`font-semibold text-light-text dark:text-dark-text truncate max-w-[70%] ${selecting ? "" : "hover:underline cursor-pointer"}`}
                 >
                     {job.position}
                 </h2>
-                <button
-                    onClick={handleRestore}
-                    className="p-2 rounded-lg font-bold bg-green-700 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-500 text-white text-xs transition-colors"
-                >
-                    Restore
-                </button>
+                {selecting ? (
+                    <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => onToggleSelect(job.id)}
+                        onClick={(event) => event.stopPropagation()}
+                        aria-label={`Select ${job.position} at ${job.company_name}`}
+                        className="h-5 w-5 cursor-pointer accent-accent"
+                    />
+                ) : (
+                    <button
+                        onClick={handleRestore}
+                        className="p-2 rounded-lg font-bold bg-green-700 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-500 text-white text-xs transition-colors"
+                    >
+                        Restore
+                    </button>
+                )}
             </div>
 
             <div className="flex flex-col text-light-muted dark:text-dark-muted gap-0.5 text-xs">
@@ -52,6 +70,8 @@ export default function ArchivedJobCard({ job, onRestore }) {
                             href={job.job_link}
                             target="_blank"
                             rel="noopener noreferrer"
+                            // In select mode a click only selects the card
+                            onClick={selecting ? (event) => event.preventDefault() : undefined}
                             className="text-accent dark:text-accent-muted hover:underline"
                         >
                             {job.job_link}
@@ -59,6 +79,16 @@ export default function ArchivedJobCard({ job, onRestore }) {
                     </span>
                 )}
             </div>
+
+            <CardTags
+                tags={job.tags}
+                addedTags={pendingChanges?.tagsToAdd}
+                removedTagIds={pendingChanges?.tagsToRemove.map((tag) => tag.id)}
+            />
+
+            {pendingChanges && (
+                <p className="mt-1 text-xs italic text-accent dark:text-accent-muted">Not saved yet</p>
+            )}
         </div>
     );
 }

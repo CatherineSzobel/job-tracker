@@ -40,6 +40,52 @@
     @apply block text-sm font-medium mb-1 text-light-text dark:text-dark-text;
 }
 
+/* Dashboard-style card and its heading (add your own margin to the heading) */
+@utility card {
+    @apply bg-surface dark:bg-dark-soft border border-border dark:border-dark-subtle shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl;
+}
+
+@utility card-title {
+    @apply flex items-center gap-2 text-lg font-semibold text-light-text dark:text-white;
+}
+
+/* A section of the Settings page (add space-y-4 when it stacks several blocks) */
+@utility settings-section {
+    @apply bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 transition-colors;
+}
+
+/* Filled accent button for a form's main action (Save, Update, Add) */
+@utility btn-primary {
+    @apply px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50;
+}
+
+/* Small outlined button for card actions (Dismiss, Edit, ...); the danger one for Delete */
+@utility btn-small {
+    @apply px-2 py-1 text-xs rounded-lg border border-light-muted dark:border-dark-subtle text-light-text dark:text-dark-text hover:bg-light dark:hover:bg-dark-subtle transition-colors;
+}
+
+@utility btn-small-danger {
+    @apply px-2 py-1 text-xs rounded-lg border border-red-300 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors;
+}
+
+/* Outlined button in a list page's header (Select, Select all, Cancel) */
+@utility btn-toolbar {
+    @apply px-3 py-2 rounded-md text-sm border border-light-muted dark:border-dark-subtle text-light-text dark:text-dark-text hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors;
+}
+
+/* Buttons in the pinned select bar (SelectionBar); the danger one for Delete */
+@utility btn-bar {
+    @apply px-3 py-1 rounded-lg text-sm border border-light-muted dark:border-dark-subtle text-light-text dark:text-dark-text hover:bg-light-soft dark:hover:bg-dark-subtle disabled:opacity-50 transition-colors;
+}
+
+@utility btn-bar-primary {
+    @apply px-3 py-1 rounded-lg text-sm bg-accent text-white hover:bg-accent-soft disabled:opacity-50 transition-colors;
+}
+
+@utility btn-bar-danger {
+    @apply px-3 py-1 rounded-lg text-sm border border-red-300 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-50 transition-colors;
+}
+
 /* Global background */
 body {
     @apply bg-light-soft text-light-text;

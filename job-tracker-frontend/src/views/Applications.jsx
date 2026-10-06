@@ -1,11 +1,28 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
+import BatchBar from "../components/JobApplications/BatchBar";
+import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
+import useArchiveWithTodos, { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
+import useBatchChanges from "../components/JobApplications/useBatchChanges";
+import useSendBatch from "../components/JobApplications/useSendBatch";
+import ManageTagsModal from "../components/Tags/ManageTagsModal";
+import TagChip from "../components/Tags/TagChip";
+import useTags from "../components/Tags/useTags";
+import DateGroups from "../components/UI/DateGroups";
+import ListPageHeader from "../components/UI/ListPageHeader";
 import PageLoader from "../components/UI/PageLoader";
 import Modal from "../components/UI/Modal";
+import SelectModeButtons from "../components/UI/SelectModeButtons";
+import ViewToggle from "../components/UI/ViewToggle";
+import useSavedView from "../components/UI/useSavedView";
+import useSelection from "../components/UI/useSelection";
 import { EMPTY_JOB, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
+import { confirmAction } from "../stores/useConfirmStore";
+import { useToastStore } from "../stores/useToastStore";
+import { countOf } from "../utils/plural";
 
 export default function Applications() {
   const fileInputRef = useRef(null);
@@ -21,16 +38,30 @@ export default function Applications() {
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [tagFilter, setTagFilter] = useState([]);
+  const [showManageTags, setShowManageTags] = useState(false);
+  const [view, changeView] = useSavedView("applications-view");
+  const { tags, reloadTags, createTag, updateTag, deleteTag } = useTags();
+  // Unsaved status and tag changes, per application; leaving select mode (any way) drops them
+  const batchChanges = useBatchChanges();
+  const { selecting, startSelecting, exitSelecting, selectedIds, toggleSelected, selectMany, clearSelection } = useSelection({ onExit: batchChanges.clear });
+  const { sendBatch, busy: batchBusy } = useSendBatch({ setJobs, listShowsArchived: false, onDone: exitSelecting });
+  const showToast = useToastStore((state) => state.showToast);
 
   const [newJob, setNewJob] = useState(EMPTY_JOB);
 
-  // Fetch jobs
+  // Also run after tags are renamed or deleted, so the cards show the new names
+  const loadJobs = useCallback(
+    () =>
+      API.get("/job-applications")
+        .then((res) => setJobs(res.data.data))
+        .catch((err) => console.error(err)),
+    []
+  );
+
   useEffect(() => {
-    API.get("/job-applications")
-      .then((res) => setJobs(res.data.data))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+    loadJobs().finally(() => setLoading(false));
+  }, [loadJobs]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -56,21 +87,84 @@ export default function Applications() {
       setNewJob(EMPTY_JOB);
     } catch (err) {
       console.error(err);
-      alert("Failed to add job application");
+      showToast(err.response?.data?.message || "Failed to add job application");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return <PageLoader text="Loading Applications..."/>
-  }
+  const toggleTagFilter = (tagId) =>
+    setTagFilter((currentIds) =>
+      currentIds.includes(tagId) ? currentIds.filter((id) => id !== tagId) : [...currentIds, tagId]
+    );
+
+  const openManageTags = () => {
+    setShowMenu(false);
+    reloadTags();
+    setShowManageTags(true);
+  };
+
+  const closeManageTags = () => {
+    setShowManageTags(false);
+    loadJobs();
+  };
+
+  // A deleted tag can't stay in the filter, or no application would match
+  const removeTag = async (tag) => {
+    if (await deleteTag(tag)) {
+      setTagFilter((currentIds) => currentIds.filter((id) => id !== tag.id));
+    }
+  };
 
   const filteredJobs = jobs.filter((job) => {
     const statusMatch = statusFilter === "all" || job.status === statusFilter;
     const priorityMatch = priorityFilter === "all" || job.priority === priorityFilter;
-    return statusMatch && priorityMatch;
+    const tagMatch = tagFilter.every((tagId) => job.tags?.some((tag) => tag.id === tagId));
+    return statusMatch && priorityMatch && tagMatch;
   });
+
+  const visibleIds = filteredJobs.map((job) => job.id);
+  // Only selected cards that are still visible count: changing a filter hides some without unselecting them
+  const visibleSelectedIds = selectedIds.filter((id) => visibleIds.includes(id));
+  const visibleSelectedJobs = filteredJobs.filter((job) => selectedIds.includes(job.id));
+
+  // Every pending change, including ones on cards a filter now hides (they were made on purpose)
+  const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
+
+  // deleteOpenTodos: the answer from the to-dos prompt, or undefined when it wasn't asked
+  // (then confirm here, and the server follows the user's setting)
+  const archiveSelected = async (deleteOpenTodos) => {
+    const count = visibleSelectedIds.length;
+    const wasAsked = deleteOpenTodos !== undefined;
+    if (!wasAsked && !(await confirmAction({ message: `Archive ${countOf(count, "application")}?`, confirmLabel: "Archive" }))) {
+      return;
+    }
+    sendBatch(() => batchUpdateJobs(visibleSelectedIds, archiveChanges(deleteOpenTodos)));
+  };
+
+  const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archiveSelected);
+
+  // The bar's Archive asks about open to-dos first (the to-dos prompt)
+  const applyBatch = () => {
+    const withOpenTodos = jobs.filter((job) => visibleSelectedIds.includes(job.id) && job.open_todos_count > 0);
+    requestArchive({
+      openTodosCount: withOpenTodos.reduce((total, job) => total + job.open_todos_count, 0),
+      applicationCount: withOpenTodos.length,
+      selectedCount: visibleSelectedIds.length,
+    });
+  };
+
+  const renderJob = (job) => (
+    <JobCard
+      key={job.id}
+      job={job}
+      onRemove={(id) => setJobs((currentJobs) => currentJobs.filter((existing) => existing.id !== id))}
+      selecting={selecting}
+      selected={selectedIds.includes(job.id)}
+      onToggleSelect={toggleSelected}
+      pendingChanges={batchChanges.forJob(job.id)}
+    />
+  );
 
   const exportJobs = async () => {
     try {
@@ -100,133 +194,156 @@ export default function Applications() {
       const res = await API.get("/job-applications");
       setJobs(res.data.data);
 
-      // Invalid rows are skipped by the server and listed in `failures`
+      showToast(data.message, "success");
+
+      // Invalid rows are skipped by the server and listed in `failures`; the toast names the first few
       const skipped = (data.failures ?? []).map(
-        (f) => `Row ${f.row} (${f.attribute}): ${f.errors.join(", ")}`
+        (failure) => `row ${failure.row} (${failure.attribute}): ${failure.errors.join(", ")}`
       );
-      alert(skipped.length ? `${data.message}\n\n${skipped.join("\n")}` : data.message);
+      if (skipped.length > 0) {
+        console.warn("Skipped rows", skipped);
+        const firstFew = skipped.slice(0, 3).join("; ");
+        showToast(`${skipped.length} row${skipped.length === 1 ? " was" : "s were"} skipped: ${firstFew}${skipped.length > 3 ? "; …" : ""}`);
+      }
     } catch (err) {
       console.error("Import failed", err.response || err);
-      alert(
-        "Import failed: " +
-        (err.response?.data?.message || JSON.stringify(err.response?.data) || err.message)
-      );
+      showToast(`Import failed: ${err.response?.data?.message || err.message}`);
     } finally {
       setImporting(false);
     }
   };
 
+  // After every hook (useArchiveWithTodos above is one), so they run on every render
+  if (loading) {
+    return <PageLoader text="Loading Applications..."/>
+  }
+
   return (
-    <div className="max-w-5xl mx-auto sm:px-4 py-4 sm:py-10">
-      {/* HEADER */}
-      <div className="rounded-2xl p-4 sm:p-6 mb-6 bg-surface dark:bg-dark-soft shadow-md border border-border dark:border-dark-subtle transition-colors">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-light-text dark:text-dark-text">
-            Job Applications
-            <span className="ml-2 text-sm text-muted dark:text-dark-muted">
-              ({jobs.length})
-            </span>
-          </h1>
-
-          <div className="flex items-center gap-2 relative" ref={dropdownRef}>
-            <button
-              className="px-4 py-2 rounded-md text-sm bg-accent-soft hover:bg-accent text-surface font-semibold transition-colors"
-              onClick={() => setShowForm(true)}
-            >
-              + Add
-            </button>
-
-            {/* Dropdown */}
-            <button
-              onClick={() => setShowMenu((s) => !s)}
-              className="w-9 h-9 flex items-center justify-center font-extrabold hover:border rounded-lg text-accent dark:text-accent-muted transition-colors"
-            >
-              ⋮
-            </button>
-
-            {showMenu && (
-              <div className="absolute right-0 top-11 w-40 rounded-lg shadow-lg border overflow-hidden z-50 bg-surface dark:bg-dark-soft border-border dark:border-dark-subtle text-primary dark:text-dark-text transition-colors">
-                <button
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
-                  onClick={() => navigate("/archives")}
-                >
-                  Archives
-                </button>
-                <button
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
-                  onClick={exportJobs}
-                >
-                  Export Excel
-                </button>
-                <button
-                  className="w-full text-left px-4 py-2 text-sm disabled:opacity-50 hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
-                  onClick={() => fileInputRef.current.click()}
-                  disabled={importing}
-                >
-                  {importing ? "Importing…" : "Import Excel"}
-                </button>
-              </div>
-            )}
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files.length > 0) {
-                  importJobs(e.target.files[0]);
-                  e.target.value = null;
-                }
-              }}
+    <div className={`max-w-6xl mx-auto mt-4 sm:mt-10 sm:px-4 transition-colors ${selecting ? "pb-28" : ""}`}>
+      <ListPageHeader
+        title="Job Applications"
+        count={jobs.length}
+        actions={
+          <>
+            <SelectModeButtons
+              selecting={selecting}
+              visibleCount={visibleIds.length}
+              onStart={startSelecting}
+              onSelectAll={() => selectMany(visibleIds)}
+              onCancel={exitSelecting}
             />
-          </div>
-        </div>
 
-        {/* FILTER BAR */}
-        <div className="rounded-xl pt-4 sm:p-4 mb-2 sm:mb-6 flex flex-wrap gap-4 sm:gap-6 text-sm">
-          <div>
-            <label className="block mb-1 text-light-text dark:text-dark-text">Status</label>
-            <select
-              className="border rounded-lg px-3 py-1 text-light-text dark:text-dark-text border-light-muted dark:border-dark-subtle bg-surface dark:bg-dark-soft transition-colors"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">All</option>
-              {JOB_STATUSES.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </div>
+            <ViewToggle view={view} onChange={changeView} />
 
-          <div>
-            <label className="block mb-1 text-light-text dark:text-dark-text">Priority</label>
-            <select
-              className="border rounded-lg px-3 py-1 text-light-text dark:text-dark-text border-light-muted dark:border-dark-subtle bg-surface dark:bg-dark-soft transition-colors"
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-            >
-              <option value="all">All</option>
-              {PRIORITIES.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+            <button type="button" className="btn-primary shadow" onClick={() => setShowForm(true)}>
+              + Add Application
+            </button>
+
+            {/* More: archives, tags, import and export */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowMenu((s) => !s)}
+                aria-label="More"
+                className="w-9 h-9 flex items-center justify-center font-extrabold hover:border rounded-lg text-accent dark:text-accent-muted transition-colors"
+              >
+                ⋮
+              </button>
+  
+              {showMenu && (
+                <div className="absolute right-0 top-11 w-40 rounded-lg shadow-lg border overflow-hidden z-50 bg-surface dark:bg-dark-soft border-border dark:border-dark-subtle text-primary dark:text-dark-text transition-colors">
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                    onClick={() => navigate("/archives")}
+                  >
+                    Archives
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                    onClick={openManageTags}
+                  >
+                    Manage tags
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                    onClick={exportJobs}
+                  >
+                    Export Excel
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm disabled:opacity-50 hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
+                    onClick={() => fileInputRef.current.click()}
+                    disabled={importing}
+                  >
+                    {importing ? "Importing…" : "Import Excel"}
+                  </button>
+                </div>
+              )}
+  
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files.length > 0) {
+                    importJobs(e.target.files[0]);
+                    e.target.value = null;
+                  }
+                }}
+              />
+            </div>
+          </>
+        }
+      >
+        <select
+          aria-label="Status"
+          className="input-field sm:w-auto"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">All statuses</option>
+          {JOB_STATUSES.map(({ value, label }) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+
+        <select
+          aria-label="Priority"
+          className="input-field sm:w-auto"
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value)}
+        >
+          <option value="all">All priorities</option>
+          {PRIORITIES.map(({ value, label }) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+
+        {tags.length > 0 && (
+          <div role="group" aria-label="Tags" className="flex flex-wrap items-center gap-1">
+            <span className="mr-1 text-sm text-light-muted dark:text-dark-muted">Tags</span>
+            {tags.map((tag) => (
+              <TagChip key={tag.id} tag={tag} active={tagFilter.includes(tag.id)} onClick={() => toggleTagFilter(tag.id)} />
+            ))}
           </div>
-        </div>
-      </div>
+        )}
+      </ListPageHeader>
 
       {/* JOB LIST */}
       {filteredJobs.length === 0 ? (
         <p className="text-center text-muted dark:text-dark-muted">No applications found.</p>
+      ) : view === "grouped" ? (
+        <DateGroups
+          items={filteredJobs}
+          getDateString={(job) => job.applied_date}
+          itemLabel="application"
+          renderItem={renderJob}
+          onSelectAll={selecting ? (groupJobs) => selectMany(groupJobs.map((job) => job.id)) : undefined}
+        />
       ) : (
         <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-          {filteredJobs.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              onRemove={(id) => setJobs((prev) => prev.filter((j) => j.id !== id))}
-            />
-          ))}
+          {filteredJobs.map(renderJob)}
         </div>
       )}
 
@@ -242,6 +359,27 @@ export default function Applications() {
           />
         </Modal>
       )}
+
+      {showManageTags && (
+        <ManageTagsModal tags={tags} onCreate={createTag} onUpdate={updateTag} onDelete={removeTag} onClose={closeManageTags} />
+      )}
+
+      {/* Stays open with nothing selected while changes wait, so Save is still there */}
+      {selecting && (visibleSelectedIds.length > 0 || batchChanges.hasChanges) && (
+        <BatchBar
+          selectedJobs={visibleSelectedJobs}
+          actions={["status", "tags", "archive"]}
+          tags={tags}
+          changes={batchChanges}
+          onSave={saveBatchChanges}
+          onApply={applyBatch}
+          onClearSelection={clearSelection}
+          onCreateTag={createTag}
+          onCancel={exitSelecting}
+          busy={batchBusy}
+        />
+      )}
+      {archivePrompt}
     </div>
   );
 }

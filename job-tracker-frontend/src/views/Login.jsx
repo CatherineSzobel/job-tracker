@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../stores/useAuthStore";
+import { DEMO_EMAIL, useAuthStore } from "../stores/useAuthStore";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -8,6 +8,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   const loginAction = useAuthStore((state) => state.loginAction);
+  const demoLoginAction = useAuthStore((state) => state.demoLoginAction);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,13 +24,12 @@ export default function Login() {
   };
 
   const demoLogin = async () => {
-    const demoEmail = "test@example.com";
-    const demoPassword = "secret123";
-
-    setForm({ email: demoEmail, password: demoPassword });
+    // Show which account is used; the password stays in the store
+    setForm({ email: DEMO_EMAIL, password: "" });
+    setError("");
 
     try {
-      await loginAction(demoEmail, demoPassword);
+      await demoLoginAction();
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Demo login failed");
@@ -38,6 +38,9 @@ export default function Login() {
 
   return (
     <div className="w-full max-w-md rounded-2xl shadow-xl p-8 bg-light dark:bg-dark-soft text-light-text dark:text-white transition-colors">
+      <Link to="/" className="inline-block mb-4 text-sm text-accent dark:text-accent-muted hover:underline">
+        ← Back to the home page
+      </Link>
       <h2 className="text-2xl font-bold text-center mb-2">Welcome back 👋</h2>
       <p className="text-sm text-light-text/70 dark:text-dark-muted text-center mb-6">
         Log in to continue tracking your job applications
