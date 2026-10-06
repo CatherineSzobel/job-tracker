@@ -155,7 +155,8 @@ export default function Settings() {
     try {
       await API.delete("/account", { data: { password: deletePassword } });
       useAuthStore.setState({ user: null, isAuthenticated: false });
-      navigate("/login");
+      // Back to the landing page
+      navigate("/");
     } catch (err) {
       setDeleteError(err.response?.data?.message || "Failed to delete account");
     } finally {

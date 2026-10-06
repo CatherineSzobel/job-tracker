@@ -73,7 +73,8 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/login");
+    // The landing page, which is what "/" shows to a visitor who isn't logged in
+    navigate("/");
   };
 
   return (
