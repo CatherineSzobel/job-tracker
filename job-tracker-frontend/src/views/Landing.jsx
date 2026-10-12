@@ -50,7 +50,7 @@ export default function Landing() {
               <button type="button" onClick={tryDemo} disabled={loggingIn} className="btn-primary shadow px-6 py-3 text-lg">
                 {loggingIn ? "Logging in…" : "Try the demo"}
               </button>
-              <Link to="/register" className="btn-toolbar px-6 py-3 text-lg text-center">
+              <Link to="/register" className="btn-secondary px-6 py-3 text-lg text-center">
                 Create an account
               </Link>
             </div>

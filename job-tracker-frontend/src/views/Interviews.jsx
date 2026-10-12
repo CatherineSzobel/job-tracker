@@ -224,7 +224,7 @@ export default function Interviews() {
                   type="button"
                   onClick={() => setWhen(value)}
                   aria-pressed={when === value}
-                  className={`px-4 py-2 text-sm transition-colors ${when === value ? "bg-accent text-surface" : "text-light-text dark:text-dark-text hover:bg-light-soft dark:hover:bg-dark-subtle"}`}
+                  className={`px-4 py-2 text-sm transition-colors ${when === value ? "bg-accent text-white" : "text-light-text dark:text-dark-text hover:bg-light-soft dark:hover:bg-dark-subtle"}`}
                 >
                   {label}
                 </button>

@@ -53,8 +53,8 @@ export default function TodoInput({ draft, onDraftChange, onAdd, fixedApplicatio
         <button
           type="submit"
           disabled={!draft.text.trim() || adding}
-          className="bg-accent hover:bg-accent-soft disabled:opacity-50 disabled:cursor-not-allowed
-            text-surface px-4 py-2 rounded-lg transition-colors"
+          className="bg-accent hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed
+            text-white px-4 py-2 rounded-lg transition-colors"
         >
           Add
         </button>

@@ -31,7 +31,7 @@ export default function AttachedDocuments({ jobId, documents, onChange }) {
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-semibold text-accent dark:text-accent">Sent with this application</h2>
         <button
-          className="text-sm text-accent dark:text-accent hover:text-accent-soft dark:hover:text-accent-soft transition-colors"
+          className="text-sm text-accent dark:text-accent hover:text-accent-hover dark:hover:text-accent-hover transition-colors"
           onClick={() => setPicking(true)}
         >
           Edit

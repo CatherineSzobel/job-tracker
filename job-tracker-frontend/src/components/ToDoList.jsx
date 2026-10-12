@@ -31,7 +31,7 @@ export default function TodoList({ todos, loading, addTodo, updateTodo, deleteTo
       <button
         type="button"
         onClick={() => setShowDetails(true)}
-        className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-soft text-surface px-4 py-2 rounded-lg transition-colors"
+        className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg transition-colors"
       >
         <CalendarPlus size={18} aria-hidden="true" />
         Add to-do
@@ -57,7 +57,7 @@ export default function TodoList({ todos, loading, addTodo, updateTodo, deleteTo
         </ul>
       )}
 
-      <Link to="/todos" className="self-end text-sm text-accent hover:text-accent-soft transition-colors">
+      <Link to="/todos" className="self-end text-sm text-accent hover:text-accent-hover transition-colors">
         View all →
       </Link>
 

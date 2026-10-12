@@ -10,7 +10,7 @@ export default function LandingHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-4 px-4 sm:px-8 py-4 bg-light/85 dark:bg-dark/85 backdrop-blur border-b border-border dark:border-dark-subtle transition-colors">
-      <Link to="/" className="text-xl font-bold text-light-text dark:text-dark-text hover:text-accent dark:hover:text-accent-soft">
+      <Link to="/" className="text-xl font-bold text-light-text dark:text-dark-text hover:text-accent dark:hover:text-accent-hover">
         Job Tracker
       </Link>
       <nav className="flex items-center gap-2">
@@ -23,7 +23,7 @@ export default function LandingHeader() {
         >
           {darkMode ? <Sun size={18} /> : <Moon size={18} />}
         </button>
-        <Link to="/login" className="btn-toolbar">
+        <Link to="/login" className="btn-secondary">
           Log in
         </Link>
         <Link to="/register" className="btn-primary">

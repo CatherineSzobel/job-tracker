@@ -19,7 +19,7 @@ export default function ViewToggle({ view, onChange }) {
             aria-pressed={view === option.value}
             aria-label={option.label}
             title={option.label}
-            className={`w-9 h-9 flex items-center justify-center transition-colors ${view === option.value ? "bg-accent text-surface" : "text-light-muted dark:text-dark-muted hover:bg-light-soft dark:hover:bg-dark-subtle"}`}
+            className={`w-9 h-9 flex items-center justify-center transition-colors ${view === option.value ? "bg-accent text-white" : "text-light-muted dark:text-dark-muted hover:bg-light-soft dark:hover:bg-dark-subtle"}`}
           >
             <ViewIcon size={18} aria-hidden="true" />
           </button>

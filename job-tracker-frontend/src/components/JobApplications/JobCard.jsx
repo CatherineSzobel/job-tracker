@@ -63,7 +63,7 @@ export default function JobCard({ job, onRemove, selecting = false, selected = f
         ) : (
           <button
             onClick={() => requestArchive({ openTodosCount: job.open_todos_count ?? 0 })}
-            className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent-soft hover:bg-blue-200 dark:hover:bg-accent text-blue-800 dark:text-surface rounded transition-colors"
+            className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent-hover hover:bg-blue-200 dark:hover:bg-accent text-blue-800 dark:text-white rounded transition-colors"
           >
             Archive
           </button>
@@ -132,7 +132,7 @@ export default function JobCard({ job, onRemove, selecting = false, selected = f
         <div className="mt-5 flex flex-wrap gap-2">
           <button
             onClick={() => navigate(`/jobs/${job.id}`)}
-            className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent hover:bg-blue-200 dark:hover:bg-accent-soft text-blue-800 dark:text-surface rounded transition-colors flex-1"
+            className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent hover:bg-blue-200 dark:hover:bg-accent-hover text-blue-800 dark:text-white rounded transition-colors flex-1"
           >
             View Job
           </button>

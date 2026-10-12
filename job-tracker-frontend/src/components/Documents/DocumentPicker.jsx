@@ -74,7 +74,7 @@ export default function DocumentPicker({ attachedDocuments, onSave, onCancel, sa
           <DocumentForm mode="file" onSaved={addUploaded} onCancel={() => setUploading(false)} />
         </div>
       ) : (
-        <button onClick={() => setUploading(true)} className="text-sm text-accent hover:text-accent-soft transition-colors">
+        <button onClick={() => setUploading(true)} className="text-sm text-accent hover:text-accent-hover transition-colors">
           + Upload new
         </button>
       )}
@@ -91,7 +91,7 @@ export default function DocumentPicker({ attachedDocuments, onSave, onCancel, sa
           type="button"
           onClick={() => onSave([...selectedIds])}
           disabled={saving || uploading}
-          className="px-6 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+          className="px-6 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover transition disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save"}
         </button>

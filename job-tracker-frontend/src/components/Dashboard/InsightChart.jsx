@@ -7,9 +7,10 @@ const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyV
 
 // The chart only: the surrounding card and heading are in Dashboard
 export default function InsightChart({ stats }) {
-  const darkMode = useThemeStore((state) => state.darkMode); // re-render with the new colors on toggle
-  const textColor = cssVar(darkMode ? "--color-dark-text" : "--color-light-text");
-  const cardColor = cssVar(darkMode ? "--color-dark-soft" : "--color-light-soft");
+  // Re-render on toggle so the values below are read again (index.css swaps them with the .dark class)
+  useThemeStore((state) => state.darkMode);
+  const textColor = cssVar("--ink");
+  const cardColor = cssVar("--surface");
 
   const data = [
     ...JOB_STATUSES.map(({ value, label }) => ({

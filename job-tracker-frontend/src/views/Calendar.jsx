@@ -64,7 +64,7 @@ export default function Calendar() {
 
   return (
     <div className="max-w-6xl mx-auto mt-4 sm:mt-10 p-3 sm:p-4 rounded-2xl shadow-lg bg-light dark:bg-dark transition-colors">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 bg-accent text-surface rounded-lg p-2">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 bg-accent text-white rounded-lg p-2">
         Calendar
       </h1>
 
@@ -73,7 +73,7 @@ export default function Calendar() {
         <button
           onClick={prevMonth}
           aria-label="Previous month"
-          className="px-3 sm:px-4 py-2 bg-accent-soft text-surface rounded-lg hover:bg-accent transition"
+          className="px-3 sm:px-4 py-2 bg-accent-hover text-white rounded-lg hover:bg-accent transition"
         >
           <span className="sm:hidden">‹</span>
           <span className="hidden sm:inline">Previous</span>
@@ -86,7 +86,7 @@ export default function Calendar() {
         <button
           onClick={nextMonth}
           aria-label="Next month"
-          className="px-3 sm:px-4 py-2 bg-accent-soft text-surface rounded-lg hover:bg-accent transition"
+          className="px-3 sm:px-4 py-2 bg-accent-hover text-white rounded-lg hover:bg-accent transition"
         >
           <span className="sm:hidden">›</span>
           <span className="hidden sm:inline">Next</span>
@@ -115,7 +115,7 @@ export default function Calendar() {
               key={day.toISOString()}
               onClick={() => handleDayClick(day)}
               className={`border rounded-lg p-1 sm:p-3 h-14 sm:h-28 cursor-pointer flex flex-col justify-between transition
-                ${isToday ? "border-accent bg-accent-soft" : "border-border hover:bg-surface-soft"}`
+                ${isToday ? "border-accent bg-accent-hover" : "border-border hover:bg-surface-soft"}`
               }
             >
               <div className={`text-sm sm:text-base font-semibold ${isToday ? "text-secondary" : "text-primary-text"}`}>
@@ -127,7 +127,7 @@ export default function Calendar() {
                 {dayInterviews.length > 0 && (
                   <div className={`text-xs sm:text-sm font-medium ${isToday ? "text-secondary" : "text-primary-text"}`}>
                     {/* Phones: just the count; wider screens: "2 interviews" */}
-                    <span className="sm:hidden inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-accent text-surface">
+                    <span className="sm:hidden inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-accent text-white">
                       {dayInterviews.length}
                     </span>
                     <span className="hidden sm:inline">
@@ -137,7 +137,7 @@ export default function Calendar() {
                 )}
 
                 {dayTodos.length > 0 && (
-                  <div className={`flex items-center gap-1 text-xs sm:text-sm font-medium ${isToday ? "text-surface" : "text-emerald-700 dark:text-emerald-400"}`}>
+                  <div className={`flex items-center gap-1 text-xs sm:text-sm font-medium ${isToday ? "text-white" : "text-emerald-700 dark:text-emerald-400"}`}>
                     <SquareCheck size={14} aria-hidden="true" />
                     <span className="sm:hidden">{dayTodos.length}</span>
                     <span className="hidden sm:inline">
@@ -199,7 +199,7 @@ export default function Calendar() {
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-accent-soft text-surface rounded-lg hover:bg-accent transition"
+                className="px-4 py-2 bg-accent-hover text-white rounded-lg hover:bg-accent transition"
               >
                 Close
               </button>

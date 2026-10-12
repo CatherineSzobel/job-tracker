@@ -3,7 +3,7 @@ import { downloadDocument } from "./documentUtils";
 import { showToast } from "../../stores/useToastStore";
 
 const BUTTON_CLASSES =
-  "inline-flex items-center gap-1 text-sm text-accent dark:text-accent-muted hover:text-accent-soft transition-colors";
+  "inline-flex items-center gap-1 text-sm text-accent dark:text-accent-muted hover:text-accent-hover transition-colors";
 
 // Download for files, Open (new tab) for links
 export default function OpenDocumentButton({ document: item }) {

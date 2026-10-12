@@ -116,7 +116,7 @@ export default function JobForm({ setShowForm, newJob, saving, handleSubmit, han
         <button
           type="submit"
           disabled={saving}
-          className="bg-accent hover:bg-accent-soft text-white dark:text-dark-text py-2 px-6 rounded-lg transition-colors"
+          className="bg-accent hover:bg-accent-hover text-white dark:text-dark-text py-2 px-6 rounded-lg transition-colors"
         >
           {saving ? "Saving..." : "Add Application"}
         </button>

@@ -12,7 +12,7 @@ export default function ConfirmDialog() {
     <Modal title="Please confirm" onClose={() => answer(false)} maxWidth="max-w-md">
       <p className="whitespace-pre-line text-light-text dark:text-dark-text">{request.message}</p>
       <div className="flex justify-end gap-3 mt-6">
-        <button type="button" onClick={() => answer(false)} className="btn-toolbar">
+        <button type="button" onClick={() => answer(false)} className="btn-secondary">
           Cancel
         </button>
         <button

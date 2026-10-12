@@ -44,7 +44,7 @@ export default function QuestionBank() {
         <button
           type="button"
           onClick={() => setEditing("new")}
-          className="bg-accent hover:bg-accent-soft text-surface px-5 py-2 rounded-lg transition shadow shrink-0"
+          className="bg-accent hover:bg-accent-hover text-white px-5 py-2 rounded-lg transition shadow shrink-0"
         >
           + New question
         </button>

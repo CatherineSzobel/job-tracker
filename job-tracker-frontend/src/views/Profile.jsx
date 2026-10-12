@@ -58,7 +58,7 @@ export default function Profile() {
 
         {!editing && (
           <button
-            className="px-5 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition"
+            className="px-5 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover transition"
             onClick={() => setEditing(true)}
           >
             Edit Profile
@@ -132,7 +132,7 @@ export default function Profile() {
               Cancel
             </button>
             <button
-              className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition"
+              className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover transition"
               onClick={saveProfile}
               disabled={saving}
             >

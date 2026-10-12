@@ -73,7 +73,7 @@ export default function ComingUp({ todos, todosLoading }) {
         </ol>
       )}
 
-      <Link to="/calendar" className="block mt-4 text-right text-sm text-accent hover:text-accent-soft transition-colors">
+      <Link to="/calendar" className="block mt-4 text-right text-sm text-accent hover:text-accent-hover transition-colors">
         Open calendar →
       </Link>
     </div>

@@ -56,7 +56,7 @@ function NewTagForm({ onCreate }) {
       <button
         type="submit"
         disabled={!trimmedName || saving}
-        className="px-3 py-1 text-sm rounded-lg bg-accent text-surface hover:bg-accent-soft disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap transition-colors"
+        className="px-3 py-1 text-sm rounded-lg bg-accent text-white hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap transition-colors"
       >
         Create
       </button>

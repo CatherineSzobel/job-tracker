@@ -12,7 +12,7 @@ export default function GoalStats({ stats, dailyGoal, weeklyGoal }) {
             label: "This Week's Applications",
             currentKey: "weekApplications",
             goal: weeklyGoal,
-            barColor: (current, goal) => (current >= goal ? "bg-green-500 dark:bg-green-400" : "bg-accent-soft dark:bg-accent-soft"),
+            barColor: (current, goal) => (current >= goal ? "bg-green-500 dark:bg-green-400" : "bg-accent-hover dark:bg-accent-hover"),
         },
     ];
 

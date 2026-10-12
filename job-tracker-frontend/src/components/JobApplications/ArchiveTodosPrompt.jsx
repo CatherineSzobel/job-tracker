@@ -36,7 +36,7 @@ export default function ArchiveTodosPrompt({ openTodosCount, applicationCount = 
         <button
           type="button"
           onClick={() => onConfirm(false, remember)}
-          className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition"
+          className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover transition"
         >
           Keep them
         </button>

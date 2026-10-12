@@ -95,7 +95,7 @@ export default function Documents() {
         </div>
         <button
           onClick={() => setAddTab("file")}
-          className="inline-flex items-center justify-center gap-1 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition shrink-0"
+          className="inline-flex items-center justify-center gap-1 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover transition shrink-0"
         >
           <Plus size={16} /> Add
         </button>
@@ -158,7 +158,7 @@ export default function Documents() {
               <div className="flex flex-wrap items-center gap-4 shrink-0">
                 <OpenDocumentButton document={item} />
                 {item.archived_at ? (
-                  <button onClick={() => restoreDocument(item)} className="text-sm text-accent hover:text-accent-soft transition-colors">
+                  <button onClick={() => restoreDocument(item)} className="text-sm text-accent hover:text-accent-hover transition-colors">
                     Restore
                   </button>
                 ) : (

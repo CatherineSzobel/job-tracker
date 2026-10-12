@@ -113,7 +113,7 @@ export default function InterviewForm({
                 <button
                     type="submit"
                     disabled={saving}
-                    className="px-6 py-2 rounded-lg bg-accent dark:bg-accent text-white hover:bg-accent-soft dark:hover:bg-accent-soft transition"
+                    className="px-6 py-2 rounded-lg bg-accent dark:bg-accent text-white hover:bg-accent-hover dark:hover:bg-accent-hover transition"
                 >
                     {saving ? "Saving..." : editingInterview ? "Update Interview" : "Add Interview"}
                 </button>

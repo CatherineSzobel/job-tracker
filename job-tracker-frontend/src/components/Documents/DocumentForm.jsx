@@ -128,7 +128,7 @@ export default function DocumentForm({ mode, existingDocument, onSaved, onCancel
         <button
           type="submit"
           disabled={saving || (mode === "file" && !file)}
-          className="px-6 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+          className="px-6 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover transition disabled:opacity-50"
         >
           {saving ? "Saving..." : mode === "edit" ? "Save" : mode === "link" ? "Add link" : "Upload"}
         </button>

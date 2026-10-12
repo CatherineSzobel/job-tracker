@@ -184,7 +184,7 @@ export default function Application() {
 
           <button
             onClick={() => (editing ? saveChanges() : startEditing())}
-            className="text-sm font-medium text-accent hover:text-accent-soft transition-colors px-3 py-1"
+            className="text-sm font-medium text-accent hover:text-accent-hover transition-colors px-3 py-1"
           >
             {editing ? (saving ? "Saving…" : "Save") : "Edit"}
           </button>
@@ -278,7 +278,7 @@ export default function Application() {
           <h2 className="font-semibold text-accent dark:text-accent">Interviews</h2>
 
           <button
-            className="text-sm text-accent dark:text-accent hover:text-accent-soft dark:hover:text-accent-soft transition-colors"
+            className="text-sm text-accent dark:text-accent hover:text-accent-hover dark:hover:text-accent-hover transition-colors"
             onClick={() => setNewInterview({ ...EMPTY_INTERVIEW, job_id: job.id })}
           >
             + Add interview
