@@ -18,32 +18,32 @@ export default function ArchiveTodosPrompt({ openTodosCount, applicationCount = 
       onClose={onCancel}
       maxWidth="max-w-md"
     >
-      <p className="text-light-text dark:text-dark-text">{question}</p>
+      <p>{question}</p>
 
-      <label className="mt-4 flex items-center gap-2 text-sm text-light-muted dark:text-dark-muted">
-        <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
+      <label className="mt-2 flex min-h-12 items-center gap-3">
+        <input type="checkbox" className="size-5" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
         Remember my choice
       </label>
 
-      <div className="flex flex-wrap justify-end gap-3 pt-6">
+      <div className="flex flex-wrap justify-end gap-2 pt-4">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 rounded-lg bg-border dark:bg-dark-subtle text-light-text dark:text-dark-text hover:bg-light-muted/25 dark:hover:bg-dark-subtle/80 transition"
+          className="btn-secondary"
         >
           Cancel
         </button>
         <button
           type="button"
           onClick={() => onConfirm(false, remember)}
-          className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover transition"
+          className="btn-primary"
         >
           Keep them
         </button>
         <button
           type="button"
           onClick={() => onConfirm(true, remember)}
-          className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
+          className="btn-danger"
         >
           Delete to-dos
         </button>

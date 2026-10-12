@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { format } from "date-fns";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { differenceInCalendarDays, format } from "date-fns";
+import { Check, ChevronLeft, Pencil } from "lucide-react";
 import API from "../api/axios";
 import Tabs, { TabPanel } from "../components/UI/Tabs";
+import Card from "../components/UI/Card";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
 import InterviewForm from "../components/Interview/InterviewForm";
@@ -18,10 +20,19 @@ import { createBankQuestion } from "../components/InterviewPrep/useBankQuestions
 import { normaliseQuestion, toSavablePrep } from "../components/InterviewPrep/prepDocument";
 import { interviewTypeLabel } from "../constants/jobs";
 import { BANK_LINKS_MAX, EMPTY_BANK_QUESTION, PREP_LIMITS, PREP_TABS } from "../constants/interviewPrep";
+import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { useToastStore } from "../stores/useToastStore";
 import { toDateTimeInputValue } from "../utils/dateInput";
 
 const showToast = (message) => useToastStore.getState().showToast(message);
+
+// The pill above the title: "Today", "Tomorrow", "In 5 days", or "Done" once it's over
+const whenPill = (date) => {
+  if (date < new Date()) return { label: "Done", classes: "bg-subtle text-muted-2" };
+  const days = differenceInCalendarDays(date, new Date());
+  const label = days === 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
+  return { label, classes: "bg-accent text-white" };
+};
 
 // Keyed by id: opening another interview starts a fresh page, so a save still waiting goes to the
 // interview it was typed on
@@ -31,6 +42,12 @@ export default function Interview() {
 }
 
 function InterviewPage({ interviewId }) {
+  const { pathname } = useLocation();
+  // ?tab=prep or ?tab=debrief: the tab a link asked for ("Open prep", "Open debrief")
+  const [searchParams] = useSearchParams();
+  // Read once: the page is keyed by interview, and switching tabs afterwards doesn't touch the URL
+  const requestedTab = useRef(PREP_TABS.some((tab) => tab.id === searchParams.get("tab")) ? searchParams.get("tab") : null);
+  const setPageTitle = usePageTitleStore((state) => state.setPageTitle);
   const [interview, setInterview] = useState(null);
   // The prep document as shown, plus rating and debrief notes (saved together)
   const [prep, setPrep] = useState(null);
@@ -90,7 +107,8 @@ function InterviewPage({ interviewId }) {
         showPrep({ ...loaded.prep, rating: loaded.rating, debrief_notes: loaded.debrief_notes });
         setNotes(loaded.notes ?? "");
         showBankLinks(loaded.bank_questions ?? []);
-        setActiveTab(new Date(loaded.interview_date) > new Date() ? "prep" : "debrief");
+        // Without a requested tab: Prep before the interview, Debrief once it has started
+        setActiveTab(requestedTab.current ?? (new Date(loaded.interview_date) > new Date() ? "prep" : "debrief"));
         setLoadError(null);
       })
       .catch((err) => {
@@ -103,6 +121,12 @@ function InterviewPage({ interviewId }) {
         }
       });
   }, [interviewId, loadAttempt]);
+
+  // The breadcrumb shows the company instead of "Interview prep"
+  const companyName = interview?.job?.company_name;
+  useEffect(() => {
+    if (companyName) setPageTitle(pathname, companyName);
+  }, [pathname, companyName, setPageTitle]);
 
   const updatePrep = (changes) => {
     const nextPrep = { ...latestPrep.current, ...changes };
@@ -134,11 +158,16 @@ function InterviewPage({ interviewId }) {
   const bankActionFor = (question) => {
     if (!question.trim()) return null;
     if (linkedQuestionTexts.includes(normaliseQuestion(question))) {
-      return <span className="text-xs whitespace-nowrap text-green-600 dark:text-green-400">✓ In bank</span>;
+      return (
+        <span className="inline-flex items-center gap-1 text-sm font-semibold whitespace-nowrap text-offer-fg">
+          <Check size={16} strokeWidth={2.5} aria-hidden="true" />
+          In bank
+        </span>
+      );
     }
     if (bankLinks.length >= BANK_LINKS_MAX) return null;
     return (
-      <button type="button" onClick={() => setSavingToBank(question.trim())} className="btn-small whitespace-nowrap">
+      <button type="button" onClick={() => setSavingToBank(question.trim())} className="btn-soft whitespace-nowrap">
         Save to bank
       </button>
     );
@@ -176,11 +205,12 @@ function InterviewPage({ interviewId }) {
     }
   };
 
+
   if (loadError === "not_found") {
     return (
-      <div className="max-w-3xl mx-auto mt-10 text-center space-y-3">
-        <p className="text-light-text dark:text-dark-text">This interview doesn&apos;t exist or was deleted.</p>
-        <Link to="/interviews" className="text-accent hover:underline">
+      <div className="flex flex-col items-start gap-4">
+        <p>This interview doesn&apos;t exist or was deleted.</p>
+        <Link to="/interviews" className="font-semibold text-accent-text hover:underline">
           Back to interviews
         </Link>
       </div>
@@ -189,9 +219,9 @@ function InterviewPage({ interviewId }) {
 
   if (loadError === "failed") {
     return (
-      <div className="max-w-3xl mx-auto mt-10 text-center space-y-3">
-        <p className="text-light-text dark:text-dark-text">Couldn&apos;t load this interview.</p>
-        <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="btn-small">
+      <div className="flex flex-col items-start gap-4">
+        <p>Couldn&apos;t load this interview.</p>
+        <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="btn-secondary">
           Try again
         </button>
       </div>
@@ -202,107 +232,117 @@ function InterviewPage({ interviewId }) {
     return <PageLoader text="Loading interview..." />;
   }
 
+  const interviewDate = new Date(interview.interview_date);
+  const pill = whenPill(interviewDate);
+
   return (
-    <div className="max-w-5xl mx-auto mt-4 sm:mt-10 sm:px-4 space-y-6">
+    <div className="flex flex-col gap-6">
+      {/* Phones have no breadcrumb */}
+      <Link to="/interviews" className="inline-flex min-h-10 items-center gap-1 self-start font-semibold text-accent-text lg:hidden">
+        <ChevronLeft size={16} aria-hidden="true" />
+        All interviews
+      </Link>
+
       <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-light-text dark:text-dark-text">
-            <Link to={`/jobs/${interview.job.id}`} className="hover:underline">
-              {interview.job.company_name} · {interview.job.position}
-            </Link>
+        <div className="flex min-w-0 flex-col gap-2">
+          <p className={`self-start rounded-full px-2.5 text-sm/6 font-semibold ${pill.classes}`}>{pill.label}</p>
+          <h1 className="page-title break-words">
+            {interview.job.company_name} · {interview.job.position}
           </h1>
-          <p className="text-sm text-light-muted dark:text-dark-muted">
-            {format(new Date(interview.interview_date), "EEE d MMM yyyy, HH:mm")} · {interviewTypeLabel(interview.type)} ·{" "}
-            {interview.location || "Location TBD"}
-          </p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted">
+            <span>{format(interviewDate, "EEE d MMM yyyy, HH:mm")}</span>
+            <span>{interviewTypeLabel(interview.type)}</span>
+            <span>{interview.location || "Location to be confirmed"}</span>
+            <Link to={`/jobs/${interview.job.id}`} className="font-semibold text-accent-text hover:underline">
+              View application
+            </Link>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <SaveStatus status={saveState.status} onRetry={saveState.retry} />
-          <button type="button" onClick={startEditing} className="btn-small">
+          <button type="button" onClick={startEditing} className="btn-secondary">
+            <Pencil size={16} aria-hidden="true" />
             Edit
           </button>
         </div>
       </header>
 
-      <Tabs tabs={PREP_TABS} activeTab={activeTab} onChange={setActiveTab} idPrefix="interview" label="Interview prep" className="mb-6" />
+      <Tabs tabs={PREP_TABS} activeTab={activeTab} onChange={setActiveTab} idPrefix="interview" label="Interview sections" className="self-start" />
 
       {activeTab === "prep" ? (
-        <TabPanel idPrefix="interview" tabId="prep" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <section className="card">
-            <h2 className="card-title mb-4">Checklist</h2>
+        <TabPanel idPrefix="interview" tabId="prep" className="flex flex-wrap items-start gap-6">
+          <div className="flex min-w-0 flex-[3_1_480px] flex-col gap-6">
             <PrepChecklist items={prep.checklist} interviewType={interview.type} onChange={(checklist) => updatePrep({ checklist })} />
-          </section>
 
-          <section className="card">
-            <h2 className="card-title mb-4">People you&apos;re meeting</h2>
-            <PeopleList people={prep.people} onChange={(people) => updatePrep({ people })} />
-          </section>
+            <Card title="Questions to ask them">
+              <EditableList
+                items={prep.questions_to_ask}
+                onChange={(questionsToAsk) => updatePrep({ questions_to_ask: questionsToAsk })}
+                placeholder="Add a question…"
+                itemLabel="Question to ask"
+                maxItems={PREP_LIMITS.questionsToAsk}
+                numbered
+              />
+            </Card>
 
-          <section className="card">
-            <h2 className="card-title mb-4">Questions to ask them</h2>
-            <EditableList
-              items={prep.questions_to_ask}
-              onChange={(questionsToAsk) => updatePrep({ questions_to_ask: questionsToAsk })}
-              placeholder="Add a question"
-              itemLabel="Question to ask"
-              maxItems={PREP_LIMITS.questionsToAsk}
-            />
-          </section>
-
-          <section className="card lg:col-span-2">
-            <h2 className="card-title mb-4">Answers from your question bank</h2>
             <BankQuestionsSection links={bankLinks} onChange={updateBankLinks} />
-          </section>
+          </div>
 
-          <section className="card">
-            <h2 className="card-title mb-4">Prep notes</h2>
-            <textarea
-              value={notes}
-              onChange={changeNotes}
-              rows={8}
-              aria-label="Prep notes"
-              placeholder="Anything else to remember"
-              className="input-field"
-            />
-          </section>
+          <div className="flex min-w-0 flex-[2_1_320px] flex-col gap-6">
+            <PeopleList people={prep.people} onChange={(people) => updatePrep({ people })} />
+
+            <Card title="Prep notes">
+              <textarea
+                value={notes}
+                onChange={changeNotes}
+                rows={6}
+                aria-label="Prep notes"
+                placeholder="Anything else to remember"
+                className="input-field resize-y"
+              />
+            </Card>
+          </div>
         </TabPanel>
       ) : (
-        <TabPanel idPrefix="interview" tabId="debrief" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <section className="card">
-            <h2 className="card-title mb-4">How did it go?</h2>
-            <RatingInput value={prep.rating} onChange={(rating) => updatePrep({ rating })} />
-            <p className="mt-2 text-xs text-light-muted dark:text-dark-muted">1 = rough, 5 = great. Click your rating again to clear it.</p>
-          </section>
+        <TabPanel idPrefix="interview" tabId="debrief" className="flex max-w-[800px] flex-col gap-6">
+          <Card title="How did it go?">
+            <div className="flex flex-col gap-2">
+              <span className="font-semibold">Rating</span>
+              <RatingInput value={prep.rating} onChange={(rating) => updatePrep({ rating })} />
+              <p className="text-sm text-muted">1 = rough, 5 = great. Click your rating again to clear it.</p>
+            </div>
+            <div>
+              <label htmlFor="debrief-notes" className="input-label">
+                Debrief notes
+              </label>
+              <textarea
+                id="debrief-notes"
+                value={prep.debrief_notes ?? ""}
+                onChange={(event) => updatePrep({ debrief_notes: event.target.value })}
+                rows={6}
+                maxLength={10000}
+                placeholder="What went well, what to work on next time"
+                className="input-field resize-y"
+              />
+            </div>
+            <p className="text-sm text-muted">Changes save as you type.</p>
+          </Card>
 
-          <section className="card">
-            <h2 className="card-title mb-4">Questions they asked</h2>
+          <Card title="Questions they asked">
             <EditableList
               items={prep.questions_asked}
               onChange={(questionsAsked) => updatePrep({ questions_asked: questionsAsked })}
-              placeholder="Add a question they asked"
+              placeholder="Add a question they asked…"
               itemLabel="Question they asked"
               maxItems={PREP_LIMITS.questionsAsked}
               renderActions={bankActionFor}
             />
-          </section>
-
-          <section className="card lg:col-span-2">
-            <h2 className="card-title mb-4">Debrief notes</h2>
-            <textarea
-              value={prep.debrief_notes ?? ""}
-              onChange={(event) => updatePrep({ debrief_notes: event.target.value })}
-              rows={8}
-              maxLength={10000}
-              aria-label="Debrief notes"
-              placeholder="What went well, what to do differently"
-              className="input-field"
-            />
-          </section>
+          </Card>
         </TabPanel>
       )}
 
       {savingToBank !== null && (
-        <Modal title="Save to your question bank" onClose={() => setSavingToBank(null)} maxWidth="max-w-lg">
+        <Modal title="Save to your question bank" onClose={() => setSavingToBank(null)}>
           <BankQuestionForm
             initialValues={{ ...EMPTY_BANK_QUESTION, question: savingToBank }}
             submitLabel="Save to bank"

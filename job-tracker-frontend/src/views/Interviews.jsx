@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { format, isToday, isTomorrow } from "date-fns";
+import { Calendar, Plus } from "lucide-react";
 import { confirmAction } from "../stores/useConfirmStore";
 import API from "../api/axios";
 import InterviewForm from "../components/Interview/InterviewForm";
 import InterviewListCard from "../components/Interview/InterviewListCard";
 import { INTERVIEW_WHEN_OPTIONS, filterInterviews, sortOrderFor } from "../components/Interview/interviewFilters";
 import DateGroups from "../components/UI/DateGroups";
-import ListPageHeader from "../components/UI/ListPageHeader";
+import PageHeader from "../components/UI/PageHeader";
+import SearchInput from "../components/UI/SearchInput";
+import { SEGMENTED_TRACK_CLASSES, segmentClasses } from "../components/UI/segmentedClasses";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
 import SelectModeButtons from "../components/UI/SelectModeButtons";
@@ -19,6 +24,14 @@ import { toDateTimeInputValue } from "../utils/dateInput";
 import { countOf } from "../utils/plural";
 
 const showToast = (message) => useToastStore.getState().showToast(message);
+
+// "today at 10:30", "tomorrow at 10:30", "on Mon 12 Oct at 09:30"
+const whenLabel = (date) => {
+  const time = format(date, "HH:mm");
+  if (isToday(date)) return `today at ${time}`;
+  if (isTomorrow(date)) return `tomorrow at ${time}`;
+  return `on ${format(date, "EEE d MMM")} at ${time}`;
+};
 
 export default function Interviews() {
   const [interviews, setInterviews] = useState([]);
@@ -167,10 +180,15 @@ export default function Interviews() {
     setShowForm(false);
   };
 
+  // The header summary and the filled date block are about the soonest upcoming interview
+  const upcomingInterviews = filterInterviews(interviews, { when: "upcoming", search: "" });
+  const nextInterview = upcomingInterviews[0];
+
   const renderInterview = (interview) => (
     <InterviewListCard
       key={interview.id}
       interview={interview}
+      isNext={interview.id === nextInterview?.id}
       onEdit={startEdit}
       onDelete={deleteInterview}
       selecting={selecting}
@@ -179,19 +197,29 @@ export default function Interviews() {
     />
   );
 
+
   if (loading) {
     return <PageLoader text="Loading interviews..." />;
   }
 
+  const summary = nextInterview
+    ? `${upcomingInterviews.length} upcoming · next one ${whenLabel(new Date(nextInterview.interview_date))}`
+    : "Nothing coming up";
+  const openAddForm = () => {
+    resetForm();
+    setShowForm(true);
+  };
+
   return (
-    <div className={`max-w-6xl mx-auto mt-4 sm:mt-10 sm:px-4 transition-colors ${selecting ? "pb-28" : ""}`}>
-      <ListPageHeader
+    <div className={`flex flex-col gap-6 ${selecting ? "pb-32" : ""}`}>
+      <PageHeader
         title="Interviews"
-        count={visibleInterviews.length}
+        description={summary}
         actions={
           <>
             {interviews.length > 0 && (
               <>
+                <ViewToggle view={view} onChange={changeView} />
                 <SelectModeButtons
                   selecting={selecting}
                   visibleCount={visibleIds.length}
@@ -199,65 +227,55 @@ export default function Interviews() {
                   onSelectAll={() => selectMany(visibleIds)}
                   onCancel={exitSelecting}
                 />
-                <ViewToggle view={view} onChange={changeView} />
               </>
             )}
-            <button
-              type="button"
-              onClick={() => {
-                resetForm();
-                setShowForm(true);
-              }}
-              className="btn-primary shadow"
-            >
-              + Add Interview
+            <Link to="/calendar" className="btn-secondary">
+              <Calendar size={16} aria-hidden="true" />
+              Calendar
+            </Link>
+            <button type="button" onClick={openAddForm} className="btn-primary">
+              <Plus size={20} strokeWidth={2.5} aria-hidden="true" />
+              Add interview
             </button>
           </>
         }
       >
         {interviews.length > 0 && (
-          <>
-            <div role="group" aria-label="Show" className="flex rounded-md border border-light-muted dark:border-dark-subtle overflow-hidden self-start">
+          <div className="flex flex-wrap items-center gap-4">
+            <div role="group" aria-label="Which interviews" className={SEGMENTED_TRACK_CLASSES}>
               {INTERVIEW_WHEN_OPTIONS.map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setWhen(value)}
-                  aria-pressed={when === value}
-                  className={`px-4 py-2 text-sm transition-colors ${when === value ? "bg-accent text-white" : "text-light-text dark:text-dark-text hover:bg-light-soft dark:hover:bg-dark-subtle"}`}
-                >
+                <button key={value} type="button" onClick={() => setWhen(value)} aria-pressed={when === value} className={segmentClasses(when === value)}>
                   {label}
                 </button>
               ))}
             </div>
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search company or position"
-              aria-label="Search company or position"
-              className="input-field sm:max-w-xs"
-            />
-          </>
+            <SearchInput label="Search company or position" value={search} onChange={setSearch} className="flex-[1_1_280px]" />
+          </div>
         )}
-      </ListPageHeader>
+      </PageHeader>
 
       {loadFailed ? (
-        <div className="card text-center text-light-muted dark:text-dark-muted">
+        <p className="text-muted">
           Couldn&apos;t load your interviews.{" "}
-          <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="text-accent dark:text-accent-muted hover:underline">
+          <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="font-semibold text-accent-text hover:underline">
             Try again
           </button>
-        </div>
+        </p>
       ) : interviews.length === 0 ? (
-        <div className="card text-center text-light-muted dark:text-dark-muted">No interviews scheduled.</div>
-      ) : visibleInterviews.length === 0 ? (
-        <div className="card text-center text-light-muted dark:text-dark-muted">
-          No interviews match.{" "}
-          <button type="button" onClick={clearFilters} className="text-accent dark:text-accent-muted hover:underline">
-            Clear filters
+        <div className="flex flex-col items-start gap-4 rounded-2xl border border-line bg-surface p-6">
+          <p className="text-muted">No interviews yet.</p>
+          <button type="button" onClick={openAddForm} className="btn-primary">
+            <Plus size={20} strokeWidth={2.5} aria-hidden="true" />
+            Add interview
           </button>
         </div>
+      ) : visibleInterviews.length === 0 ? (
+        <p className="text-muted">
+          No interviews match.{" "}
+          <button type="button" onClick={clearFilters} className="font-semibold text-accent-text hover:underline">
+            Clear filters
+          </button>
+        </p>
       ) : view === "grouped" ? (
         <DateGroups
           // A new filter starts the sections fresh, so its first year and month are open again
@@ -270,11 +288,11 @@ export default function Interviews() {
           onSelectAll={selecting ? (groupInterviews) => selectMany(groupInterviews.map((interview) => interview.id)) : undefined}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{visibleInterviews.map(renderInterview)}</div>
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,340px),1fr))] gap-4">{visibleInterviews.map(renderInterview)}</ul>
       )}
 
       {showForm && (
-        <Modal title={editingInterview ? "Edit Interview" : "Add New Interview"} onClose={resetForm}>
+        <Modal title={editingInterview ? "Edit interview" : "Add interview"} onClose={resetForm}>
           <InterviewForm
             handleSubmit={handleSubmit}
             handleChange={handleChange}

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { ChevronRight } from "lucide-react";
+import PageHeader from "../components/UI/PageHeader";
 import PageLoader from "../components/UI/PageLoader";
 import TodoInput from "../components/Todo/TodoInput";
 import TodoItem from "../components/Todo/TodoItem";
@@ -18,9 +20,8 @@ const SECTIONS = [
   { state: "overdue", title: "Overdue" },
   { state: "today", title: "Today" },
   { state: "upcoming", title: "Upcoming" },
-  { state: "none", title: "No date" },
+  { state: "none", title: "No due date" },
 ];
-
 
 export default function Todos() {
   const { todos, loading, addTodo, updateTodo, deleteTodo } = useTodos();
@@ -46,39 +47,30 @@ export default function Todos() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto mt-4 sm:mt-10 sm:px-4 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-light-text dark:text-dark-text mb-2">To-dos</h1>
-        <p className="text-light-muted dark:text-dark-muted">Follow-ups for your applications, and anything else on your list.</p>
-      </div>
+    <div className="mx-auto flex w-full max-w-[960px] flex-col gap-6">
+      <PageHeader title="To-dos" description="Follow-ups for your applications, and anything else on your list." />
 
-      <div className="bg-light dark:bg-dark-soft rounded-xl p-4 shadow-sm border border-border dark:border-dark-subtle transition-colors">
+      <div className="card">
         <TodoInput draft={draft} onDraftChange={setDraft} onAdd={addTodo} />
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div role="group" aria-label="Filter to-dos" className="flex flex-wrap gap-2">
         {FILTERS.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setFilter(value)}
-            className={filterChipClasses(filter === value)}
-          >
+          <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className={filterChipClasses(filter === value)}>
             {label}
           </button>
         ))}
       </div>
 
-      {openTodos.length === 0 && (
-        <p className="text-sm text-light-muted dark:text-dark-muted">Nothing to do. Add a follow-up above.</p>
-      )}
+      {openTodos.length === 0 && <p className="text-muted">Nothing to do. Add a follow-up above.</p>}
 
       {SECTIONS.map(({ state, title }) => {
         const sectionTodos = openTodos.filter((todo) => describeDueDate(todo.due_date).state === state);
         if (sectionTodos.length === 0) return null;
 
         return (
-          <section key={state}>
-            <h2 className={`text-sm font-semibold uppercase tracking-wide mb-2 ${state === "overdue" ? "text-red-600 dark:text-red-400" : "text-light-muted dark:text-dark-muted"}`}>
+          <section key={state} aria-label={title} className="flex flex-col gap-2">
+            <h2 className={`group-label ${state === "overdue" ? "text-rejected-fg" : ""}`}>
               {title} ({sectionTodos.length})
             </h2>
             <ul className="flex flex-col gap-2">{sectionTodos.map(renderItem)}</ul>
@@ -87,13 +79,15 @@ export default function Todos() {
       })}
 
       {doneTodos.length > 0 && (
-        <section>
+        <section className="flex flex-col gap-2">
           <button
+            type="button"
             onClick={() => setShowDone((shown) => !shown)}
             aria-expanded={showDone}
-            className="text-sm font-semibold uppercase tracking-wide mb-2 text-light-muted dark:text-dark-muted hover:text-accent transition-colors"
+            className="group-label inline-flex min-h-10 items-center gap-1 self-start hover:text-ink"
           >
-            {showDone ? "▾" : "▸"} Done ({doneTodos.length})
+            <ChevronRight size={16} aria-hidden="true" className={`transition-transform ${showDone ? "rotate-90" : ""}`} />
+            Done ({doneTodos.length})
           </button>
           {showDone && <ul className="flex flex-col gap-2">{doneTodos.map(renderItem)}</ul>}
         </section>

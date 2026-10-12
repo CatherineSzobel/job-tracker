@@ -49,7 +49,7 @@ export default function TagInput({
         onChange={(event) => setName(event.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="input-field py-1 text-sm"
+        className="input-field min-w-0 flex-1"
       />
       <datalist id={listId}>
         {tags
@@ -61,7 +61,7 @@ export default function TagInput({
       <button
         type="submit"
         disabled={!trimmedName || saving}
-        className="px-3 py-1 text-sm rounded-lg bg-accent text-white hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap transition-colors"
+        className="btn-secondary shrink-0"
       >
         {willCreate ? "Create" : submitLabel}
       </button>

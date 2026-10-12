@@ -2,7 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { groupByDate } from "../../utils/groupByDate";
 import { countOf } from "../../utils/plural";
 
-const GRID_CLASSES = "mt-2 mb-2 grid gap-4 md:grid-cols-2 xl:grid-cols-3";
+const GRID_CLASSES = "my-2 grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4";
 const SECTION_CLASSES = "group/year rounded-2xl border border-line bg-surface p-2 sm:p-4";
 // list-none + the webkit rule hide the browser's own triangle; ours rotates instead
 const SUMMARY_CLASSES = "list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none flex min-h-12 flex-wrap items-center gap-2 rounded-lg px-2 text-ink transition-colors hover:bg-soft";
@@ -10,7 +10,7 @@ const COUNT_CLASSES = "rounded-full bg-subtle px-2 text-sm/6 font-semibold text-
 
 // Collapsible year → month sections (native <details>); the first year and its first month start open.
 // items are grouped by getDateString(item) in `order` ("newest" or "oldest" first, see groupByDate).
-// itemLabel: "application", "interview", … for the counts. renderItem(item) draws a card.
+// itemLabel: "application", "interview", … for the counts. renderItem(item) draws one card (an <li>).
 // onSelectAll(items), when given (select mode), adds a "Select all" button to each month header.
 export default function DateGroups({ items, getDateString, order = "newest", itemLabel, renderItem, onSelectAll }) {
   const groups = groupByDate(items, getDateString, order);
@@ -44,7 +44,7 @@ export default function DateGroups({ items, getDateString, order = "newest", ite
                 <span className={COUNT_CLASSES}>{countLabel(undated.items.length)}</span>
                 {selectAllButton(undated.items)}
               </summary>
-              <div className={GRID_CLASSES}>{undated.items.map(renderItem)}</div>
+              <ul className={GRID_CLASSES}>{undated.items.map(renderItem)}</ul>
             </details>
           );
         }
@@ -67,7 +67,7 @@ export default function DateGroups({ items, getDateString, order = "newest", ite
                     <span className={COUNT_CLASSES}>{countLabel(month.items.length)}</span>
                     {selectAllButton(month.items)}
                   </summary>
-                  <div className={GRID_CLASSES}>{month.items.map(renderItem)}</div>
+                  <ul className={GRID_CLASSES}>{month.items.map(renderItem)}</ul>
                 </details>
               ))}
             </div>

@@ -242,8 +242,9 @@ class JobApplicationService
             ...$statusCounts,
             'todayApplications' => $jobs->clone()->whereDate('applied_date', '>=', $today)->count(),
             'weekApplications' => $jobs->clone()->whereDate('applied_date', '>=', $today->copy()->startOfWeek())->count(),
+            // From now on: an interview earlier today is over, not upcoming
             'upcomingInterviews' => Interview::whereHas('job', fn ($query) => $query->whereBelongsTo($user))
-                ->where('interview_date', '>=', $today)
+                ->where('interview_date', '>=', Carbon::now())
                 ->count(),
         ];
     }

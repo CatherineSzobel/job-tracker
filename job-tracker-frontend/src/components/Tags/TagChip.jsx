@@ -1,27 +1,33 @@
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { TAG_COLOR_CLASSES } from "../../constants/tags";
 
-const BASE_CLASSES = "inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full whitespace-nowrap transition-opacity";
+const BASE_CLASSES = "inline-flex items-center gap-1 rounded-full font-semibold whitespace-nowrap";
 
-// A coloured tag pill. onRemove adds a ✕; onClick turns the whole chip into a toggle
-// (active = on) for filters.
-export default function TagChip({ tag, onRemove, onClick, active = true }) {
-  const classes = `${BASE_CLASSES} ${TAG_COLOR_CLASSES[tag.color]} ${active ? "" : "opacity-40 hover:opacity-70"}`;
+// A coloured tag pill (24px). onRemove adds a ×. onClick makes it a 32px filter toggle: the chosen
+// one (active) gets a check and an accent ring, so the choice isn't shown by colour alone.
+export default function TagChip({ tag, onRemove, onClick, active = false }) {
+  const colourClasses = TAG_COLOR_CLASSES[tag.color] ?? TAG_COLOR_CLASSES.slate;
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} aria-pressed={active} className={classes}>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={active}
+        className={`${BASE_CLASSES} h-8 px-3 text-sm ${colourClasses} ${active ? "ring-2 ring-accent-text" : "hover:ring-1 hover:ring-input"}`}
+      >
+        {active && <Check size={14} strokeWidth={3} aria-hidden="true" />}
         {tag.name}
       </button>
     );
   }
 
   return (
-    <span className={classes}>
+    <span className={`${BASE_CLASSES} h-6 text-sm ${onRemove ? "pr-1 pl-2.5" : "px-2.5"} ${colourClasses}`}>
       {tag.name}
       {onRemove && (
-        <button type="button" onClick={onRemove} aria-label={`Remove tag ${tag.name}`} className="hover:opacity-70">
-          <X size={12} />
+        <button type="button" onClick={onRemove} aria-label={`Remove tag ${tag.name}`} className="rounded-full p-0.5 hover:bg-black/10">
+          <X size={14} aria-hidden="true" />
         </button>
       )}
     </span>

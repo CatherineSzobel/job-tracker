@@ -10,7 +10,7 @@ export default function CardTags({ tags = [], addedTags = [], removedTagIds = []
   if (tags.length === 0 && newTags.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-1 mt-2">
+    <div className="flex flex-wrap items-center gap-2">
       {tags.slice(0, CARD_TAG_LIMIT).map((tag) =>
         removedTagIds.includes(tag.id) ? (
           <span key={tag.id} title={NOT_SAVED_TITLE} className="line-through opacity-50">
@@ -21,10 +21,10 @@ export default function CardTags({ tags = [], addedTags = [], removedTagIds = []
         )
       )}
       {tags.length > CARD_TAG_LIMIT && (
-        <span className="text-xs text-light-muted dark:text-dark-muted">+{tags.length - CARD_TAG_LIMIT}</span>
+        <span className="text-sm font-semibold text-muted">+{tags.length - CARD_TAG_LIMIT}</span>
       )}
       {newTags.map((tag) => (
-        <span key={`new-${tag.id}`} title={NOT_SAVED_TITLE} className="rounded-full outline-1 outline-dashed outline-offset-1 outline-accent">
+        <span key={`new-${tag.id}`} title={NOT_SAVED_TITLE} className="rounded-full outline-2 outline-dashed outline-offset-1 outline-accent-text">
           <TagChip tag={tag} />
         </span>
       ))}

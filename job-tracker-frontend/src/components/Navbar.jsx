@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronRight, LogOut } from "lucide-react";
 import { useAuthStore } from "../stores/useAuthStore";
+import { usePageTitle } from "../stores/usePageTitleStore";
 import { ACCOUNT_LINKS, getBreadcrumb } from "../constants/navigation";
 import Avatar from "./UI/Avatar";
 import Menu, { MenuDivider, MenuItem } from "./UI/Menu";
@@ -40,7 +41,9 @@ function AccountMenu({ user }) {
 export default function Navbar() {
   const user = useAuthStore((state) => state.user);
   const { pathname } = useLocation();
-  const { title, parent } = getBreadcrumb(pathname);
+  const breadcrumb = getBreadcrumb(pathname);
+  const title = usePageTitle(pathname) ?? breadcrumb.title;
+  const { parent } = breadcrumb;
 
   return (
     <header className="hidden items-center justify-between gap-4 border-b border-line bg-surface px-8 py-4 lg:flex">

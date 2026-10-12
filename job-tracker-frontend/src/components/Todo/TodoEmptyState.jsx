@@ -1,7 +1,3 @@
 export default function TodoEmptyState() {
-  return (
-    <div className="text-sm text-light-muted dark:text-dark-muted text-center py-6 transition-colors">
-      🎯 No todos yet. Add one to stay on track.
-    </div>
-  );
+  return <p className="py-4 text-center text-muted">No to-dos yet. Add one to stay on track.</p>;
 }

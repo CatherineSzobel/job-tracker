@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu as MenuIcon, X } from "lucide-react";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useThemeStore } from "../stores/useThemeStore";
+import { usePageTitle } from "../stores/usePageTitleStore";
 import { ACCOUNT_LINKS, NAV_LINKS, SECONDARY_LINKS, getPageTitle, isLinkActive } from "../constants/navigation";
 import Avatar from "./UI/Avatar";
 import Switch from "./UI/Switch";
@@ -25,6 +26,7 @@ export default function PhoneBar() {
   const darkMode = useThemeStore((state) => state.darkMode);
   const toggleDarkMode = useThemeStore((state) => state.toggleDarkMode);
   const logout = useLogout();
+  const pageTitle = usePageTitle(pathname) ?? getPageTitle(pathname);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -71,7 +73,7 @@ export default function PhoneBar() {
         >
           {menuOpen ? <X size={24} aria-hidden="true" /> : <MenuIcon size={24} aria-hidden="true" />}
         </button>
-        <span className="min-w-0 flex-1 truncate text-lg font-semibold">{getPageTitle(pathname)}</span>
+        <span className="min-w-0 flex-1 truncate text-lg font-semibold">{pageTitle}</span>
         {user && (
           <Link to="/profile" aria-label="Your profile" className="inline-flex size-12 shrink-0 items-center justify-center rounded-full">
             <Avatar name={user.name} />

@@ -1,81 +1,90 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { Building2, CalendarDays, Phone, Square, Video } from "lucide-react";
+import { ArrowRight, CalendarDays, MapPin, Phone, SquareCheck, Video } from "lucide-react";
+import Card, { CardLink } from "../UI/Card";
 import PageLoader from "../UI/PageLoader";
 import { COMING_UP_DAYS } from "../../constants/dashboard";
 import { interviewTypeLabel } from "../../constants/jobs";
-import { describeDueDate } from "../../utils/dueDate";
-import useComingUp from "./useComingUp";
+import { describeDueDate, formatDueDate } from "../../utils/dueDate";
 
-const LINK_CLASSES = "text-accent dark:text-accent-muted hover:underline";
-const ROW_CLASSES = "flex flex-wrap items-center gap-x-2";
-const ROW_ICON_CLASSES = "shrink-0 text-light-muted dark:text-dark-muted";
+const INTERVIEW_TYPE_ICONS = { phone: Phone, online: Video, onsite: MapPin };
 
-const INTERVIEW_TYPE_ICONS = { phone: Phone, online: Video, onsite: Building2 };
+// "Today", "Tomorrow · Fri 9 Oct", "Sun 11 Oct"
+const dayLabel = (date) => {
+  const { label } = describeDueDate(date);
+  return label === "Tomorrow" ? `${label} · ${formatDueDate(date)}` : label;
+};
 
-// This week's interviews and to-dos, by day ("Today", "Tomorrow", "Thu 9 Oct"). Read-only:
-// to-dos are ticked in Quick to-dos, which shares its to-do list with this card.
-export default function ComingUp({ todos, todosLoading }) {
-  const { days, loading: interviewsLoading } = useComingUp(todos);
-
+// One agenda line: a type icon in a square, the title with its application link under it, and the time
+function AgendaRow({ icon, title, linkTo, linkText, time }) {
+  const Icon = icon;
   return (
-    <div className="card">
-      <h2 className="card-title mb-4">
-        <CalendarDays size={18} aria-hidden="true" />
-        Coming up
-      </h2>
+    <li className="flex items-center gap-4 rounded-xl bg-soft px-4 py-3">
+      <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-surface text-accent-text">
+        <Icon size={20} aria-hidden="true" />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="font-semibold break-words">{title}</span>
+        {linkTo && (
+          <Link to={linkTo} className="truncate text-sm text-accent-text hover:underline">
+            {linkText}
+          </Link>
+        )}
+      </div>
+      {time && <span className="shrink-0 font-semibold text-muted tabular-nums">{time}</span>}
+    </li>
+  );
+}
 
-      {interviewsLoading || todosLoading ? (
+// This week's interviews and to-dos, by day. Read-only: to-dos are ticked in Quick to-dos, which shares
+// its to-do list with this card. days / loading come from useComingUp (the Dashboard also counts them).
+export default function ComingUp({ days, loading }) {
+  return (
+    <Card
+      title="Coming up"
+      icon={CalendarDays}
+      action={
+        <CardLink to="/calendar">
+          Calendar
+          <ArrowRight size={16} aria-hidden="true" />
+        </CardLink>
+      }
+    >
+      {loading ? (
         <PageLoader text="Loading your week..." compact />
       ) : days.length === 0 ? (
-        <p className="text-sm text-light-muted dark:text-dark-muted">Nothing in the next {COMING_UP_DAYS} days.</p>
+        <p className="text-muted">Nothing in the next {COMING_UP_DAYS} days.</p>
       ) : (
         <ol className="flex flex-col gap-4">
           {days.map((day) => (
-            <li key={day.date}>
-              <h3 className="text-sm font-semibold uppercase tracking-wide mb-1 text-light-muted dark:text-dark-muted">
-                {describeDueDate(day.date).label}
-              </h3>
-              <ul className="flex flex-col gap-1 text-sm text-light-text dark:text-dark-text">
-                {day.interviews.map((interview) => {
-                  const TypeIcon = INTERVIEW_TYPE_ICONS[interview.type] ?? CalendarDays;
-                  return (
-                    <li key={`interview-${interview.id}`} className={ROW_CLASSES}>
-                      <TypeIcon size={14} aria-hidden="true" className={ROW_ICON_CLASSES} />
-                      <span className="font-medium">{format(interview.startsAt, "HH:mm")}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{interviewTypeLabel(interview.type)}</span>
-                      <span aria-hidden="true">·</span>
-                      {/* Before an interview its prep page is where you go; the job is linked from there */}
-                      <Link to={`/interviews/${interview.id}`} className={LINK_CLASSES}>
-                        {interview.job ? `${interview.job.company_name} – ${interview.job.position}` : "Interview"}
-                      </Link>
-                    </li>
-                  );
-                })}
+            <li key={day.date} className="flex flex-col gap-2">
+              <h3 className="group-label">{dayLabel(day.date)}</h3>
+              <ul className="flex flex-col gap-2">
+                {day.interviews.map((interview) => (
+                  // Before an interview its prep page is where you go; the job is linked from there
+                  <AgendaRow
+                    key={`interview-${interview.id}`}
+                    icon={INTERVIEW_TYPE_ICONS[interview.type] ?? CalendarDays}
+                    title={`${interviewTypeLabel(interview.type)} interview`}
+                    linkTo={`/interviews/${interview.id}`}
+                    linkText={interview.job ? `${interview.job.company_name} · ${interview.job.position}` : "Open prep"}
+                    time={format(interview.startsAt, "HH:mm")}
+                  />
+                ))}
                 {day.todos.map((todo) => (
-                  <li key={`todo-${todo.id}`} className={ROW_CLASSES}>
-                    <Square size={14} aria-hidden="true" className={ROW_ICON_CLASSES} />
-                    <span className="break-words">{todo.text}</span>
-                    {todo.job_application && (
-                      <>
-                        <span aria-hidden="true">·</span>
-                        <Link to={`/jobs/${todo.job_application.id}`} className={LINK_CLASSES}>
-                          {todo.job_application.company_name}
-                        </Link>
-                      </>
-                    )}
-                  </li>
+                  <AgendaRow
+                    key={`todo-${todo.id}`}
+                    icon={SquareCheck}
+                    title={todo.text}
+                    linkTo={todo.job_application && `/jobs/${todo.job_application.id}`}
+                    linkText={todo.job_application && `${todo.job_application.company_name} · ${todo.job_application.position}`}
+                  />
                 ))}
               </ul>
             </li>
           ))}
         </ol>
       )}
-
-      <Link to="/calendar" className="block mt-4 text-right text-sm text-accent hover:text-accent-hover transition-colors">
-        Open calendar →
-      </Link>
-    </div>
+    </Card>
   );
 }

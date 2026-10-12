@@ -1,24 +1,27 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { EllipsisVertical, Plus } from "lucide-react";
 import API from "../api/axios";
 import BatchBar from "../components/JobApplications/BatchBar";
 import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
+import JobDateGroups from "../components/JobApplications/JobDateGroups";
 import useArchiveWithTodos, { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
 import useBatchChanges from "../components/JobApplications/useBatchChanges";
 import useSendBatch from "../components/JobApplications/useSendBatch";
 import ManageTagsModal from "../components/Tags/ManageTagsModal";
 import TagChip from "../components/Tags/TagChip";
 import useTags from "../components/Tags/useTags";
-import DateGroups from "../components/UI/DateGroups";
-import ListPageHeader from "../components/UI/ListPageHeader";
+import Menu, { MenuItem } from "../components/UI/Menu";
+import PageHeader from "../components/UI/PageHeader";
+import SearchInput from "../components/UI/SearchInput";
 import PageLoader from "../components/UI/PageLoader";
 import Modal from "../components/UI/Modal";
 import SelectModeButtons from "../components/UI/SelectModeButtons";
 import ViewToggle from "../components/UI/ViewToggle";
 import useSavedView from "../components/UI/useSavedView";
 import useSelection from "../components/UI/useSelection";
+import { filterChipClasses, filterChipCountClasses } from "../components/UI/filterChipClasses";
 import { EMPTY_JOB, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
 import { confirmAction } from "../stores/useConfirmStore";
 import { useToastStore } from "../stores/useToastStore";
@@ -26,19 +29,17 @@ import { countOf } from "../utils/plural";
 
 export default function Applications() {
   const fileInputRef = useRef(null);
-  const dropdownRef = useRef(null);
-  const navigate = useNavigate();
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState([]);
+  const [search, setSearch] = useState("");
   const [showManageTags, setShowManageTags] = useState(false);
   const [view, changeView] = useSavedView("applications-view");
   const { tags, reloadTags, createTag, updateTag, deleteTag } = useTags();
@@ -62,16 +63,6 @@ export default function Applications() {
   useEffect(() => {
     loadJobs().finally(() => setLoading(false));
   }, [loadJobs]);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleChange = (e) => {
     setNewJob({ ...newJob, [e.target.name]: e.target.value });
@@ -99,7 +90,6 @@ export default function Applications() {
     );
 
   const openManageTags = () => {
-    setShowMenu(false);
     reloadTags();
     setShowManageTags(true);
   };
@@ -116,11 +106,15 @@ export default function Applications() {
     }
   };
 
+  // Matches position, company or location, ignoring case and surrounding spaces
+  const searchText = search.trim().toLowerCase();
   const filteredJobs = jobs.filter((job) => {
+    const searchMatch =
+      !searchText || [job.position, job.company_name, job.location].some((value) => value?.toLowerCase().includes(searchText));
     const statusMatch = statusFilter === "all" || job.status === statusFilter;
     const priorityMatch = priorityFilter === "all" || job.priority === priorityFilter;
     const tagMatch = tagFilter.every((tagId) => job.tags?.some((tag) => tag.id === tagId));
-    return statusMatch && priorityMatch && tagMatch;
+    return searchMatch && statusMatch && priorityMatch && tagMatch;
   });
 
   const visibleIds = filteredJobs.map((job) => job.id);
@@ -215,16 +209,23 @@ export default function Applications() {
 
   // After every hook (useArchiveWithTodos above is one), so they run on every render
   if (loading) {
-    return <PageLoader text="Loading Applications..."/>
+    return <PageLoader text="Loading applications..." />;
   }
 
+  // Status chips count every active application, whatever the other filters are
+  const statusCounts = Object.fromEntries(JOB_STATUSES.map(({ value }) => [value, jobs.filter((job) => job.status === value).length]));
+  const statusChips = [{ value: "all", label: "All", count: jobs.length }, ...JOB_STATUSES.map((status) => ({ ...status, count: statusCounts[status.value] }))];
+  const isFiltered = filteredJobs.length !== jobs.length;
+
   return (
-    <div className={`max-w-6xl mx-auto mt-4 sm:mt-10 sm:px-4 transition-colors ${selecting ? "pb-28" : ""}`}>
-      <ListPageHeader
-        title="Job Applications"
-        count={jobs.length}
+    <div className={`flex flex-col gap-6 ${selecting ? "pb-32" : ""}`}>
+      <PageHeader
+        title="Applications"
+        description={`${countOf(jobs.length, "active application")}${isFiltered ? ` · ${filteredJobs.length} shown` : ""}`}
         actions={
           <>
+            <ViewToggle view={view} onChange={changeView} />
+
             <SelectModeButtons
               selecting={selecting}
               visibleCount={visibleIds.length}
@@ -233,123 +234,99 @@ export default function Applications() {
               onCancel={exitSelecting}
             />
 
-            <ViewToggle view={view} onChange={changeView} />
-
-            <button type="button" className="btn-primary shadow" onClick={() => setShowForm(true)}>
-              + Add Application
+            <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
+              <Plus size={20} strokeWidth={2.5} aria-hidden="true" />
+              Add application
             </button>
 
-            {/* More: archives, tags, import and export */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                type="button"
-                onClick={() => setShowMenu((s) => !s)}
-                aria-label="More"
-                className="w-9 h-9 flex items-center justify-center font-extrabold hover:border rounded-lg text-accent dark:text-accent-muted transition-colors"
-              >
-                ⋮
-              </button>
-  
-              {showMenu && (
-                <div className="absolute right-0 top-11 w-40 rounded-lg shadow-lg border overflow-hidden z-50 bg-surface dark:bg-dark-soft border-border dark:border-dark-subtle text-primary dark:text-dark-text transition-colors">
-                  <button
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
-                    onClick={() => navigate("/archives")}
-                  >
-                    Archives
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
-                    onClick={openManageTags}
-                  >
-                    Manage tags
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
-                    onClick={exportJobs}
-                  >
-                    Export Excel
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 text-sm disabled:opacity-50 hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors"
-                    onClick={() => fileInputRef.current.click()}
-                    disabled={importing}
-                  >
-                    {importing ? "Importing…" : "Import Excel"}
-                  </button>
-                </div>
-              )}
-  
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files.length > 0) {
-                    importJobs(e.target.files[0]);
-                    e.target.value = null;
-                  }
-                }}
-              />
-            </div>
+            <Menu label="More actions" buttonClassName="btn-secondary w-12 px-0" buttonContent={<EllipsisVertical size={20} aria-hidden="true" />} width="w-60">
+              <MenuItem onClick={() => fileInputRef.current.click()}>{importing ? "Importing…" : "Import from Excel"}</MenuItem>
+              <MenuItem onClick={exportJobs}>Export to Excel</MenuItem>
+              <MenuItem onClick={openManageTags}>Manage tags</MenuItem>
+              <MenuItem to="/archives">View archive</MenuItem>
+            </Menu>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files.length > 0) {
+                  importJobs(e.target.files[0]);
+                  e.target.value = null;
+                }
+              }}
+            />
           </>
         }
       >
-        <select
-          aria-label="Status"
-          className="input-field sm:w-auto"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="all">All statuses</option>
-          {JOB_STATUSES.map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
+        {/* Filters: search, status chips with counts, then priority and tags */}
+        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
+          <SearchInput label="Search position, company or location" value={search} onChange={setSearch} />
 
-        <select
-          aria-label="Priority"
-          className="input-field sm:w-auto"
-          value={priorityFilter}
-          onChange={(e) => setPriorityFilter(e.target.value)}
-        >
-          <option value="all">All priorities</option>
-          {PRIORITIES.map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
-
-        {tags.length > 0 && (
-          <div role="group" aria-label="Tags" className="flex flex-wrap items-center gap-1">
-            <span className="mr-1 text-sm text-light-muted dark:text-dark-muted">Tags</span>
-            {tags.map((tag) => (
-              <TagChip key={tag.id} tag={tag} active={tagFilter.includes(tag.id)} onClick={() => toggleTagFilter(tag.id)} />
-            ))}
+          <div role="group" aria-label="Filter by status" className="flex flex-wrap gap-2">
+            {statusChips.map(({ value, label, count }) => {
+              const isActive = statusFilter === value;
+              return (
+                <button key={value} type="button" aria-pressed={isActive} onClick={() => setStatusFilter(value)} className={filterChipClasses(isActive)}>
+                  {label}
+                  <span className={filterChipCountClasses(isActive)}>{count}</span>
+                </button>
+              );
+            })}
           </div>
-        )}
-      </ListPageHeader>
 
-      {/* JOB LIST */}
-      {filteredJobs.length === 0 ? (
-        <p className="text-center text-muted dark:text-dark-muted">No applications found.</p>
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="inline-flex items-center gap-2 font-semibold">
+              Priority
+              <select
+                className="input-field min-h-10 w-auto py-1 font-normal"
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+              >
+                <option value="all">All</option>
+                {PRIORITIES.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </label>
+
+            {tags.length > 0 && (
+              <div role="group" aria-label="Filter by tag" className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold">Tags</span>
+                {tags.map((tag) => (
+                  <TagChip key={tag.id} tag={tag} active={tagFilter.includes(tag.id)} onClick={() => toggleTagFilter(tag.id)} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </PageHeader>
+
+      {jobs.length === 0 ? (
+        <div className="flex flex-col items-start gap-4 rounded-2xl border border-line bg-surface p-6">
+          <p className="text-muted">No applications yet.</p>
+          <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
+            <Plus size={20} strokeWidth={2.5} aria-hidden="true" />
+            Add application
+          </button>
+        </div>
+      ) : filteredJobs.length === 0 ? (
+        <p className="text-muted">No applications match these filters.</p>
       ) : view === "grouped" ? (
-        <DateGroups
-          items={filteredJobs}
-          getDateString={(job) => job.applied_date}
-          itemLabel="application"
-          renderItem={renderJob}
-          onSelectAll={selecting ? (groupJobs) => selectMany(groupJobs.map((job) => job.id)) : undefined}
+        <JobDateGroups
+          jobs={filteredJobs}
+          selecting={selecting}
+          renderCard={renderJob}
+          onSelectAll={(groupJobs) => selectMany(groupJobs.map((job) => job.id))}
         />
       ) : (
-        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-          {filteredJobs.map(renderJob)}
-        </div>
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">{filteredJobs.map(renderJob)}</ul>
       )}
 
-      {/* MODAL */}
       {showForm && (
-        <Modal title="Add Job Application" onClose={() => setShowForm(false)}>
+        <Modal title="Add application" onClose={() => setShowForm(false)}>
           <JobForm
             setShowForm={setShowForm}
             newJob={newJob}
@@ -383,3 +360,4 @@ export default function Applications() {
     </div>
   );
 }
+

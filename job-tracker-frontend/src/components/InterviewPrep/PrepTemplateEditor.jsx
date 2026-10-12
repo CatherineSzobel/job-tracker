@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { confirmAction } from "../../stores/useConfirmStore";
 import API from "../../api/axios";
 import AddItemInput from "../UI/AddItemInput";
+import FormMessage from "../UI/FormMessage";
 import PageLoader from "../UI/PageLoader";
 import RemoveButton from "../UI/RemoveButton";
+import SettingsSection from "../UI/SettingsSection";
+import { INLINE_FIELD_CLASSES } from "./EditableList";
 import { CHECKLIST_ITEM_MAX_LENGTH, TEMPLATE_ITEMS_MAX, TEMPLATE_TYPE_OPTIONS } from "../../constants/interviewPrep";
 import { removeAt, replaceAt } from "../../utils/lists";
 
@@ -61,34 +64,31 @@ export default function PrepTemplateEditor() {
   };
 
   return (
-    <section className="settings-section space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-light-text dark:text-dark-text">Interview prep checklist</h2>
-        <p className="text-sm text-light-muted dark:text-dark-muted">
-          Every new interview starts with these items. Changing them doesn&apos;t affect interviews you&apos;ve already scheduled.
-        </p>
-      </div>
-
+    <SettingsSection
+      id="prep"
+      title="Prep checklist template"
+      description="Every new interview starts with these items. Pick a type to use an item only for that kind of interview. Changing them doesn't affect interviews you've already scheduled."
+    >
       {template === null ? (
         !error && <PageLoader text="Loading checklist..." compact />
       ) : (
         <>
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col divide-y divide-subtle">
             {items.map((item, index) => (
-              <li key={index} className="flex items-center gap-2">
+              <li key={index} className="flex min-h-12 items-center gap-2 py-1">
                 <input
                   value={item.text}
                   onChange={(event) => setItems(replaceAt(items, index, { text: event.target.value }))}
                   onBlur={saveTextIfChanged}
                   maxLength={CHECKLIST_ITEM_MAX_LENGTH}
                   aria-label="Checklist item"
-                  className="input-field py-1"
+                  className={INLINE_FIELD_CLASSES}
                 />
                 <select
                   value={item.type ?? ""}
                   onChange={(event) => save(replaceAt(items, index, { type: event.target.value || null }))}
                   aria-label={`Which interviews: ${item.text}`}
-                  className="input-field py-1 w-32 shrink-0"
+                  className="input-field min-h-10 w-32 shrink-0 px-3 py-1 text-sm"
                 >
                   {TEMPLATE_TYPE_OPTIONS.map(({ value, label }) => (
                     <option key={value} value={value}>{label}</option>
@@ -100,13 +100,11 @@ export default function PrepTemplateEditor() {
           </ul>
 
           {items.length < TEMPLATE_ITEMS_MAX && (
-            <AddItemInput placeholder="Add an item" maxLength={CHECKLIST_ITEM_MAX_LENGTH} onAdd={(text) => save([...items, { text, type: null }])} />
+            <AddItemInput placeholder="Add an item…" maxLength={CHECKLIST_ITEM_MAX_LENGTH} onAdd={(text) => save([...items, { text, type: null }])} />
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-light-muted dark:text-dark-muted">
-              {template.is_default ? "Using the default checklist." : "Using your own checklist."}
-            </p>
+            <p className="text-sm text-muted">{template.is_default ? "Using the default checklist." : "Using your own checklist."}</p>
             {!template.is_default && (
               <button type="button" onClick={resetToDefault} className="btn-small">
                 Reset to default
@@ -116,7 +114,7 @@ export default function PrepTemplateEditor() {
         </>
       )}
 
-      {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
-    </section>
+      <FormMessage tone="error">{error}</FormMessage>
+    </SettingsSection>
   );
 }

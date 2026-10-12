@@ -38,32 +38,32 @@ export default function BankPickerModal({ linkedIds, onAdd, onClose }) {
   };
 
   return (
-    <Modal title={creating ? "New question" : "Add from your question bank"} onClose={onClose} maxWidth="max-w-xl">
+    <Modal title={creating ? "New question" : "Link answers from your question bank"} onClose={onClose}>
       {creating ? (
         <BankQuestionForm submitLabel="Add to bank" onSubmit={createAndSelect} onCancel={() => setCreating(false)} />
       ) : (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <BankQuestionFilters category={category} search={search} onCategoryChange={setCategory} onSearchChange={setSearch} />
 
           {loading ? (
             <PageLoader text="Loading your question bank..." compact />
           ) : visibleQuestions.length === 0 ? (
-            <p className="text-sm text-light-muted dark:text-dark-muted">
+            <p className="text-muted">
               {questions.length === 0 ? "Your bank is empty. Add a new question below." : "No questions match."}
             </p>
           ) : (
-            <ul className="max-h-80 overflow-y-auto flex flex-col gap-1">
+            <ul className="flex max-h-80 flex-col divide-y divide-subtle overflow-y-auto rounded-xl border border-line">
               {visibleQuestions.map((question) => {
                 const linked = linkedIds.includes(question.id);
                 return (
                   <li key={question.id}>
-                    <label className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-light dark:hover:bg-dark-subtle">
+                    <label className="flex min-h-12 cursor-pointer items-start gap-3 px-4 py-3 hover:bg-soft">
                       <input
                         type="checkbox"
                         checked={linked || selectedIds.includes(question.id)}
                         disabled={linked}
                         onChange={() => toggle(question.id)}
-                        className="mt-1 h-4 w-4 accent-accent"
+                        className="mt-0.5 size-5 shrink-0"
                       />
                       <BankQuestionSummary question={question} showAnswer={false} />
                     </label>
@@ -74,15 +74,15 @@ export default function BankPickerModal({ linkedIds, onAdd, onClose }) {
           )}
 
           {tooMany && (
-            <p className="text-sm text-red-500 dark:text-red-400">An interview can have up to {BANK_LINKS_MAX} bank questions.</p>
+            <p className="text-sm font-semibold text-danger">An interview can have up to {BANK_LINKS_MAX} bank questions.</p>
           )}
 
-          <div className="flex flex-wrap justify-between gap-3">
-            <button type="button" onClick={() => setCreating(true)} className="btn-small">
+          <div className="flex flex-wrap justify-between gap-2">
+            <button type="button" onClick={() => setCreating(true)} className="btn-soft min-h-12">
               New question
             </button>
-            <div className="flex gap-3">
-              <button type="button" onClick={onClose} className="btn-small">
+            <div className="flex gap-2">
+              <button type="button" onClick={onClose} className="btn-secondary">
                 Cancel
               </button>
               <button

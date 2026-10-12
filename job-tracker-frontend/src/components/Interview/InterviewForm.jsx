@@ -12,13 +12,13 @@ export default function InterviewForm({
     onCancel,
 }) {
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Job Select */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-                <label className="input-label">
-                    Job
+                <label htmlFor="interview-job" className="input-label">
+                    Application
                 </label>
                 <select
+                    id="interview-job"
                     name="job_id"
                     value={newInterview.job_id}
                     onChange={handleChange}
@@ -26,29 +26,22 @@ export default function InterviewForm({
                     required
                     disabled={!!editingInterview || lockJob}
                 >
-                    <option value="">Select Job</option>
+                    <option value="">Choose an application</option>
                     {jobs.map((job) => (
                         <option key={job.id} value={job.id}>
-                            {job.company_name} - {job.position}
+                            {job.company_name} · {job.position}
                         </option>
                     ))}
                 </select>
             </div>
 
-            {/* Type & Date */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                    <label className="input-label">
-                        Interview Type
+                    <label htmlFor="interview-type" className="input-label">
+                        Type
                     </label>
-                    <select
-                        name="type"
-                        value={newInterview.type}
-                        onChange={handleChange}
-                        className="input-field"
-                        required
-                    >
-                        <option value="">Select Type</option>
+                    <select id="interview-type" name="type" value={newInterview.type} onChange={handleChange} className="input-field" required>
+                        <option value="">Choose a type</option>
                         {INTERVIEW_TYPES.map(({ value, label }) => (
                             <option key={value} value={value}>{label}</option>
                         ))}
@@ -56,10 +49,11 @@ export default function InterviewForm({
                 </div>
 
                 <div>
-                    <label className="input-label">
-                        Date & Time
+                    <label htmlFor="interview-date" className="input-label">
+                        Date and time
                     </label>
                     <input
+                        id="interview-date"
                         type="datetime-local"
                         name="interview_date"
                         value={newInterview.interview_date}
@@ -70,15 +64,15 @@ export default function InterviewForm({
                 </div>
             </div>
 
-            {/* Location */}
             <div>
-                <label className="input-label">
+                <label htmlFor="interview-location" className="input-label">
                     Location
                 </label>
                 <input
+                    id="interview-location"
                     type="text"
                     name="location"
-                    placeholder="Location"
+                    placeholder="An address, or e.g. Video call"
                     value={newInterview.location}
                     onChange={handleChange}
                     className="input-field"
@@ -86,36 +80,27 @@ export default function InterviewForm({
                 />
             </div>
 
-            {/* Notes */}
             <div>
-                <label className="input-label">
-                    Prep notes
+                <label htmlFor="interview-notes" className="input-label">
+                    Prep notes <span className="font-normal text-muted">(optional)</span>
                 </label>
                 <textarea
+                    id="interview-notes"
                     name="notes"
-                    placeholder="What to prepare, what to remember..."
+                    placeholder="What to prepare, what to remember…"
                     value={newInterview.notes}
                     onChange={handleChange}
                     rows={4}
-                    className="input-field resize-none"
+                    className="input-field resize-y"
                 />
             </div>
 
-            {/* Buttons */}
-            <div className="flex justify-end gap-3 pt-4">
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    className="px-6 py-2 rounded-lg bg-border dark:bg-dark-subtle text-light-text dark:text-dark-text hover:bg-light-muted/25 dark:hover:bg-dark-subtle/80 transition"
-                >
+            <div className="flex flex-wrap justify-end gap-2 pt-2">
+                <button type="button" onClick={onCancel} className="btn-secondary">
                     Cancel
                 </button>
-                <button
-                    type="submit"
-                    disabled={saving}
-                    className="px-6 py-2 rounded-lg bg-accent dark:bg-accent text-white hover:bg-accent-hover dark:hover:bg-accent-hover transition"
-                >
-                    {saving ? "Saving..." : editingInterview ? "Update Interview" : "Add Interview"}
+                <button type="submit" disabled={saving} className="btn-primary">
+                    {saving ? "Saving…" : editingInterview ? "Save changes" : "Add interview"}
                 </button>
             </div>
         </form>

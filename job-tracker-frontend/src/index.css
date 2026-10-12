@@ -41,6 +41,29 @@
     --color-rejected-fg: var(--rejected-fg);
     --color-rejected-line: var(--rejected-line);
 
+    /* User tags (App\Enums\TagColor): a tinted background with dark text of the same hue, inverted in dark mode */
+    --color-tag-slate-bg: var(--tag-slate-bg);
+    --color-tag-slate-fg: var(--tag-slate-fg);
+    --color-tag-red-bg: var(--tag-red-bg);
+    --color-tag-red-fg: var(--tag-red-fg);
+    --color-tag-amber-bg: var(--tag-amber-bg);
+    --color-tag-amber-fg: var(--tag-amber-fg);
+    --color-tag-green-bg: var(--tag-green-bg);
+    --color-tag-green-fg: var(--tag-green-fg);
+    --color-tag-teal-bg: var(--tag-teal-bg);
+    --color-tag-teal-fg: var(--tag-teal-fg);
+    --color-tag-blue-bg: var(--tag-blue-bg);
+    --color-tag-blue-fg: var(--tag-blue-fg);
+    --color-tag-violet-bg: var(--tag-violet-bg);
+    --color-tag-violet-fg: var(--tag-violet-fg);
+    --color-tag-pink-bg: var(--tag-pink-bg);
+    --color-tag-pink-fg: var(--tag-pink-fg);
+
+    /* "Applications by status" bars (Applied uses the accent); mid tones that read on both themes */
+    --color-bar-interview: #d99a1e;
+    --color-bar-offer: #2e8b57;
+    --color-bar-rejected: #c2382a;
+
     /* Dashboard note cards */
     --color-note-bg: var(--note-bg);
     --color-note-line: var(--note-line);
@@ -48,23 +71,6 @@
 
     /* The only shadow: floating menus, drawers and toasts */
     --shadow-menu: 0 8px 24px rgb(15 27 45 / 0.12);
-
-    /*
-     * Legacy names from the old light/dark palette, pointed at the new tokens so pages that
-     * haven't been restyled yet still read well in both themes. Delete once every page uses
-     * the semantic classes (DESIGN_E.md §9.2 step 4).
-     */
-    --color-dark: var(--page);
-    --color-dark-soft: var(--surface);
-    --color-dark-subtle: var(--line);
-    --color-dark-text: var(--ink);
-    --color-dark-muted: var(--muted);
-    --color-light: var(--surface);
-    --color-light-soft: var(--soft);
-    --color-light-muted: var(--muted);
-    --color-light-text: var(--ink);
-    --color-accent-muted: var(--accent-text);
-    --color-border: var(--line);
 }
 
 @layer base {
@@ -103,6 +109,23 @@
         --note-bg: #fff8e6;
         --note-line: #f1e2b8;
         --note-fg: #6b5a2e;
+
+        --tag-slate-bg: #eef1f5;
+        --tag-slate-fg: #334155;
+        --tag-red-bg: #fbe3e3;
+        --tag-red-fg: #a12a2a;
+        --tag-amber-bg: #fdf1d6;
+        --tag-amber-fg: #8a5a00;
+        --tag-green-bg: #e7f3ec;
+        --tag-green-fg: #1e6b3a;
+        --tag-teal-bg: #ddf2f0;
+        --tag-teal-fg: #14635e;
+        --tag-blue-bg: #e6ecf7;
+        --tag-blue-fg: #2b4c9b;
+        --tag-violet-bg: #f1e8fb;
+        --tag-violet-fg: #5b2a86;
+        --tag-pink-bg: #fbe7f1;
+        --tag-pink-fg: #8e2a5b;
     }
 
     .dark {
@@ -140,6 +163,23 @@
         --note-bg: #2e2814;
         --note-line: #4a4020;
         --note-fg: #d9c58f;
+
+        --tag-slate-bg: #243149;
+        --tag-slate-fg: #c4cdda;
+        --tag-red-bg: #3d1a1a;
+        --tag-red-fg: #f4a3a3;
+        --tag-amber-bg: #3a2c0e;
+        --tag-amber-fg: #f2c46b;
+        --tag-green-bg: #12331f;
+        --tag-green-fg: #7fd3a0;
+        --tag-teal-bg: #0f3330;
+        --tag-teal-fg: #7fd6cc;
+        --tag-blue-bg: #1e2e52;
+        --tag-blue-fg: #b9ccff;
+        --tag-violet-bg: #2e1f45;
+        --tag-violet-fg: #d4b8f5;
+        --tag-pink-bg: #3f1a2d;
+        --tag-pink-fg: #f3aacb;
     }
 
     :root {

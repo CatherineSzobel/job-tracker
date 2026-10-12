@@ -1,13 +1,13 @@
 // Mirrors App\Enums\TagColor. Full class strings (not built at runtime) so Tailwind can find them.
 export const TAG_COLOR_CLASSES = {
-  slate: "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100",
-  red: "bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200",
-  amber: "bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-  green: "bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200",
-  teal: "bg-teal-200 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
-  blue: "bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  violet: "bg-violet-200 text-violet-800 dark:bg-violet-900 dark:text-violet-200",
-  pink: "bg-pink-200 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
+  slate: "bg-tag-slate-bg text-tag-slate-fg",
+  red: "bg-tag-red-bg text-tag-red-fg",
+  amber: "bg-tag-amber-bg text-tag-amber-fg",
+  green: "bg-tag-green-bg text-tag-green-fg",
+  teal: "bg-tag-teal-bg text-tag-teal-fg",
+  blue: "bg-tag-blue-bg text-tag-blue-fg",
+  violet: "bg-tag-violet-bg text-tag-violet-fg",
+  pink: "bg-tag-pink-bg text-tag-pink-fg",
 };
 
 export const TAG_COLORS = Object.keys(TAG_COLOR_CLASSES);

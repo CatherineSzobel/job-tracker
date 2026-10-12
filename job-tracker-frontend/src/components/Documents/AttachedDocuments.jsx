@@ -1,13 +1,15 @@
 import { useState } from "react";
 import API from "../../api/axios";
 import { showToast } from "../../stores/useToastStore";
+import { Paperclip } from "lucide-react";
+import Card from "../UI/Card";
 import Modal from "../UI/Modal";
 import DocumentPicker from "./DocumentPicker";
 import OpenDocumentButton from "./OpenDocumentButton";
 import { apiErrorMessage } from "./documentUtils";
 import { CATEGORY_BY_VALUE } from "../../constants/documents";
 
-// "Sent with this application": the documents attached to one job
+// "Documents sent": the documents attached to one job; Attach opens the picker
 export default function AttachedDocuments({ jobId, documents, onChange }) {
   const [picking, setPicking] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -27,47 +29,43 @@ export default function AttachedDocuments({ jobId, documents, onChange }) {
   };
 
   return (
-    <div className="bg-light-soft dark:bg-dark-soft rounded-xl p-6 mb-6 transition-colors">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-semibold text-accent dark:text-accent">Sent with this application</h2>
-        <button
-          className="text-sm text-accent dark:text-accent hover:text-accent-hover dark:hover:text-accent-hover transition-colors"
-          onClick={() => setPicking(true)}
-        >
-          Edit
+    <Card
+      title="Documents sent"
+      icon={Paperclip}
+      action={
+        <button type="button" className="btn-soft" onClick={() => setPicking(true)}>
+          Attach
         </button>
-      </div>
-
+      }
+    >
       {documents.length ? (
-        <ul className="flex flex-col gap-2">
+        <ul className="-my-2 flex flex-col divide-y divide-subtle">
           {documents.map((item) => {
             const { icon: Icon, label } = CATEGORY_BY_VALUE[item.category];
             return (
-              <li key={item.id} className="flex flex-wrap items-center gap-3">
-                <Icon size={18} className="text-accent dark:text-accent-muted shrink-0" />
-                <span className="text-light-text dark:text-dark-text break-words">{item.name}</span>
-                <span className="text-xs text-light-muted dark:text-dark-muted">{label}</span>
-                {item.archived_at && (
-                  <span className="px-2 py-0.5 text-xs rounded-full bg-light dark:bg-dark-subtle text-light-muted dark:text-dark-muted">
-                    archived
+              <li key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2">
+                <Icon size={20} aria-hidden="true" className="shrink-0 text-accent-text" />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="break-words">{item.name}</span>
+                  <span className="text-sm text-muted">
+                    {label}
+                    {item.archived_at && " · archived"}
                   </span>
-                )}
-                <span className="ml-auto">
-                  <OpenDocumentButton document={item} />
                 </span>
+                <OpenDocumentButton document={item} />
               </li>
             );
           })}
         </ul>
       ) : (
-        <p className="text-light-muted dark:text-dark-muted text-sm">No documents attached yet.</p>
+        <p className="text-muted">No documents attached yet.</p>
       )}
 
       {picking && (
-        <Modal title="Sent with this application" onClose={() => setPicking(false)}>
+        <Modal title="Documents sent with this application" onClose={() => setPicking(false)}>
           <DocumentPicker attachedDocuments={documents} onSave={save} onCancel={() => setPicking(false)} saving={saving} />
         </Modal>
       )}
-    </div>
+    </Card>
   );
 }

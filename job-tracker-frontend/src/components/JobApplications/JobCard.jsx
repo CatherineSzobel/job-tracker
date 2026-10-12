@@ -1,16 +1,19 @@
-import { useNavigate } from "react-router-dom";
-import { confirmAction } from "../../stores/useConfirmStore";
+import { Link } from "react-router-dom";
+import { Archive, CalendarDays, ExternalLink, MapPin } from "lucide-react";
 import API from "../../api/axios";
-import { PRIORITY_CLASSES, STATUS_COLORS } from "../../constants/jobs";
 import { useToastStore } from "../../stores/useToastStore";
+import { formatShortDate } from "../../utils/formatDate";
 import CardTags from "../Tags/CardTags";
+import PriorityLabel from "../UI/PriorityLabel";
+import StatusChip from "../UI/StatusChip";
 import useArchiveWithTodos, { archiveChanges } from "./useArchiveWithTodos";
 
-// onRemove(id) is called after the job is archived or deleted so the parent can drop it.
-// In select mode (selecting) clicking the card calls onToggleSelect(id) and the action buttons are hidden.
+// One application in the grid: status and priority, the position (link to the detail page) and company,
+// when and where, tags, then "View posting" and Archive. Delete lives on the detail page.
+// onRemove(id) is called after the job is archived so the parent can drop it.
+// In select mode (selecting) clicking the card calls onToggleSelect(id) and the footer actions are hidden.
 // pendingChanges (useBatchChanges().forJob): this application's unsaved batch change to preview, or null.
 export default function JobCard({ job, onRemove, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
-  const navigate = useNavigate();
   const showToast = useToastStore((state) => state.showToast);
   const newStatus = pendingChanges?.status && pendingChanges.status !== job.status ? pendingChanges.status : null;
   const shownStatus = newStatus ?? job.status;
@@ -28,124 +31,97 @@ export default function JobCard({ job, onRemove, selecting = false, selected = f
 
   const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archive);
 
-  const deleteJob = async () => {
-    if (!(await confirmAction({ message: "Delete this job application?", confirmLabel: "Delete", danger: true }))) return;
-    try {
-      await API.delete(`/job-applications/${job.id}`);
-      onRemove?.(job.id);
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to delete job");
-    }
-  };
-
   return (
-    <div
+    <li
       onClick={selecting ? () => onToggleSelect(job.id) : undefined}
-      className={`
-      relative flex flex-col justify-between h-full
-      bg-surface dark:bg-dark-soft border border-border dark:border-dark-subtle
-      rounded-2xl p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300
-      ${selecting ? "cursor-pointer" : ""} ${selected ? "ring-2 ring-accent" : ""}
-    `}
+      className={`flex min-w-0 flex-col gap-3 rounded-2xl border bg-surface px-4 pt-5 pb-4 sm:px-6 ${
+        selected ? "border-accent ring-1 ring-accent" : "border-line"
+      } ${selecting ? "cursor-pointer" : ""}`}
     >
-      {/* Top right: Archive, or the select checkbox in select mode */}
-      <div className="absolute top-3 right-3">
-        {selecting ? (
+      <div className="flex items-center gap-2">
+        {selecting && (
           <input
             type="checkbox"
             checked={selected}
             onChange={() => onToggleSelect(job.id)}
             onClick={(event) => event.stopPropagation()}
             aria-label={`Select ${job.position} at ${job.company_name}`}
-            className="h-5 w-5 cursor-pointer accent-accent"
+            className="size-5 shrink-0 cursor-pointer"
           />
-        ) : (
-          <button
-            onClick={() => requestArchive({ openTodosCount: job.open_todos_count ?? 0 })}
-            className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent-hover hover:bg-blue-200 dark:hover:bg-accent text-blue-800 dark:text-white rounded transition-colors"
-          >
-            Archive
-          </button>
         )}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <h2
-          onClick={selecting ? undefined : () => navigate(`/jobs/${job.id}`)}
-          className={`text-lg font-semibold line-clamp-2 pr-20 text-light-text dark:text-dark-text transition-colors ${selecting ? "" : "cursor-pointer hover:text-accent"}`}
+        <span
+          title={newStatus ? `Not saved yet (now ${job.status})` : undefined}
+          className={newStatus ? "rounded-full outline-2 outline-offset-2 outline-accent-text outline-dashed" : undefined}
         >
-          {job.position}
-        </h2>
-        <p className="text-sm text-muted dark:text-dark-muted">{job.company_name}</p>
+          <StatusChip status={shownStatus} />
+        </span>
+        <span className="ml-auto">
+          <PriorityLabel priority={job.priority} />
+        </span>
+      </div>
 
-        <div className="flex gap-2 mt-2">
-          <span
-            title={newStatus ? `Not saved yet (now ${job.status})` : undefined}
-            className={`px-2 py-1 text-xs rounded-full text-white truncate ${newStatus ? "outline-2 outline-dashed outline-offset-2 outline-accent" : ""}`}
-            style={{ backgroundColor: STATUS_COLORS[shownStatus] }}
-          >
-            {shownStatus}
+      <div className="flex min-w-0 flex-col">
+        {selecting ? (
+          <span className="text-lg/7 font-semibold break-words">{job.position}</span>
+        ) : (
+          <Link to={`/jobs/${job.id}`} className="text-lg/7 font-semibold break-words text-ink hover:underline">
+            {job.position}
+          </Link>
+        )}
+        <span className="text-muted">{job.company_name}</span>
+      </div>
+
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+        {job.applied_date && (
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays size={16} aria-hidden="true" />
+            Applied {formatShortDate(job.applied_date)}
           </span>
-          <span className={`px-2 py-1 text-xs rounded-full truncate ${PRIORITY_CLASSES[job.priority]}`}>
-            {job.priority}
+        )}
+        {job.location && (
+          <span className="inline-flex items-center gap-1.5">
+            <MapPin size={16} aria-hidden="true" />
+            {job.location}
           </span>
-        </div>
-
-        <CardTags
-          tags={job.tags}
-          addedTags={pendingChanges?.tagsToAdd}
-          removedTagIds={pendingChanges?.tagsToRemove.map((tag) => tag.id)}
-        />
-
-        {pendingChanges && (
-          <p className="mt-1 text-xs italic text-accent dark:text-accent-muted">Not saved yet</p>
         )}
       </div>
 
-      <div className="mt-4 flex flex-col gap-2 text-sm text-muted dark:text-dark-muted">
-        <span><strong>Applied:</strong> {job.applied_date}</span>
-        <span><strong>Location:</strong> {job.location}</span>
-        {job.job_link && (
-          <span className="flex items-center gap-1">
-            <strong>Application:</strong>
+      <CardTags
+        tags={job.tags}
+        addedTags={pendingChanges?.tagsToAdd}
+        removedTagIds={pendingChanges?.tagsToRemove.map((tag) => tag.id)}
+      />
+
+      {pendingChanges && <p className="text-sm font-semibold text-accent-text">Not saved yet</p>}
+
+      {!selecting && (
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-subtle pt-3">
+          {job.job_link ? (
             <a
               href={job.job_link}
               target="_blank"
               rel="noopener noreferrer"
-              // In select mode a click only selects the card
-              onClick={selecting ? (event) => event.preventDefault() : undefined}
-              className="text-accent dark:text-accent hover:underline font-medium truncate"
               title={job.job_link}
+              className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-accent-text hover:underline"
             >
-              View Posting →
+              View posting
+              <ExternalLink size={14} strokeWidth={2.5} aria-hidden="true" />
             </a>
-          </span>
-        )}
-        <span>
-          <strong>Notes:</strong>{" "}
-          {job.notes ? job.notes : <span className="text-light-muted dark:text-dark-muted">—</span>}
-        </span>
-      </div>
-
-      {!selecting && (
-        <div className="mt-5 flex flex-wrap gap-2">
+          ) : (
+            <span />
+          )}
           <button
-            onClick={() => navigate(`/jobs/${job.id}`)}
-            className="px-3 py-1 text-xs bg-blue-100 dark:bg-accent hover:bg-blue-200 dark:hover:bg-accent-hover text-blue-800 dark:text-white rounded transition-colors flex-1"
+            type="button"
+            onClick={() => requestArchive({ openTodosCount: job.open_todos_count ?? 0 })}
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-muted transition-colors hover:bg-soft hover:text-ink"
           >
-            View Job
-          </button>
-          <button
-            onClick={deleteJob}
-            className="px-3 py-1 text-xs bg-red-100 dark:bg-red-400 hover:bg-red-200 dark:hover:bg-red-300 text-red-700 dark:text-dark-text rounded transition-colors flex-1"
-          >
-            Delete
+            <Archive size={16} aria-hidden="true" />
+            Archive
           </button>
         </div>
       )}
 
       {archivePrompt}
-    </div>
+    </li>
   );
 }

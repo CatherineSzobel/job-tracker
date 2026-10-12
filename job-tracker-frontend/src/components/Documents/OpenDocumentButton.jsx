@@ -2,15 +2,13 @@ import { Download, ExternalLink } from "lucide-react";
 import { downloadDocument } from "./documentUtils";
 import { showToast } from "../../stores/useToastStore";
 
-const BUTTON_CLASSES =
-  "inline-flex items-center gap-1 text-sm text-accent dark:text-accent-muted hover:text-accent-hover transition-colors";
-
-// Download for files, Open (new tab) for links
+// Download for files, Open (new tab) for links; a soft button
 export default function OpenDocumentButton({ document: item }) {
   if (item.kind === "link") {
     return (
-      <a href={item.url} target="_blank" rel="noopener noreferrer" className={BUTTON_CLASSES}>
-        <ExternalLink size={14} /> Open
+      <a href={item.url} target="_blank" rel="noopener noreferrer" className="btn-soft">
+        Open
+        <ExternalLink size={14} strokeWidth={2.5} aria-hidden="true" />
       </a>
     );
   }
@@ -25,8 +23,9 @@ export default function OpenDocumentButton({ document: item }) {
   };
 
   return (
-    <button type="button" onClick={download} className={BUTTON_CLASSES}>
-      <Download size={14} /> Download
+    <button type="button" onClick={download} className="btn-soft">
+      <Download size={16} aria-hidden="true" />
+      Download
     </button>
   );
 }

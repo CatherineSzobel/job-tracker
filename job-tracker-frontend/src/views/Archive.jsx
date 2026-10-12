@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import API from "../api/axios";
 import ArchivedJobCard from "../components/JobApplications/ArchivedJobCard";
 import BatchBar from "../components/JobApplications/BatchBar";
@@ -8,13 +9,12 @@ import useBatchChanges from "../components/JobApplications/useBatchChanges";
 import useSendBatch from "../components/JobApplications/useSendBatch";
 import useSelection from "../components/UI/useSelection";
 import useTags from "../components/Tags/useTags";
-import ListPageHeader from "../components/UI/ListPageHeader";
+import PageHeader from "../components/UI/PageHeader";
 import PageLoader from "../components/UI/PageLoader";
 import SelectModeButtons from "../components/UI/SelectModeButtons";
 import { useToastStore } from "../stores/useToastStore";
 
 export default function Archive() {
-    const navigate = useNavigate();
     const [archivedJobs, setArchivedJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const { tags, createTag } = useTags();
@@ -34,9 +34,9 @@ export default function Archive() {
             .finally(() => setLoading(false));
     }, [showToast]);
 
-    // Callback to remove a restored job from the list
-    const handleRestore = (restoredJobId) => {
-        setArchivedJobs((currentJobs) => currentJobs.filter((job) => job.id !== restoredJobId));
+    // Drops a restored or deleted job from the list
+    const removeJob = (removedJobId) => {
+        setArchivedJobs((currentJobs) => currentJobs.filter((job) => job.id !== removedJobId));
     };
 
     const selectedJobs = archivedJobs.filter((job) => selectedIds.includes(job.id));
@@ -45,14 +45,14 @@ export default function Archive() {
     const applyBatch = (changes) => sendBatch(() => batchUpdateJobs(selectedIds, changes));
 
     if (loading) {
-        return <PageLoader text="Loading archives..." />;
+        return <PageLoader text="Loading the archive..." />;
     }
 
     return (
-        <div className={`max-w-6xl mx-auto mt-4 sm:mt-10 sm:px-4 transition-colors ${selecting ? "pb-28" : ""}`}>
-            <ListPageHeader
+        <div className={`flex flex-col gap-6 ${selecting ? "pb-32" : ""}`}>
+            <PageHeader
                 title="Archive"
-                count={archivedJobs.length}
+                description="Applications you've closed. Restore one to bring it back to your list."
                 actions={
                     <>
                         {archivedJobs.length > 0 && (
@@ -64,32 +64,30 @@ export default function Archive() {
                                 onCancel={exitSelecting}
                             />
                         )}
-                        <button type="button" className="btn-primary shadow" onClick={() => navigate("/applications")}>
+                        <Link to="/applications" className="btn-secondary">
+                            <ArrowLeft size={16} aria-hidden="true" />
                             Applications
-                        </button>
+                        </Link>
                     </>
                 }
             />
 
-            {/* Empty state */}
             {archivedJobs.length === 0 ? (
-                <div className="p-6 bg-light-soft dark:bg-dark-soft rounded-xl shadow text-center text-light-muted dark:text-dark-muted transition-colors">
-                    No archived jobs yet.
-                </div>
+                <p className="text-muted">Nothing archived yet. Archive an application from its card or page when you're done with it.</p>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">
                     {archivedJobs.map((job) => (
                         <ArchivedJobCard
                             key={job.id}
                             job={job}
-                            onRestore={handleRestore}
+                            onRemove={removeJob}
                             selecting={selecting}
                             selected={selectedIds.includes(job.id)}
                             onToggleSelect={toggleSelected}
                             pendingChanges={batchChanges.forJob(job.id)}
                         />
                     ))}
-                </div>
+                </ul>
             )}
 
             {/* Stays open with nothing selected while changes wait, so Save is still there */}
