@@ -68,3 +68,19 @@ export const priorityLabel = (priority) => PRIORITIES.find((option) => option.va
 
 // Mirrors the column defaults on users (daily_goal, weekly_goal)
 export const DEFAULT_GOALS = { daily_goal: 5, weekly_goal: 20 };
+
+// The Dashboard's "Applications by status" bar colours. Full class strings (not built at runtime) so Tailwind can find them.
+export const STATUS_BAR_CLASSES = {
+  applied: "bg-accent",
+  interview: "bg-bar-interview",
+  offer: "bg-bar-offer",
+  rejected: "bg-bar-rejected",
+};
+
+// The application page's header fields, shown as inputs while editing
+export const APPLICATION_EDIT_FIELDS = [
+  { name: "position", label: "Position", required: true },
+  { name: "company_name", label: "Company", required: true },
+  { name: "location", label: "Location", required: true },
+  { name: "job_link", label: "Link to the posting", type: "url" },
+];

@@ -91,3 +91,10 @@ export function screenshotFor(fileName, darkMode = false) {
   if (!lightUrl || !darkMode) return lightUrl;
   return fileUrl(fileName.replace(/\.png$/, "-dark.png")) ?? lightUrl;
 }
+
+// The landing page footer's links
+export const LANDING_FOOTER_LINKS = [
+  { label: "GitHub", href: GITHUB_URL },
+  { label: "Log in", to: "/login" },
+  { label: "Sign up", to: "/register" },
+];

@@ -13,17 +13,7 @@ import { useSettingsStore } from "../stores/useSettingsStore";
 import { DEFAULT_GOALS } from "../constants/jobs";
 import { ARCHIVE_TODOS_OPTIONS } from "../constants/todos";
 import { REMINDER_DAYS_MAX, REMINDER_DAYS_MIN, REMINDER_DISMISS_OPTIONS } from "../constants/reminders";
-
-// The sections, in page order: the side list (desktop) and chip row (phones) link to them
-const SECTIONS = [
-  { id: "account", label: "Account & security" },
-  { id: "goals", label: "Goals" },
-  { id: "reminders", label: "Reminders" },
-  { id: "todos", label: "To-dos" },
-  { id: "prep", label: "Prep checklist" },
-  { id: "appearance", label: "Appearance" },
-  { id: "delete", label: "Delete account" },
-];
+import { SETTINGS_SECTIONS } from "../constants/settings";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -201,7 +191,7 @@ export default function Settings() {
       {/* Phones: the section links as a scrolling chip row */}
       <nav aria-label="Settings sections" className="-mx-4 overflow-x-auto px-4 lg:hidden">
         <ul className="flex w-max gap-2 p-0.5">
-          {SECTIONS.map(({ id, label }) => (
+          {SETTINGS_SECTIONS.map(({ id, label }) => (
             <li key={id}>
               <a href={`#${id}`} className="inline-flex min-h-10 items-center rounded-full border border-input bg-surface px-4 font-semibold whitespace-nowrap text-ink hover:bg-soft">
                 {label}
@@ -215,7 +205,7 @@ export default function Settings() {
         {/* Desktop: a sticky list beside the cards */}
         <nav aria-label="Settings sections" className="sticky top-6 hidden w-52 shrink-0 lg:block">
           <ul className="flex flex-col gap-1">
-            {SECTIONS.map(({ id, label }) => (
+            {SETTINGS_SECTIONS.map(({ id, label }) => (
               <li key={id}>
                 <a
                   href={`#${id}`}

@@ -10,17 +10,10 @@ import { SEGMENTED_TRACK_CLASSES, segmentClasses } from "../components/UI/segmen
 import DocumentForm from "../components/Documents/DocumentForm";
 import OpenDocumentButton from "../components/Documents/OpenDocumentButton";
 import { apiErrorMessage, formatFileSize, linkDomain } from "../components/Documents/documentUtils";
-import { CATEGORY_BY_VALUE, DOCUMENT_CATEGORIES } from "../constants/documents";
+import { CATEGORY_BY_VALUE, DOCUMENT_ADD_TABS, DOCUMENT_FILTER_CHIPS } from "../constants/documents";
 import { formatShortDate } from "../utils/formatDate";
 import { countOf } from "../utils/plural";
 import { filterChipClasses } from "../components/UI/filterChipClasses";
-
-const ADD_TABS = [
-  { value: "file", label: "Upload file" },
-  { value: "link", label: "Add link" },
-];
-
-const FILTER_CHIPS = [{ value: "all", label: "All" }, ...DOCUMENT_CATEGORIES];
 
 export default function Documents() {
   const [documents, setDocuments] = useState([]);
@@ -104,7 +97,7 @@ export default function Documents() {
         {/* The type chips scroll sideways rather than wrapping into several rows (p-0.5 keeps the focus ring visible) */}
         <div className="min-w-0 flex-[1_1_320px] overflow-x-auto p-0.5">
           <div role="group" aria-label="Filter by type" className="flex w-max gap-2">
-            {FILTER_CHIPS.map(({ value, label }) => (
+            {DOCUMENT_FILTER_CHIPS.map(({ value, label }) => (
               <button
                 key={value}
                 type="button"
@@ -184,7 +177,7 @@ export default function Documents() {
       {addTab && (
         <Modal title="Add document or link" onClose={() => setAddTab(null)}>
           <div role="group" aria-label="What to add" className={`${SEGMENTED_TRACK_CLASSES} mb-4`}>
-            {ADD_TABS.map(({ value, label }) => (
+            {DOCUMENT_ADD_TABS.map(({ value, label }) => (
               <button key={value} type="button" aria-pressed={addTab === value} onClick={() => setAddTab(value)} className={segmentClasses(addTab === value)}>
                 {label}
               </button>

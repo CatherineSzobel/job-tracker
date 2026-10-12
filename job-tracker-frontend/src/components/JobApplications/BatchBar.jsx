@@ -5,12 +5,7 @@ import SelectionBar from "../UI/SelectionBar";
 import { JOB_STATUSES, jobStatusLabel } from "../../constants/jobs";
 import { tagIdsOf } from "./batchUpdate";
 import { countOf } from "../../utils/plural";
-
-// How the tag field behaves when adding vs removing a tag
-const TAG_MODES = {
-  add: { placeholder: "Tag to add…", submitLabel: "Add", allowCreate: true },
-  remove: { placeholder: "Tag to remove…", submitLabel: "Remove", allowCreate: false },
-};
+import { BATCH_TAG_MODES } from "../../constants/tags";
 
 // A summary line's text: "Status: Applied", "+ remote", "− fintech"
 const summaryLabel = (line) => {
@@ -97,9 +92,9 @@ export default function BatchBar({ selectedJobs, actions, tags, changes, onSave,
               tags={tagChoices}
               onSelect={pickTag}
               onCreate={onCreateTag}
-              allowCreate={TAG_MODES[tagMode].allowCreate}
-              placeholder={TAG_MODES[tagMode].placeholder}
-              submitLabel={TAG_MODES[tagMode].submitLabel}
+              allowCreate={BATCH_TAG_MODES[tagMode].allowCreate}
+              placeholder={BATCH_TAG_MODES[tagMode].placeholder}
+              submitLabel={BATCH_TAG_MODES[tagMode].submitLabel}
             />
           </div>
         ) : (

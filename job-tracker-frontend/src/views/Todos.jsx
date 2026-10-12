@@ -5,23 +5,9 @@ import PageLoader from "../components/UI/PageLoader";
 import TodoInput from "../components/Todo/TodoInput";
 import TodoItem from "../components/Todo/TodoItem";
 import useTodos from "../components/Todo/useTodos";
-import { EMPTY_TODO_DRAFT } from "../constants/todos";
+import { EMPTY_TODO_DRAFT, TODO_FILTERS, TODO_SECTIONS } from "../constants/todos";
 import { describeDueDate } from "../utils/dueDate";
 import { filterChipClasses } from "../components/UI/filterChipClasses";
-
-const FILTERS = [
-  { value: "all", label: "All" },
-  { value: "linked", label: "Linked to an application" },
-  { value: "general", label: "General" },
-];
-
-// Open to-dos are grouped by due state; done ones sit in a collapsed section at the end
-const SECTIONS = [
-  { state: "overdue", title: "Overdue" },
-  { state: "today", title: "Today" },
-  { state: "upcoming", title: "Upcoming" },
-  { state: "none", title: "No due date" },
-];
 
 export default function Todos() {
   const { todos, loading, addTodo, updateTodo, deleteTodo } = useTodos();
@@ -55,7 +41,7 @@ export default function Todos() {
       </div>
 
       <div role="group" aria-label="Filter to-dos" className="flex flex-wrap gap-2">
-        {FILTERS.map(({ value, label }) => (
+        {TODO_FILTERS.map(({ value, label }) => (
           <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className={filterChipClasses(filter === value)}>
             {label}
           </button>
@@ -64,7 +50,7 @@ export default function Todos() {
 
       {openTodos.length === 0 && <p className="text-muted">Nothing to do. Add a follow-up above.</p>}
 
-      {SECTIONS.map(({ state, title }) => {
+      {TODO_SECTIONS.map(({ state, title }) => {
         const sectionTodos = openTodos.filter((todo) => describeDueDate(todo.due_date).state === state);
         if (sectionTodos.length === 0) return null;
 

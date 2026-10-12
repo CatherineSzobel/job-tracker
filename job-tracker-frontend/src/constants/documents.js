@@ -22,3 +22,12 @@ export const ACCEPTED_FILE_EXTENSIONS = ["pdf", "doc", "docx", "odt", "txt", "pn
 export const ACCEPTED_FILE_TYPES = ACCEPTED_FILE_EXTENSIONS.map((extension) => `.${extension}`).join(",");
 export const MAX_FILE_SIZE_MB = 10;
 export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+// The Documents page's Add dialog: upload a file or add a link
+export const DOCUMENT_ADD_TABS = [
+  { value: "file", label: "Upload file" },
+  { value: "link", label: "Add link" },
+];
+
+// The Documents page's type filter: All, then each category
+export const DOCUMENT_FILTER_CHIPS = [{ value: "all", label: "All" }, ...DOCUMENT_CATEGORIES];

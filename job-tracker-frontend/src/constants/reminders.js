@@ -7,3 +7,9 @@ export const REMINDER_DISMISS_OPTIONS = [
 // Same range as the backend validation
 export const REMINDER_DAYS_MIN = 1;
 export const REMINDER_DAYS_MAX = 60;
+
+// What a reminder's Dismiss will do (setting reminder_dismiss_mode), shown as its tooltip
+export const REMINDER_DISMISS_HINTS = {
+  today: "Hide until tomorrow",
+  permanent: "Hide until you update this application",
+};

@@ -1,10 +1,3 @@
-// The date filter on the Interviews page; "upcoming" is the default
-export const INTERVIEW_WHEN_OPTIONS = [
-  { value: "upcoming", label: "Upcoming" },
-  { value: "past", label: "Past" },
-  { value: "all", label: "All" },
-];
-
 // From now on: an interview earlier today is over ("past"), like the dashboard's count (also used by the card)
 export function isUpcoming(interview, now = new Date()) {
   return new Date(interview.interview_date) >= now;

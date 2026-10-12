@@ -1,18 +1,17 @@
 import { useState } from "react";
+import { DEFAULT_LIST_VIEW, LIST_VIEWS } from "../../constants/views";
 
-const VIEWS = ["grid", "grouped"];
-
-// A stored value that isn't a known view (e.g. from an older version) counts as "grid"
+// A stored value that isn't a known view (e.g. from an older version) counts as the default
 function readSavedView(storageKey) {
   try {
     const savedView = localStorage.getItem(storageKey);
-    return VIEWS.includes(savedView) ? savedView : "grid";
+    return LIST_VIEWS.some((view) => view.value === savedView) ? savedView : DEFAULT_LIST_VIEW;
   } catch {
-    return "grid";
+    return DEFAULT_LIST_VIEW;
   }
 }
 
-// "grid" or "grouped", remembered per browser under storageKey. localStorage can throw
+// A LIST_VIEWS value, remembered per browser under storageKey. localStorage can throw
 // (private windows, blocked storage); then the choice lasts for this visit only.
 export default function useSavedView(storageKey) {
   const [view, setView] = useState(() => readSavedView(storageKey));

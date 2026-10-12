@@ -17,3 +17,9 @@ export const TAG_NAME_MAX = 30;
 
 // Cards show this many tags, then "+N"
 export const CARD_TAG_LIMIT = 3;
+
+// The batch bar's tag field (JobApplications/BatchBar): how it behaves when adding vs removing a tag
+export const BATCH_TAG_MODES = {
+  add: { placeholder: "Tag to add…", submitLabel: "Add", allowCreate: true },
+  remove: { placeholder: "Tag to remove…", submitLabel: "Remove", allowCreate: false },
+};

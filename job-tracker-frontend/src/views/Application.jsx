@@ -15,7 +15,7 @@ import Card from "../components/UI/Card";
 import Menu, { MenuDivider, MenuItem } from "../components/UI/Menu";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
-import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, STATUS_BADGE_CLASSES, priorityLabel } from "../constants/jobs";
+import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, STATUS_BADGE_CLASSES, priorityLabel, APPLICATION_EDIT_FIELDS } from "../constants/jobs";
 import { confirmAction } from "../stores/useConfirmStore";
 import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { useToastStore } from "../stores/useToastStore";
@@ -25,14 +25,6 @@ const statusOptionClasses = (isChosen, status) =>
   `min-h-10 rounded-lg border text-sm font-semibold transition-colors ${
     isChosen ? `border-current ${STATUS_BADGE_CLASSES[status]}` : "border-line bg-surface text-muted-2 hover:bg-soft"
   }`;
-
-// The fields the header shows as inputs while editing
-const HEADER_FIELDS = [
-  { name: "position", label: "Position", required: true },
-  { name: "company_name", label: "Company", required: true },
-  { name: "location", label: "Location", required: true },
-  { name: "job_link", label: "Link to the posting", type: "url" },
-];
 
 export default function Application() {
   const navigate = useNavigate();
@@ -213,7 +205,7 @@ export default function Application() {
         {editing ? (
           // Only the header fields are a <form>: the tag and follow-up forms below can't sit inside one
           <form id="application-edit-form" onSubmit={saveChanges} className="grid min-w-0 flex-[1_1_480px] gap-4 sm:grid-cols-2">
-            {HEADER_FIELDS.map(({ name, label, type = "text", required = false }) => (
+            {APPLICATION_EDIT_FIELDS.map(({ name, label, type = "text", required = false }) => (
               <div key={name}>
                 <label htmlFor={`edit-${name}`} className="input-label">
                   {label}

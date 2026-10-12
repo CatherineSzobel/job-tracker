@@ -1,20 +1,6 @@
 import Card, { CardLink } from "../UI/Card";
-import { JOB_STATUSES } from "../../constants/jobs";
-
-const STAT_TILES = [
-  { label: "Total applications", valueKey: "total" },
-  { label: "Applied today", valueKey: "todayApplications" },
-  { label: "Applied this week", valueKey: "weekApplications" },
-  { label: "Upcoming interviews", valueKey: "upcomingInterviews" },
-];
-
-// Full class strings (not built at runtime) so Tailwind can find them
-const STATUS_BAR_CLASSES = {
-  applied: "bg-accent",
-  interview: "bg-bar-interview",
-  offer: "bg-bar-offer",
-  rejected: "bg-bar-rejected",
-};
+import { JOB_STATUSES, STATUS_BAR_CLASSES } from "../../constants/jobs";
+import { INSIGHT_STAT_TILES } from "../../constants/dashboard";
 
 const percentOf = (part, whole) => (whole > 0 ? Math.min((part / whole) * 100, 100) : 0);
 
@@ -29,7 +15,7 @@ export default function Insights({ stats, dailyGoal, weeklyGoal }) {
   return (
     <div className="flex flex-col gap-6">
       <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-4">
-        {STAT_TILES.map(({ label, valueKey }) => (
+        {INSIGHT_STAT_TILES.map(({ label, valueKey }) => (
           <li key={valueKey} className="card flex flex-col justify-between gap-2">
             {/* Two lines reserved for the label, so the numbers line up when one wraps */}
             <span className="min-h-12 font-medium text-muted">{label}</span>
