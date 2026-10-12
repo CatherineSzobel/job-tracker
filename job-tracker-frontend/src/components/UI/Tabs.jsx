@@ -1,8 +1,11 @@
+import { SEGMENTED_TRACK_CLASSES, segmentClasses } from "./segmentedClasses";
+
 const tabButtonId = (idPrefix, tabId) => `${idPrefix}-tab-${tabId}`;
 const tabPanelId = (idPrefix, tabId) => `${idPrefix}-panel-${tabId}`;
 
-// Accessible tab bar: Left/Right arrow keys move between tabs. tabs: [{ id, label }].
-// Pair it with one TabPanel (same idPrefix) for the active tab. className adds to the bar's own classes.
+// Accessible tabs drawn as a segmented control: Left/Right arrow keys move between tabs. tabs: [{ id, label }].
+// Pair it with one TabPanel (same idPrefix) for the active tab. className adds to the bar's own classes
+// (it has no outer margin, so add one where needed).
 export default function Tabs({ tabs, activeTab, onChange, idPrefix, label, className = "" }) {
   const moveWithArrowKeys = (event) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -18,7 +21,7 @@ export default function Tabs({ tabs, activeTab, onChange, idPrefix, label, class
       role="tablist"
       aria-label={label}
       onKeyDown={moveWithArrowKeys}
-      className={`flex gap-6 mb-6 border-b border-border dark:border-dark-subtle ${className}`}
+      className={`${SEGMENTED_TRACK_CLASSES} ${className}`}
     >
       {tabs.map((tab) => {
         const selected = tab.id === activeTab;
@@ -33,11 +36,7 @@ export default function Tabs({ tabs, activeTab, onChange, idPrefix, label, class
             aria-controls={selected ? tabPanelId(idPrefix, tab.id) : undefined}
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(tab.id)}
-            className={`-mb-px pb-2 px-1 whitespace-nowrap text-sm font-medium border-b-2 transition-colors ${
-              selected
-                ? "border-accent text-accent dark:text-accent-muted"
-                : "border-transparent text-light-muted dark:text-dark-muted hover:text-light-text dark:hover:text-dark-text"
-            }`}
+            className={segmentClasses(selected)}
           >
             {tab.label}
           </button>

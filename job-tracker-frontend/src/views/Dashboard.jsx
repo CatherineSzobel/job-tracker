@@ -66,7 +66,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-light p-4 sm:p-6 lg:p-8 dark:bg-dark transition-colors rounded-2xl">
-      <Tabs tabs={DASHBOARD_TABS} activeTab={activeTab} onChange={changeTab} idPrefix="dashboard" label="Dashboard" />
+      <Tabs tabs={DASHBOARD_TABS} activeTab={activeTab} onChange={changeTab} idPrefix="dashboard" label="Dashboard" className="mb-6" />
 
       {/* Only the active tab is rendered: a hidden chart would measure 0 width */}
       {activeTab === "insights" ? (

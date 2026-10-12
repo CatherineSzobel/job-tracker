@@ -224,7 +224,7 @@ function InterviewPage({ interviewId }) {
         </div>
       </header>
 
-      <Tabs tabs={PREP_TABS} activeTab={activeTab} onChange={setActiveTab} idPrefix="interview" label="Interview prep" />
+      <Tabs tabs={PREP_TABS} activeTab={activeTab} onChange={setActiveTab} idPrefix="interview" label="Interview prep" className="mb-6" />
 
       {activeTab === "prep" ? (
         <TabPanel idPrefix="interview" tabId="prep" className="grid grid-cols-1 lg:grid-cols-2 gap-6">

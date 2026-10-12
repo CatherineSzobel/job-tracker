@@ -25,9 +25,9 @@ export default function AddItemInput({ placeholder, maxLength, onAdd }) {
         placeholder={placeholder}
         aria-label={placeholder}
         maxLength={maxLength}
-        className="input-field py-1"
+        className="input-field"
       />
-      <button type="button" onClick={add} disabled={!text.trim()} className="btn-small disabled:opacity-50">
+      <button type="button" onClick={add} disabled={!text.trim()} className="btn-secondary">
         Add
       </button>
     </div>

@@ -54,12 +54,15 @@ export const STATUS_COLORS = {
   archived: "#06b6d4",
 };
 
-// Full class strings (not built at runtime) so Tailwind can find them
+// "Applied" for "applied"; an unknown status is shown as is
+export const jobStatusLabel = (status) => JOB_STATUSES.find((option) => option.value === status)?.label ?? status;
+
+// Status chip colours (UI/StatusChip). Full class strings (not built at runtime) so Tailwind can find them.
 export const STATUS_BADGE_CLASSES = {
-  applied: "bg-blue-200 text-blue-700 dark:bg-blue-700 dark:text-blue-300",
-  interview: "bg-yellow-200 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300",
-  offer: "bg-green-200 text-green-700 dark:bg-green-800 dark:text-green-300",
-  rejected: "bg-red-200 text-red-700 dark:bg-red-700 dark:text-red-300",
+  applied: "bg-applied-bg text-applied-fg",
+  interview: "bg-interview-bg text-interview-fg",
+  offer: "bg-offer-bg text-offer-fg",
+  rejected: "bg-rejected-bg text-rejected-fg",
 };
 
 export const PRIORITY_CLASSES = {

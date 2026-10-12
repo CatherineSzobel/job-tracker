@@ -1,9 +1,11 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 
-// Centered dialog over a dimmed backdrop. Escape and backdrop clicks call onClose.
+// Centered dialog over a dimmed backdrop (560px wide unless maxWidth says otherwise).
+// Escape, the × button and backdrop clicks call onClose.
 // When dialogs are stacked (e.g. a confirm over Manage tags), Escape only closes the top one.
-export default function Modal({ title, onClose, maxWidth = "max-w-2xl", children }) {
+export default function Modal({ title, onClose, maxWidth = "max-w-[560px]", children }) {
   const dialogRef = useRef(null);
 
   useEffect(() => {
@@ -18,20 +20,22 @@ export default function Modal({ title, onClose, maxWidth = "max-w-2xl", children
 
   // On <body>, so a transformed ancestor (e.g. a card's hover lift) can't trap the fixed overlay
   return createPortal(
-    <div
-      className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 p-3 sm:p-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       {/* Scrolls inside itself when taller than the screen (long forms on phones) */}
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`bg-surface dark:bg-dark-soft rounded-xl shadow-xl p-4 sm:p-6 w-full ${maxWidth} max-h-full overflow-y-auto transition-colors`}
+        className={`max-h-full w-full ${maxWidth} overflow-y-auto rounded-2xl border border-line bg-surface p-4 text-ink shadow-menu sm:p-6`}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-semibold mb-4 text-light-text dark:text-dark-text">{title}</h2>
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <h2 className="pt-1 text-xl/8 font-semibold">{title}</h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="btn-icon-sm -mt-1 -mr-2">
+            <X size={20} aria-hidden="true" />
+          </button>
+        </div>
         {children}
       </div>
     </div>,
