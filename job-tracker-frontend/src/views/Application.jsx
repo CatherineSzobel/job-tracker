@@ -6,7 +6,7 @@ import API from "../api/axios";
 import AttachedDocuments from "../components/Documents/AttachedDocuments";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
-import useArchiveWithTodos, { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, archivedMessage, deletedOpenTodos } from "../components/JobApplications/useArchiveWithTodos";
 import TagChip from "../components/Tags/TagChip";
 import TagInput from "../components/Tags/TagInput";
 import useTags from "../components/Tags/useTags";
@@ -18,7 +18,7 @@ import PageLoader from "../components/UI/PageLoader";
 import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, STATUS_BADGE_CLASSES, priorityLabel, APPLICATION_EDIT_FIELDS } from "../constants/jobs";
 import { confirmAction } from "../stores/useConfirmStore";
 import { usePageTitleStore } from "../stores/usePageTitleStore";
-import { useToastStore } from "../stores/useToastStore";
+import { showUndoToast, useToastStore } from "../stores/useToastStore";
 
 // The 2×2 status picker's buttons: the chosen one in its status colours with a border of the same hue
 const statusOptionClasses = (isChosen, status) =>
@@ -143,11 +143,28 @@ export default function Application() {
     }
   };
 
-  // deleteOpenTodos: the answer from the to-dos prompt, or undefined to follow the user's setting
+  // Restores it and comes back to this page (the list has moved on to Applications by then)
+  const undoArchive = async () => {
+    try {
+      await API.put(`/job-applications/${job.id}`, { is_archived: false });
+      navigate(`/jobs/${job.id}`);
+    } catch (err) {
+      console.error(err);
+      showToast("Couldn't undo archiving the application");
+    }
+  };
+
+  // deleteOpenTodos: the answer from the to-dos prompt, or undefined to follow the user's setting.
+  // The toast offers Undo, unless open to-dos were deleted too or it was already archived.
   const archive = async (deleteOpenTodos) => {
     try {
-      await API.put(`/job-applications/${job.id}`, archiveChanges(deleteOpenTodos));
-      showToast("Application archived", "success");
+      const res = await API.put(`/job-applications/${job.id}`, archiveChanges(deleteOpenTodos));
+      const todosDeleted = deletedOpenTodos([job], [res.data.data]);
+      if (todosDeleted || job.is_archived) {
+        showToast(archivedMessage(1, todosDeleted), "success");
+      } else {
+        showUndoToast(archivedMessage(1, false), undoArchive);
+      }
       navigate("/applications");
     } catch (err) {
       console.error(err);

@@ -31,7 +31,7 @@ function PendingChange({ label, onUndo }) {
 // preview them) on the applications selected when it's made, and then the selection is cleared
 // (onClearSelection) so the next change starts from a fresh pick. The summary lists the changes until Save
 // (onSave) sends all of them in one request; Cancel leaves select mode, which drops them. Archive and
-// Restore (onApply(request)) act on the selection straight away, since they ask first, and wait until
+// Restore (onApply(request)) act on the selection straight away (the toast offers Undo), and wait until
 // unsaved changes are saved or undone.
 export default function BatchBar({ selectedJobs, actions, tags, changes, onSave, onApply, onClearSelection, onCreateTag, onCancel, busy = false }) {
   // "add" or "remove" while the tag field is open

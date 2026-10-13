@@ -1,7 +1,5 @@
 import { create } from 'zustand'
 
-const TOAST_DURATION_MS = 4000
-
 let nextId = 1
 
 // Short messages shown by <Toaster /> (in Layout), instead of alert().
@@ -12,11 +10,11 @@ export const useToastStore = create((set, get) => ({
     toasts: [],
 
     // Actions
-    // type: 'error' | 'success'. Each toast removes itself after a few seconds.
-    showToast: (message, type = 'error') => {
+    // type: 'error' | 'success'. action: an optional button { label, onClick }; clicking it also dismisses
+    // the toast. Each toast removes itself after a few seconds (Toaster runs the timer).
+    showToast: (message, type = 'error', action = null) => {
         const id = nextId++
-        set({ toasts: [...get().toasts, { id, message, type }] })
-        setTimeout(() => get().dismissToast(id), TOAST_DURATION_MS)
+        set({ toasts: [...get().toasts, { id, message, type, action }] })
     },
 
     dismissToast: (id) => {
@@ -25,4 +23,8 @@ export const useToastStore = create((set, get) => ({
 }))
 
 // Shortcut for code outside components: showToast('Saved', 'success')
-export const showToast = (message, type) => useToastStore.getState().showToast(message, type)
+export const showToast = (message, type, action) => useToastStore.getState().showToast(message, type, action)
+
+// A success message with an Undo button, for actions that are easy to reverse (archive, restore)
+// instead of asking first. undo() does the reverse request and handles its own failure.
+export const showUndoToast = (message, undo) => showToast(message, 'success', { label: 'Undo', onClick: undo })

@@ -6,7 +6,7 @@ import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/b
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
 import JobDateGroups from "../components/JobApplications/JobDateGroups";
-import useArchiveWithTodos, { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, archivedMessage, deletedOpenTodos } from "../components/JobApplications/useArchiveWithTodos";
 import useBatchChanges from "../components/JobApplications/useBatchChanges";
 import useSendBatch from "../components/JobApplications/useSendBatch";
 import ManageTagsModal from "../components/Tags/ManageTagsModal";
@@ -23,8 +23,7 @@ import useSavedView from "../components/UI/useSavedView";
 import useSelection from "../components/UI/useSelection";
 import { filterChipClasses, filterChipCountClasses } from "../components/UI/filterChipClasses";
 import { EMPTY_JOB, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
-import { confirmAction } from "../stores/useConfirmStore";
-import { useToastStore } from "../stores/useToastStore";
+import { showUndoToast, useToastStore } from "../stores/useToastStore";
 import { countOf } from "../utils/plural";
 
 export default function Applications() {
@@ -125,15 +124,29 @@ export default function Applications() {
   // Every pending change, including ones on cards a filter now hides (they were made on purpose)
   const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
 
-  // deleteOpenTodos: the answer from the to-dos prompt, or undefined when it wasn't asked
-  // (then confirm here, and the server follows the user's setting)
-  const archiveSelected = async (deleteOpenTodos) => {
-    const count = visibleSelectedIds.length;
-    const wasAsked = deleteOpenTodos !== undefined;
-    if (!wasAsked && !(await confirmAction({ message: `Archive ${countOf(count, "application")}?`, confirmLabel: "Archive" }))) {
-      return;
+  const undoArchiveSelected = async (ids) => {
+    try {
+      await batchUpdateJobs(ids, { is_archived: false });
+      loadJobs();
+    } catch (err) {
+      console.error(err);
+      showToast("Couldn't undo archiving the applications");
     }
-    sendBatch(() => batchUpdateJobs(visibleSelectedIds, archiveChanges(deleteOpenTodos)));
+  };
+
+  // deleteOpenTodos: the answer from the to-dos prompt, or undefined to let the server follow the user's setting.
+  // No "Are you sure?": the toast offers Undo instead, unless open to-dos were deleted too.
+  const archiveSelected = async (deleteOpenTodos) => {
+    const ids = visibleSelectedIds;
+    const jobsBefore = jobs.filter((job) => ids.includes(job.id));
+    const archivedJobs = await sendBatch(() => batchUpdateJobs(ids, archiveChanges(deleteOpenTodos)));
+    if (!archivedJobs) return;
+
+    if (deletedOpenTodos(jobsBefore, archivedJobs)) {
+      showToast(archivedMessage(ids.length, true), "success");
+    } else {
+      showUndoToast(archivedMessage(ids.length, false), () => undoArchiveSelected(ids));
+    }
   };
 
   const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archiveSelected);
@@ -153,6 +166,7 @@ export default function Applications() {
       key={job.id}
       job={job}
       onRemove={(id) => setJobs((currentJobs) => currentJobs.filter((existing) => existing.id !== id))}
+      onUndone={loadJobs}
       selecting={selecting}
       selected={selectedIds.includes(job.id)}
       onToggleSelect={toggleSelected}
