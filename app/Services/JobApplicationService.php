@@ -37,8 +37,9 @@ class JobApplicationService
     }
 
     /**
-     * Update an existing job application. Archiving it also deletes its open to-dos when
-     * $deleteOpenTodos is true, or when it's null and the owner's setting is "delete".
+     * Update an existing job application. Archiving it sets archived_at and also deletes its open to-dos
+     * when $deleteOpenTodos is true, or when it's null and the owner's setting is "delete". Restoring
+     * clears archived_at.
      */
     public function update(JobApplication $job, array $data, ?bool $deleteOpenTodos = null): JobApplication
     {
@@ -46,7 +47,10 @@ class JobApplicationService
             // Only active → archived counts: the job page re-sends is_archived: true on every save
             $isBeingArchived = ! $job->is_archived && (bool) ($data['is_archived'] ?? false);
 
-            $job->update($data);
+            $job->fill($data);
+            // Keeps the date it was first archived when an archived application is edited
+            $job->archived_at = $job->is_archived ? ($job->archived_at ?? now()) : null;
+            $job->save();
 
             if ($isBeingArchived && ($deleteOpenTodos ?? $job->user->archive_todos === ArchiveTodosAction::Delete)) {
                 $job->todos()->where('done', false)->delete();
@@ -59,7 +63,8 @@ class JobApplicationService
     /**
      * Archive or restore several of the user's applications, all or nothing.
      * Any id that isn't one of theirs answers 404 before anything changes. Archiving follows the same
-     * open to-dos rule as update(): only applications going from active to archived.
+     * open to-dos rule as update(): only applications going from active to archived. Those get archived_at
+     * (already archived ones keep theirs); restoring clears it.
      *
      * @param  list<int>  $ids
      * @return EloquentCollection<int, JobApplication>
@@ -72,8 +77,12 @@ class JobApplicationService
 
             $newlyArchivedIds = $isArchived ? $jobs->where('is_archived', false)->modelKeys() : [];
 
-            // A query update, so updated_at moves too (archiving counts as an update)
-            $user->jobApplications()->whereKey($ids)->update(['is_archived' => $isArchived]);
+            // Query updates (no model events), so archived_at is set here; updated_at moves too
+            // (archiving counts as an update)
+            $user->jobApplications()->whereKey($ids)->update($isArchived ? ['is_archived' => true] : ['is_archived' => false, 'archived_at' => null]);
+            if ($newlyArchivedIds !== []) {
+                $user->jobApplications()->whereKey($newlyArchivedIds)->update(['archived_at' => now()]);
+            }
 
             if ($newlyArchivedIds !== [] && ($deleteOpenTodos ?? $user->archive_todos === ArchiveTodosAction::Delete)) {
                 Todo::whereIn('job_application_id', $newlyArchivedIds)->where('done', false)->delete();

@@ -18,14 +18,14 @@ class ApiResponseShapeTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const JOB = ['id', 'company_name', 'position', 'location', 'status', 'priority', 'applied_date', 'job_link', 'notes', 'is_archived'];
+    private const JOB = ['id', 'company_name', 'position', 'location', 'status', 'priority', 'applied_date', 'job_link', 'notes', 'is_archived', 'archived_at', 'updated_at'];
 
-    private const INTERVIEW = ['id', 'job_application_id', 'interview_date', 'type', 'location', 'notes', 'prep_progress' => ['done', 'total']];
+    private const INTERVIEW = ['id', 'job_application_id', 'interview_date', 'type', 'location', 'notes', 'rating', 'prep_progress' => ['done', 'total']];
 
     private const INTERVIEW_DETAIL = [
         ...self::INTERVIEW,
         'prep' => ['checklist', 'people', 'questions_to_ask', 'questions_asked'],
-        'rating', 'debrief_notes',
+        'debrief_notes',
     ];
 
     private const TODO = ['id', 'text', 'done', 'due_date', 'job_application', 'created_at'];
@@ -66,9 +66,12 @@ class ApiResponseShapeTest extends TestCase
         $this->actingAs($this->user);
     }
 
-    private function assertHidden($response, string $prefix): void
+    /**
+     * @param  list<string>  $exposed  fields this resource shows on purpose (applications show updated_at)
+     */
+    private function assertHidden($response, string $prefix, array $exposed = []): void
     {
-        foreach (['user_id', 'profile_id', 'updated_at', 'success', 'password', 'path'] as $field) {
+        foreach (array_diff(['user_id', 'profile_id', 'updated_at', 'success', 'password', 'path'], $exposed) as $field) {
             $response->assertJsonMissingPath("{$prefix}.{$field}");
         }
     }
@@ -92,7 +95,7 @@ class ApiResponseShapeTest extends TestCase
             ->assertJsonPath('data.0.applied_date', '2026-09-01')
             ->assertJsonPath('data.0.is_archived', false)
             ->assertJsonMissingPath('data.0.documents');
-        $this->assertHidden($list, 'data.0');
+        $this->assertHidden($list, 'data.0', exposed: ['updated_at']);
 
         $this->postJson('/api/job-applications', ['company_name' => 'Globex', 'position' => 'Designer'])
             ->assertCreated()

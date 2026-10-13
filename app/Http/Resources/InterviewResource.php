@@ -22,6 +22,8 @@ class InterviewResource extends JsonResource
             'type' => $this->type,
             'location' => $this->location,
             'notes' => $this->notes,
+            // The debrief's 1–5 stars, shown on past interview cards
+            'rating' => $this->rating,
             // For the "Prep 3/7" chip on interview cards; lists don't carry the prep document itself
             'prep_progress' => [
                 'done' => count(array_filter($checklist, fn (array $item) => (bool) $item['done'])),

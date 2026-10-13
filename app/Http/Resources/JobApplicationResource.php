@@ -24,6 +24,9 @@ class JobApplicationResource extends JsonResource
             'job_link' => $this->job_link,
             'notes' => $this->notes,
             'is_archived' => (bool) $this->is_archived,
+            'archived_at' => $this->archived_at,
+            // "Last update" on the detail page
+            'updated_at' => $this->updated_at,
             'interviews' => InterviewResource::collection($this->whenLoaded('interviews')),
             'open_todos_count' => $this->whenCounted('open_todos'),
             'tags' => TagResource::collection($this->whenLoaded('tags')),

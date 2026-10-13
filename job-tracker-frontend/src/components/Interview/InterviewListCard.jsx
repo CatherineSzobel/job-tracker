@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { Clock, EllipsisVertical, MapPin } from "lucide-react";
+import { Clock, EllipsisVertical, MapPin, Star } from "lucide-react";
 import DateBlock from "../UI/DateBlock";
 import Menu, { MenuDivider, MenuItem } from "../UI/Menu";
 import { isUpcoming } from "./interviewFilters";
+import { RATING_VALUES } from "../../constants/interviewPrep";
 import { interviewTypeLabel } from "../../constants/jobs";
 
 // An interview on the Interviews page: date block (filled for the next one), company (link to the prep page)
-// and position, ⋮ with Edit and Delete, type / time / place, then prep progress or the debrief link.
+// and position, ⋮ with Edit and Delete, type / time / place, then prep progress, or the debrief rating and link.
 // In select mode clicking the card calls onToggleSelect(id), and the links and actions are hidden.
 export default function InterviewListCard({ interview, isNext = false, onEdit, onDelete, selecting = false, selected = false, onToggleSelect }) {
   const upcoming = isUpcoming(interview);
@@ -96,9 +97,19 @@ export default function InterviewListCard({ interview, isNext = false, onEdit, o
               </Link>
             </>
           ) : (
-            <Link to={`/interviews/${interview.id}?tab=debrief`} className="btn-small ml-auto">
-              Open debrief
-            </Link>
+            <>
+              {interview.rating ? (
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
+                  <Star size={16} fill="currentColor" aria-hidden="true" className="text-bar-interview" />
+                  Rated {interview.rating} of {RATING_VALUES.length}
+                </span>
+              ) : (
+                <span className="text-sm text-muted">Not rated yet</span>
+              )}
+              <Link to={`/interviews/${interview.id}?tab=debrief`} className="btn-small ml-auto">
+                Open debrief
+              </Link>
+            </>
           )}
         </div>
       )}

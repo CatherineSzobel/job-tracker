@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { format, isPast, parseISO } from "date-fns";
+import { format, formatDistanceToNow, isPast, parseISO } from "date-fns";
 import { ChevronLeft, ClipboardList, EllipsisVertical, ExternalLink, MapPin, Pencil, Plus, StickyNote, Tag } from "lucide-react";
 import API from "../api/axios";
 import AttachedDocuments from "../components/Documents/AttachedDocuments";
@@ -386,6 +386,10 @@ export default function Application() {
               <dd className="font-semibold">{job.applied_date ? format(parseISO(job.applied_date), "d MMM yyyy") : "—"}</dd>
               <dt className="text-muted">Location</dt>
               <dd className="font-semibold break-words">{job.location || "—"}</dd>
+              <dt className="text-muted">Last update</dt>
+              <dd className="font-semibold" title={format(parseISO(job.updated_at), "d MMM yyyy, HH:mm")}>
+                {formatDistanceToNow(parseISO(job.updated_at), { addSuffix: true })}
+              </dd>
             </dl>
           </Card>
 

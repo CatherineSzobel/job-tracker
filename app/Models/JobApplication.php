@@ -38,6 +38,7 @@ class JobApplication extends Model
             'priority' => Priority::class,
             'applied_date' => 'date:Y-m-d',
             'is_archived' => 'boolean',
+            'archived_at' => 'datetime',
             'reminder_hidden_until' => 'datetime',
             'reminder_dismissed_at' => 'datetime',
         ];
