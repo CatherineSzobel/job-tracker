@@ -8,7 +8,8 @@ const ITEM_CLASSES = "flex w-full min-h-10 items-center gap-3 rounded-lg px-3 te
 const menuItems = (list) => [...list.querySelectorAll('[role="menuitem"]')];
 
 // A button that opens a floating menu of MenuItem / MenuDivider children (DESIGN_E.md §5 "Menu").
-// Closes on outside click, Escape (focus goes back to the button), Tab and after picking an item.
+// Closes on outside click, Tab, Escape and after picking an item. For the last two, focus goes back to
+// the button, so a dialog opened from an item can return focus there when it closes.
 // Arrow keys, Home and End move between items. buttonContent: what the button shows; label: its
 // accessible name, only needed when buttonContent is just an icon. align: which edge of the button the menu lines up with.
 export default function Menu({ label, buttonContent, buttonClassName = "btn-icon", align = "right", width = "w-56", children }) {
@@ -108,7 +109,7 @@ export function MenuItem({ to, onClick, icon, danger = false, children }) {
   );
 
   const pick = () => {
-    close();
+    close({ restoreFocus: true });
     onClick?.();
   };
 
