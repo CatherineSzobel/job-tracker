@@ -1,98 +1,76 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { ChevronDown, ChevronRight, LogOut } from "lucide-react";
 import { useAuthStore } from "../stores/useAuthStore";
-import { ACCOUNT_LINKS, getPageTitle } from "../constants/navigation";
+import { usePageTitle } from "../stores/usePageTitleStore";
+import { ACCOUNT_LINKS, getBreadcrumb } from "../constants/navigation";
+import Avatar from "./UI/Avatar";
+import Menu, { MenuDivider, MenuItem } from "./UI/Menu";
+import ThemeToggle from "./UI/ThemeToggle";
+import useLogout from "./Layouts/useLogout";
 
-const menuItemClasses =
-  "block w-full text-left px-4 py-2 text-sm hover:bg-light-soft dark:hover:bg-dark-subtle focus:bg-light-soft dark:focus:bg-dark-subtle focus:outline-none transition-colors";
-
-// Account menu: closes on outside click, on Escape (returning focus to the button) and after picking an item
-function UserMenu({ onLogout }) {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef(null);
-  const buttonRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const handleClickOutside = (e) => {
-      if (!menuRef.current.contains(e.target)) setOpen(false);
-    };
-    const handleEscape = (e) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        buttonRef.current.focus();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [open]);
+// Account button: initials, name and a chevron, opening Profile, Settings and Log out
+function AccountMenu({ user }) {
+  const logout = useLogout();
 
   return (
-    <div ref={menuRef} className="relative">
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-haspopup="true"
-        aria-expanded={open}
-        className="flex items-center gap-1 text-sm rounded-lg border px-3 py-1 border-border dark:border-dark-subtle hover:bg-light-soft dark:hover:bg-dark-subtle focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
-      >
-        Menu
-        <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 mt-2 w-40 py-1 z-20 rounded-lg shadow-lg border bg-light border-border dark:bg-dark-soft dark:border-dark-subtle">
-          {ACCOUNT_LINKS.map(({ to, label }) => (
-            <Link key={to} to={to} onClick={() => setOpen(false)} className={menuItemClasses}>
-              {label}
-            </Link>
-          ))}
-          <button type="button" onClick={onLogout} className={menuItemClasses}>
-            Logout
-          </button>
-        </div>
-      )}
-    </div>
+    <Menu
+      buttonClassName="flex h-12 items-center gap-2 rounded-full border border-line bg-surface pr-2 pl-1 font-medium text-ink transition-colors hover:bg-soft"
+      buttonContent={
+        <>
+          <Avatar name={user.name} />
+          <span className="max-w-48 truncate">{user.name}</span>
+          <ChevronDown size={16} aria-hidden="true" />
+        </>
+      }
+    >
+      {ACCOUNT_LINKS.map(({ to, label, icon }) => (
+        <MenuItem key={to} to={to} icon={icon}>
+          {label}
+        </MenuItem>
+      ))}
+      <MenuDivider />
+      <MenuItem onClick={logout} icon={LogOut} danger>
+        Log out
+      </MenuItem>
+    </Menu>
   );
 }
 
+// Desktop (lg+) top bar: where you are on the left (the page itself shows the title as its h1),
+// theme toggle and account menu on the right. Phones get PhoneBar instead.
 export default function Navbar() {
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logoutAction);
-
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleLogout = async () => {
-    await logout();
-    // The landing page, which is what "/" shows to a visitor who isn't logged in
-    navigate("/");
-  };
+  const { pathname } = useLocation();
+  const breadcrumb = getBreadcrumb(pathname);
+  const title = usePageTitle(pathname) ?? breadcrumb.title;
+  const { parent } = breadcrumb;
 
   return (
-    <header
-      className="
-        flex items-center justify-between p-4 shadow-md
-        bg-light text-light-text
-        dark:bg-dark-soft dark:text-dark-text
-      "
-    >
-      <h1 className="text-lg font-semibold">{getPageTitle(location.pathname)}</h1>
+    <header className="hidden items-center justify-between gap-4 border-b border-line bg-surface px-8 py-4 lg:flex">
+      <nav aria-label="Breadcrumb" className="min-w-0">
+        <ol className="flex flex-wrap items-center gap-2 text-muted">
+          {parent && (
+            <>
+              <li>
+                <Link to={parent.to} className="underline-offset-4 hover:text-ink hover:underline">
+                  {parent.label}
+                </Link>
+              </li>
+              <li aria-hidden="true">
+                <ChevronRight size={16} />
+              </li>
+            </>
+          )}
+          <li aria-current="page" className="font-semibold text-ink">
+            {title}
+          </li>
+        </ol>
+      </nav>
 
-      {user && (
-        <div className="flex items-center gap-2">
-          <p className="text-sm hidden md:block">Hello, {user.name}</p>
-          <UserMenu onLogout={handleLogout} />
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+        {user && <AccountMenu user={user} />}
+      </div>
     </header>
   );
 }

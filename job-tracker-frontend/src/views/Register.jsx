@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../stores/useAuthStore";
+import AuthCard, { AuthError } from "../components/Layouts/AuthCard";
+import PasswordInput from "../components/UI/PasswordInput";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -10,6 +12,8 @@ export default function Register() {
     password_confirmation: "",
   });
   const [error, setError] = useState("");
+  // One toggle for both password fields
+  const [showPasswords, setShowPasswords] = useState(false);
   const navigate = useNavigate();
   const register = useAuthStore((state) => state.registerAction);
 
@@ -33,33 +37,29 @@ export default function Register() {
   };
 
   return (
-    <div
-      className="w-full max-w-md rounded-2xl shadow-xl p-8
-                 bg-light dark:bg-dark-soft
-                 text-light-text dark:text-white
-                 transition-colors"
+    <AuthCard
+      title="Create your account"
+      intro="Start tracking your job applications in one place."
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link to="/login" className="font-semibold text-accent-text hover:underline">
+            Log in
+          </Link>
+        </>
+      }
     >
-      <Link to="/" className="inline-block mb-4 text-sm text-accent dark:text-accent-muted hover:underline">
-        ← Back to the home page
-      </Link>
-      <h2 className="text-2xl font-bold text-center mb-2">
-        Create your account 🚀
-      </h2>
-      <p className="text-sm text-light-text/70 dark:text-dark-muted text-center mb-6">
-        Start tracking your job applications in one place
-      </p>
+      {error && <AuthError message={error} />}
 
-      {error && (
-        <div className="mb-4 text-red-700 bg-red-100 border border-red-300 p-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label className="input-label">Name</label>
+          <label htmlFor="register-name" className="input-label">
+            Name
+          </label>
           <input
+            id="register-name"
             name="name"
+            autoComplete="name"
             value={form.name}
             onChange={handleChange}
             placeholder="Jane Doe"
@@ -69,10 +69,14 @@ export default function Register() {
         </div>
 
         <div>
-          <label className="input-label">Email</label>
+          <label htmlFor="register-email" className="input-label">
+            Email
+          </label>
           <input
+            id="register-email"
             name="email"
             type="email"
+            autoComplete="email"
             value={form.email}
             onChange={handleChange}
             placeholder="you@example.com"
@@ -82,25 +86,35 @@ export default function Register() {
         </div>
 
         <div>
-          <label className="input-label">Password</label>
-          <input
+          <label htmlFor="register-password" className="input-label">
+            Password
+          </label>
+          <PasswordInput
+            id="register-password"
             name="password"
-            type="password"
+            autoComplete="new-password"
             value={form.password}
             onChange={handleChange}
             placeholder="••••••••"
-            className="input-field"
+            aria-describedby="register-password-hint"
+            shown={showPasswords}
+            onToggleShown={() => setShowPasswords(!showPasswords)}
             required
           />
+          <p id="register-password-hint" className="mt-2 text-sm text-muted">
+            At least 8 characters.
+          </p>
         </div>
 
         <div>
-          <label className="input-label">
-            Confirm Password
+          <label htmlFor="register-password-confirmation" className="input-label">
+            Confirm password
           </label>
           <input
+            id="register-password-confirmation"
             name="password_confirmation"
-            type="password"
+            type={showPasswords ? "text" : "password"}
+            autoComplete="new-password"
             value={form.password_confirmation}
             onChange={handleChange}
             placeholder="••••••••"
@@ -109,21 +123,10 @@ export default function Register() {
           />
         </div>
 
-        <button
-          type="submit"
-          className="w-full py-2 rounded-lg font-semibold
-                     bg-accent hover:bg-accent-soft text-white"
-        >
-          Create Account
+        <button type="submit" className="btn-primary mt-2 w-full">
+          Create account
         </button>
       </form>
-
-      <div className="text-sm text-light-text/70 dark:text-dark-muted text-center mt-6">
-        <p>Already have an account?</p>
-        <Link to="/login" className="text-accent font-medium hover:underline">
-          Log in
-        </Link>
-      </div>
-    </div>
+    </AuthCard>
   );
 }

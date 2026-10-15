@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import TagInput from "../Tags/TagInput";
 import SelectionBar from "../UI/SelectionBar";
-import { JOB_STATUSES } from "../../constants/jobs";
+import { JOB_STATUSES, jobStatusLabel } from "../../constants/jobs";
 import { tagIdsOf } from "./batchUpdate";
 import { countOf } from "../../utils/plural";
 
@@ -12,21 +12,19 @@ const TAG_MODES = {
   remove: { placeholder: "Tag to remove…", submitLabel: "Remove", allowCreate: false },
 };
 
-const statusLabel = (value) => JOB_STATUSES.find((status) => status.value === value)?.label ?? value;
-
 // A summary line's text: "Status: Applied", "+ remote", "− fintech"
 const summaryLabel = (line) => {
-  if (line.kind === "status") return `Status: ${statusLabel(line.status)}`;
+  if (line.kind === "status") return `Status: ${jobStatusLabel(line.status)}`;
   return `${line.kind === "add" ? "+" : "−"} ${line.tag.name}`;
 };
 
 // One change waiting to be saved, with an × to drop it
 function PendingChange({ label, onUndo }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-light-soft dark:bg-dark-subtle text-light-text dark:text-dark-text">
+    <span className="inline-flex items-center gap-1 rounded-full bg-white pr-1 pl-3 text-sm/6 font-semibold text-accent">
       {label}
-      <button type="button" onClick={onUndo} aria-label={`Undo: ${label}`} className="hover:text-red-500 dark:hover:text-red-400">
-        <X size={12} />
+      <button type="button" onClick={onUndo} aria-label={`Undo: ${label}`} className="rounded-full p-1 hover:text-danger-fill">
+        <X size={14} aria-hidden="true" />
       </button>
     </span>
   );
@@ -135,7 +133,7 @@ export default function BatchBar({ selectedJobs, actions, tags, changes, onSave,
       {/* Changes waiting for Save, on their own line at the bottom of the bar */}
       {changes.hasChanges && (
         <div className="order-last w-full flex flex-wrap items-center gap-2 pt-1">
-          <span className="text-xs text-light-muted dark:text-dark-muted">Not saved yet:</span>
+          <span className="text-sm/6 font-semibold">Not saved yet:</span>
           {changes.summary.map((line) => (
             <PendingChange key={line.key} label={`${summaryLabel(line)} · ${countOf(line.count, "application")}`} onUndo={() => changes.undoLine(line)} />
           ))}

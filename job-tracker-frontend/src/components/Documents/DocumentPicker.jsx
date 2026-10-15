@@ -48,20 +48,20 @@ export default function DocumentPicker({ attachedDocuments, onSave, onCancel, sa
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {groups.length === 0 && !uploading && (
-        <p className="text-sm text-light-muted dark:text-dark-muted">Your library is empty. Upload a document to attach it.</p>
+        <p className="text-muted">Your library is empty. Upload a document to attach it.</p>
       )}
 
       {groups.map((group) => (
         <fieldset key={group.key}>
-          <legend className="text-xs font-semibold uppercase tracking-wide text-light-muted dark:text-dark-muted mb-2">
+          <legend className="group-label mb-1">
             {group.label}
           </legend>
-          <div className="space-y-1">
+          <div className="flex flex-col">
             {group.documents.map((item) => (
-              <label key={item.id} className="flex items-center gap-2 text-sm text-light-text dark:text-dark-text">
-                <input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggle(item.id)} />
+              <label key={item.id} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg px-2 hover:bg-soft">
+                <input type="checkbox" className="size-5 shrink-0" checked={selectedIds.has(item.id)} onChange={() => toggle(item.id)} />
                 {item.name}
               </label>
             ))}
@@ -70,20 +70,20 @@ export default function DocumentPicker({ attachedDocuments, onSave, onCancel, sa
       ))}
 
       {uploading ? (
-        <div className="p-4 rounded-lg bg-light-soft dark:bg-dark border border-border dark:border-dark-subtle">
+        <div className="rounded-xl border border-line bg-soft p-4">
           <DocumentForm mode="file" onSaved={addUploaded} onCancel={() => setUploading(false)} />
         </div>
       ) : (
-        <button onClick={() => setUploading(true)} className="text-sm text-accent hover:text-accent-soft transition-colors">
-          + Upload new
+        <button type="button" onClick={() => setUploading(true)} className="btn-soft self-start">
+          Upload a new file
         </button>
       )}
 
-      <div className="flex justify-end gap-3 pt-2">
+      <div className="flex flex-wrap justify-end gap-2 pt-2">
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2 rounded-lg bg-border dark:bg-dark-subtle text-light-text dark:text-dark-text hover:bg-light-muted/25 dark:hover:bg-dark-subtle/80 transition"
+          className="btn-secondary"
         >
           Cancel
         </button>
@@ -91,9 +91,9 @@ export default function DocumentPicker({ attachedDocuments, onSave, onCancel, sa
           type="button"
           onClick={() => onSave([...selectedIds])}
           disabled={saving || uploading}
-          className="px-6 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50"
+          className="btn-primary"
         >
-          {saving ? "Saving..." : "Save"}
+          {saving ? "Saving…" : "Save"}
         </button>
       </div>
     </div>

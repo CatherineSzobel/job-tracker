@@ -45,28 +45,26 @@ export const EMPTY_INTERVIEW = {
   notes: "",
 };
 
-// Hex colors for inline styles and charts
-export const STATUS_COLORS = {
-  applied: "#3b82f6",
-  interview: "#facc15",
-  offer: "#22c55e",
-  rejected: "#ef4444",
-  archived: "#06b6d4",
-};
+// "Applied" for "applied"; an unknown status is shown as is
+export const jobStatusLabel = (status) => JOB_STATUSES.find((option) => option.value === status)?.label ?? status;
 
-// Full class strings (not built at runtime) so Tailwind can find them
+// Status chip colours (UI/StatusChip). Full class strings (not built at runtime) so Tailwind can find them.
 export const STATUS_BADGE_CLASSES = {
-  applied: "bg-blue-200 text-blue-700 dark:bg-blue-700 dark:text-blue-300",
-  interview: "bg-yellow-200 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300",
-  offer: "bg-green-200 text-green-700 dark:bg-green-800 dark:text-green-300",
-  rejected: "bg-red-200 text-red-700 dark:bg-red-700 dark:text-red-300",
+  applied: "bg-applied-bg text-applied-fg",
+  interview: "bg-interview-bg text-interview-fg",
+  offer: "bg-offer-bg text-offer-fg",
+  rejected: "bg-rejected-bg text-rejected-fg",
 };
 
-export const PRIORITY_CLASSES = {
-  low: "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300",
-  medium: "bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300",
-  high: "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300",
+// Priority is coloured text with a flag (UI/PriorityLabel), not a second chip. Full class strings for Tailwind.
+export const PRIORITY_TEXT_CLASSES = {
+  high: "text-rejected-fg",
+  medium: "text-interview-fg",
+  low: "text-muted",
 };
+
+// "High" for "high"; an unknown priority is shown as is
+export const priorityLabel = (priority) => PRIORITIES.find((option) => option.value === priority)?.label ?? priority;
 
 // Mirrors the column defaults on users (daily_goal, weekly_goal)
 export const DEFAULT_GOALS = { daily_goal: 5, weekly_goal: 20 };

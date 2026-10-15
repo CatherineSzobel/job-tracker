@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { confirmAction } from "../stores/useConfirmStore";
-import { Plus } from "lucide-react";
+import { Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import API from "../api/axios";
 import { showToast } from "../stores/useToastStore";
 import Modal from "../components/UI/Modal";
+import PageHeader from "../components/UI/PageHeader";
 import PageLoader from "../components/UI/PageLoader";
+import { SEGMENTED_TRACK_CLASSES, segmentClasses } from "../components/UI/segmentedClasses";
 import DocumentForm from "../components/Documents/DocumentForm";
 import OpenDocumentButton from "../components/Documents/OpenDocumentButton";
 import { apiErrorMessage, formatFileSize, linkDomain } from "../components/Documents/documentUtils";
 import { CATEGORY_BY_VALUE, DOCUMENT_CATEGORIES } from "../constants/documents";
+import { formatShortDate } from "../utils/formatDate";
 import { countOf } from "../utils/plural";
 import { filterChipClasses } from "../components/UI/filterChipClasses";
 
@@ -17,6 +20,7 @@ const ADD_TABS = [
   { value: "link", label: "Add link" },
 ];
 
+const FILTER_CHIPS = [{ value: "all", label: "All" }, ...DOCUMENT_CATEGORIES];
 
 export default function Documents() {
   const [documents, setDocuments] = useState([]);
@@ -84,111 +88,104 @@ export default function Documents() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto mt-4 sm:mt-10 sm:px-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-light-text dark:text-dark-text mb-2">Documents & links</h1>
-          <p className="text-light-muted dark:text-dark-muted">
-            Your CVs, cover letters and profile links, ready to attach to applications.
-          </p>
-        </div>
-        <button
-          onClick={() => setAddTab("file")}
-          className="inline-flex items-center justify-center gap-1 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition shrink-0"
-        >
-          <Plus size={16} /> Add
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <button
-          onClick={() => setCategoryFilter("all")}
-          className={filterChipClasses(categoryFilter === "all")}
-        >
-          All
-        </button>
-        {DOCUMENT_CATEGORIES.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setCategoryFilter(value)}
-            className={filterChipClasses(categoryFilter === value)}
-          >
-            {label}
+    <div className="mx-auto flex w-full max-w-[960px] flex-col gap-6">
+      <PageHeader
+        title="Documents & links"
+        description="Your CVs, cover letters and profile links, ready to attach to applications."
+        actions={
+          <button type="button" onClick={() => setAddTab("file")} className="btn-primary">
+            <Plus size={20} strokeWidth={2.5} aria-hidden="true" />
+            Add document or link
           </button>
-        ))}
-        <label className="ml-auto flex items-center gap-2 text-sm text-light-muted dark:text-dark-muted">
-          <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
+        }
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* The type chips scroll sideways rather than wrapping into several rows (p-0.5 keeps the focus ring visible) */}
+        <div className="min-w-0 flex-[1_1_320px] overflow-x-auto p-0.5">
+          <div role="group" aria-label="Filter by type" className="flex w-max gap-2">
+            {FILTER_CHIPS.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={categoryFilter === value}
+                onClick={() => setCategoryFilter(value)}
+                className={filterChipClasses(categoryFilter === value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 text-muted-2">
+          <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="size-5" />
           Show archived
         </label>
       </div>
 
-      {/* List */}
-      <div className="space-y-3">
-        {visibleDocuments.length === 0 && (
-          <p className="text-sm text-light-muted dark:text-dark-muted">No documents here yet.</p>
-        )}
+      {visibleDocuments.length === 0 ? (
+        <p className="text-muted">No documents here yet.</p>
+      ) : (
+        <ul className="divide-y divide-subtle overflow-hidden rounded-2xl border border-line bg-surface">
+          {visibleDocuments.map((item) => {
+            const { icon: Icon, label } = CATEGORY_BY_VALUE[item.category];
+            const details = item.kind === "file" ? `${formatFileSize(item.size)} · ${formatShortDate(item.created_at)}` : linkDomain(item.url);
+            const sentWith = item.applications_count > 0 ? `Sent with ${countOf(item.applications_count, "application")}` : "Not sent with an application yet";
 
-        {visibleDocuments.map((item) => {
-          const { icon: Icon, label } = CATEGORY_BY_VALUE[item.category];
-          const details = item.kind === "file"
-            ? `${formatFileSize(item.size)} · ${new Date(item.created_at).toLocaleDateString()}`
-            : linkDomain(item.url);
+            return (
+              <li key={item.id} className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 md:px-6">
+                <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-text">
+                  <Icon size={20} aria-hidden="true" />
+                </span>
 
-          return (
-            <div
-              key={item.id}
-              className="flex flex-col sm:flex-row sm:items-center gap-3 bg-light dark:bg-dark-soft border border-border dark:border-dark-subtle rounded-lg p-4 transition-colors"
-            >
-              <Icon size={20} className="text-accent dark:text-accent-muted shrink-0" />
+                <div className="flex min-w-0 flex-[1_1_200px] flex-col">
+                  <strong className="font-semibold break-words">
+                    {item.name}
+                    {item.archived_at && (
+                      <span className="ml-2 rounded-full bg-subtle px-2 text-sm font-semibold text-muted-2">Archived</span>
+                    )}
+                  </strong>
+                  <span className="text-sm text-muted">
+                    {label} · {details}
+                  </span>
+                  <span className="text-sm text-muted">{sentWith}</span>
+                </div>
 
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-light-text dark:text-dark-text break-words">
-                  {item.name}
-                  {item.archived_at && (
-                    <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-light-soft dark:bg-dark-subtle text-light-muted dark:text-dark-muted">
-                      archived
-                    </span>
+                <div className="flex items-center gap-1">
+                  <OpenDocumentButton document={item} />
+                  {item.archived_at ? (
+                    <button type="button" onClick={() => restoreDocument(item)} className="btn-small ml-1">
+                      <RotateCcw size={16} aria-hidden="true" />
+                      Restore
+                    </button>
+                  ) : (
+                    <>
+                      <button type="button" onClick={() => setEditingDocument(item)} aria-label={`Rename ${item.name}`} title="Rename" className="btn-icon-sm">
+                        <Pencil size={18} aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteDocument(item)}
+                        aria-label={`Delete ${item.name}`}
+                        title="Delete"
+                        className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-danger transition-colors hover:bg-rejected-bg"
+                      >
+                        <Trash2 size={18} aria-hidden="true" />
+                      </button>
+                    </>
                   )}
-                </p>
-                <p className="text-sm text-light-muted dark:text-dark-muted">{label} · {details}</p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-4 shrink-0">
-                <OpenDocumentButton document={item} />
-                {item.archived_at ? (
-                  <button onClick={() => restoreDocument(item)} className="text-sm text-accent hover:text-accent-soft transition-colors">
-                    Restore
-                  </button>
-                ) : (
-                  <>
-                    <button onClick={() => setEditingDocument(item)} className="text-sm text-light-muted dark:text-dark-muted hover:text-accent transition-colors">
-                      Rename
-                    </button>
-                    <button
-                      onClick={() => deleteDocument(item)}
-                      className="text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500"
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       {addTab && (
-        <Modal title="Add document" onClose={() => setAddTab(null)}>
-          <div className="flex gap-2 mb-4">
+        <Modal title="Add document or link" onClose={() => setAddTab(null)}>
+          <div role="group" aria-label="What to add" className={`${SEGMENTED_TRACK_CLASSES} mb-4`}>
             {ADD_TABS.map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => setAddTab(value)}
-                className={filterChipClasses(addTab === value)}
-              >
+              <button key={value} type="button" aria-pressed={addTab === value} onClick={() => setAddTab(value)} className={segmentClasses(addTab === value)}>
                 {label}
               </button>
             ))}

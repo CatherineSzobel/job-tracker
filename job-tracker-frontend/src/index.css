@@ -2,96 +2,281 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-    /* Dark mode background (lighter) */
-    --color-dark: #202c3b;
-    /* main bg, slightly lighter than before */
-    --color-dark-soft: #2a3a4d;
-    /* for cards / forms */
-    --color-dark-subtle: #3b4b61;
-    /* borders / dividers */
-    --color-dark-text: #e5e5e5;
-    /* main text in dark mode */
-    --color-dark-muted: #a0aec0;
-    /* secondary text */
+/*
+ * Design E semantic tokens (DESIGN_E.md §4.1, §9.1). Components use one class per property
+ * (bg-surface text-ink border-line); dark mode only swaps the values below, so no dark: duplicates.
+ * "inline" because the colours point at the runtime variables that .dark overrides.
+ */
+@theme inline {
+    --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
 
-    /* Light mode */
-    --color-light: #ffffff;
-    --color-light-soft: #f3f4f6;
-    --color-light-muted: #6b7280;
-    --color-light-text: #1f2937;
+    --color-page: var(--page);
+    --color-surface: var(--surface);
+    --color-raised: var(--raised);
+    --color-soft: var(--soft);
+    --color-subtle: var(--subtle);
+    --color-line: var(--line);
+    --color-input: var(--input);
+    --color-ink: var(--ink);
+    --color-muted: var(--muted);
+    --color-muted-2: var(--muted2);
+    --color-accent: var(--accent);
+    --color-accent-hover: var(--accent-hover);
+    --color-accent-text: var(--accent-text);
+    --color-accent-soft: var(--accent-soft);
+    --color-accent-soft-hover: var(--accent-soft-hover);
+    --color-danger: var(--danger);
+    --color-danger-fill: var(--danger-fill);
+    --color-danger-fill-hover: var(--danger-fill-hover);
 
-    /* Accent / neutral */
-    --color-accent: #4e68b1;
-    --color-accent-soft: #5f77b8;
-    --color-accent-muted: #8395c8;
+    /* Status chips (background / text), plus the borders used around tinted rows */
+    --color-applied-bg: var(--applied-bg);
+    --color-applied-fg: var(--applied-fg);
+    --color-interview-bg: var(--interview-bg);
+    --color-interview-fg: var(--interview-fg);
+    --color-offer-bg: var(--offer-bg);
+    --color-offer-fg: var(--offer-fg);
+    --color-offer-line: var(--offer-line);
+    --color-rejected-bg: var(--rejected-bg);
+    --color-rejected-fg: var(--rejected-fg);
+    --color-rejected-line: var(--rejected-line);
 
-    --color-surface: #ffffff;
-    --color-muted: #64748b;
-    --color-border: #e5e7eb;
+    /* User tags (App\Enums\TagColor): a tinted background with dark text of the same hue, inverted in dark mode */
+    --color-tag-slate-bg: var(--tag-slate-bg);
+    --color-tag-slate-fg: var(--tag-slate-fg);
+    --color-tag-red-bg: var(--tag-red-bg);
+    --color-tag-red-fg: var(--tag-red-fg);
+    --color-tag-amber-bg: var(--tag-amber-bg);
+    --color-tag-amber-fg: var(--tag-amber-fg);
+    --color-tag-green-bg: var(--tag-green-bg);
+    --color-tag-green-fg: var(--tag-green-fg);
+    --color-tag-teal-bg: var(--tag-teal-bg);
+    --color-tag-teal-fg: var(--tag-teal-fg);
+    --color-tag-blue-bg: var(--tag-blue-bg);
+    --color-tag-blue-fg: var(--tag-blue-fg);
+    --color-tag-violet-bg: var(--tag-violet-bg);
+    --color-tag-violet-fg: var(--tag-violet-fg);
+    --color-tag-pink-bg: var(--tag-pink-bg);
+    --color-tag-pink-fg: var(--tag-pink-fg);
+
+    /* "Applications by status" bars (Applied uses the accent); mid tones that read on both themes */
+    --color-bar-interview: #d99a1e;
+    --color-bar-offer: #2e8b57;
+    --color-bar-rejected: #c2382a;
+
+    /* Dashboard note cards */
+    --color-note-bg: var(--note-bg);
+    --color-note-line: var(--note-line);
+    --color-note-fg: var(--note-fg);
+
+    /* The only shadow: floating menus, drawers and toasts */
+    --shadow-menu: 0 8px 24px rgb(15 27 45 / 0.12);
 }
 
-/* Form controls (input, select, textarea) and their labels */
+@layer base {
+    :root {
+        color-scheme: light;
+        --page: #f4f6fa;
+        --surface: #ffffff;
+        --raised: #ffffff;
+        --soft: #f4f6fa;
+        --subtle: #eef1f5;
+        --line: #dde3ec;
+        --input: #b8c3d6;
+        --ink: #0f1b2d;
+        --muted: #4a5568;
+        --muted2: #334155;
+        --accent: #2b4c9b;
+        --accent-hover: #233f82;
+        --accent-text: #2b4c9b;
+        --accent-soft: #e6ecf7;
+        --accent-soft-hover: #d6e0f2;
+        --danger: #b42318;
+        --danger-fill: #b42318;
+        --danger-fill-hover: #912018;
+
+        --applied-bg: #e6ecf7;
+        --applied-fg: #2b4c9b;
+        --interview-bg: #fdf1d6;
+        --interview-fg: #8a5a00;
+        --offer-bg: #ddf3e4;
+        --offer-fg: #1e6b3a;
+        --offer-line: #bfe0cb;
+        --rejected-bg: #fbe3e3;
+        --rejected-fg: #a12a2a;
+        --rejected-line: #f2c4c4;
+
+        --note-bg: #fff8e6;
+        --note-line: #f1e2b8;
+        --note-fg: #6b5a2e;
+
+        --tag-slate-bg: #eef1f5;
+        --tag-slate-fg: #334155;
+        --tag-red-bg: #fbe3e3;
+        --tag-red-fg: #a12a2a;
+        --tag-amber-bg: #fdf1d6;
+        --tag-amber-fg: #8a5a00;
+        --tag-green-bg: #e7f3ec;
+        --tag-green-fg: #1e6b3a;
+        --tag-teal-bg: #ddf2f0;
+        --tag-teal-fg: #14635e;
+        --tag-blue-bg: #e6ecf7;
+        --tag-blue-fg: #2b4c9b;
+        --tag-violet-bg: #f1e8fb;
+        --tag-violet-fg: #5b2a86;
+        --tag-pink-bg: #fbe7f1;
+        --tag-pink-fg: #8e2a5b;
+    }
+
+    .dark {
+        color-scheme: dark;
+        --page: #0f1623;
+        --surface: #172131;
+        --raised: #33445f;
+        --soft: #1f2b3e;
+        --subtle: #243149;
+        --line: #2a3850;
+        --input: #3a4a66;
+        --ink: #e6ebf2;
+        --muted: #a3afc2;
+        --muted2: #c4cdda;
+        --accent: #3d63c4;
+        --accent-hover: #3557b0;
+        --accent-text: #8fb0ff;
+        --accent-soft: #1e2e52;
+        --accent-soft-hover: #263a66;
+        --danger: #f07a6e;
+        --danger-fill: #c2382a;
+        --danger-fill-hover: #a82f23;
+
+        --applied-bg: #1e2e52;
+        --applied-fg: #b9ccff;
+        --interview-bg: #3a2c0e;
+        --interview-fg: #f2c46b;
+        --offer-bg: #12331f;
+        --offer-fg: #7fd3a0;
+        --offer-line: #2a5a3c;
+        --rejected-bg: #3d1a1a;
+        --rejected-fg: #f4a3a3;
+        --rejected-line: #5a2a2a;
+
+        --note-bg: #2e2814;
+        --note-line: #4a4020;
+        --note-fg: #d9c58f;
+
+        --tag-slate-bg: #243149;
+        --tag-slate-fg: #c4cdda;
+        --tag-red-bg: #3d1a1a;
+        --tag-red-fg: #f4a3a3;
+        --tag-amber-bg: #3a2c0e;
+        --tag-amber-fg: #f2c46b;
+        --tag-green-bg: #12331f;
+        --tag-green-fg: #7fd3a0;
+        --tag-teal-bg: #0f3330;
+        --tag-teal-fg: #7fd6cc;
+        --tag-blue-bg: #1e2e52;
+        --tag-blue-fg: #b9ccff;
+        --tag-violet-bg: #2e1f45;
+        --tag-violet-fg: #d4b8f5;
+        --tag-pink-bg: #3f1a2d;
+        --tag-pink-fg: #f3aacb;
+    }
+
+    :root {
+        /* Native checkboxes, radios and range inputs */
+        accent-color: var(--accent);
+    }
+
+    body {
+        @apply bg-page font-sans text-ink;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--accent-text);
+        outline-offset: 2px;
+    }
+}
+
+/* Page heading inside the app (32/40, smaller on phones) */
+@utility page-title {
+    @apply text-[clamp(28px,2.6vw,32px)] leading-10 font-bold tracking-[-0.01em] text-ink;
+}
+
+/* "TODAY", "OVERDUE": a small uppercase heading above a group of rows */
+@utility group-label {
+    @apply text-sm/6 font-semibold tracking-[0.04em] text-muted uppercase;
+}
+
+/* Form controls (input, select, textarea): 48px, label above */
 @utility input-field {
-    @apply w-full px-4 py-2 rounded-lg border border-border dark:border-dark-subtle bg-light dark:bg-dark-subtle text-light-text dark:text-dark-text focus:ring-2 focus:ring-accent focus:outline-none transition-colors;
+    @apply min-h-12 w-full rounded-lg border border-input bg-surface px-4 py-2 text-ink transition-colors placeholder:text-muted focus:border-accent disabled:opacity-50;
 }
 
 @utility input-label {
-    @apply block text-sm font-medium mb-1 text-light-text dark:text-dark-text;
+    @apply mb-2 block text-sm/6 font-semibold text-ink;
 }
 
-/* Dashboard-style card and its heading (add your own margin to the heading) */
+/* Card: flat surface with a border, no shadow. card-title is its 20/32 heading (add your own margin) */
 @utility card {
-    @apply bg-surface dark:bg-dark-soft border border-border dark:border-dark-subtle shadow-md rounded-2xl p-6 transition-shadow hover:shadow-xl;
+    @apply rounded-2xl border border-line bg-surface p-4 md:p-6;
 }
 
 @utility card-title {
-    @apply flex items-center gap-2 text-lg font-semibold text-light-text dark:text-white;
+    @apply flex items-center gap-2 text-xl/8 font-semibold text-ink;
 }
 
 /* A section of the Settings page (add space-y-4 when it stacks several blocks) */
 @utility settings-section {
-    @apply bg-light dark:bg-dark-soft rounded-2xl shadow-md border border-border dark:border-dark-subtle p-6 transition-colors;
+    @apply rounded-2xl border border-line bg-surface p-4 md:p-6;
 }
 
-/* Filled accent button for a form's main action (Save, Update, Add) */
+/* Filled accent button: the page's one main action (Add application, Save) */
 @utility btn-primary {
-    @apply px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-soft transition disabled:opacity-50;
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-accent px-4 font-semibold text-white transition-colors not-disabled:hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50;
 }
 
-/* Small outlined button for card actions (Dismiss, Edit, ...); the danger one for Delete */
+/* Outline button: secondary actions next to the primary one (Select, Cancel, Edit) */
+@utility btn-secondary {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-input bg-surface px-4 font-semibold text-ink transition-colors not-disabled:hover:bg-soft disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+/* Tinted button for in-card actions (Add follow-up, Attach, Link answer) */
+@utility btn-soft {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-accent-soft px-3 text-sm/6 font-semibold text-accent-text transition-colors not-disabled:hover:bg-accent-soft-hover disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+/* Filled danger button: only for the last step of something destructive (Delete account) */
+@utility btn-danger {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-danger-fill px-4 font-semibold text-white transition-colors not-disabled:hover:bg-danger-fill-hover disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+/* Compact (40px) outline button for actions inside cards (Dismiss, Edit); the danger one is text-only */
 @utility btn-small {
-    @apply px-2 py-1 text-xs rounded-lg border border-light-muted dark:border-dark-subtle text-light-text dark:text-dark-text hover:bg-light dark:hover:bg-dark-subtle transition-colors;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-input bg-surface px-3 text-sm/6 font-semibold text-ink transition-colors not-disabled:hover:bg-soft disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 @utility btn-small-danger {
-    @apply px-2 py-1 text-xs rounded-lg border border-red-300 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm/6 font-semibold text-danger transition-colors not-disabled:hover:bg-rejected-bg disabled:cursor-not-allowed disabled:opacity-50;
 }
 
-/* Outlined button in a list page's header (Select, Select all, Cancel) */
-@utility btn-toolbar {
-    @apply px-3 py-2 rounded-md text-sm border border-light-muted dark:border-dark-subtle text-light-text dark:text-dark-text hover:bg-light-soft dark:hover:bg-dark-subtle transition-colors;
+/* Square icon-only button (48px; btn-icon-sm is the 40px one inside cards). Needs an aria-label. */
+@utility btn-icon {
+    @apply inline-flex size-12 shrink-0 items-center justify-center rounded-lg text-ink transition-colors not-disabled:hover:bg-soft disabled:cursor-not-allowed disabled:opacity-50;
 }
 
-/* Buttons in the pinned select bar (SelectionBar); the danger one for Delete */
+@utility btn-icon-sm {
+    @apply inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-muted transition-colors not-disabled:hover:bg-soft not-disabled:hover:text-ink disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+/* Buttons on the navy selection bar (SelectionBar): outline, filled white, and white with danger text */
 @utility btn-bar {
-    @apply px-3 py-1 rounded-lg text-sm border border-light-muted dark:border-dark-subtle text-light-text dark:text-dark-text hover:bg-light-soft dark:hover:bg-dark-subtle disabled:opacity-50 transition-colors;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-white px-3 text-sm/6 font-semibold text-white transition-colors not-disabled:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 @utility btn-bar-primary {
-    @apply px-3 py-1 rounded-lg text-sm bg-accent text-white hover:bg-accent-soft disabled:opacity-50 transition-colors;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-white bg-white px-3 text-sm/6 font-semibold text-accent transition-colors not-disabled:hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 @utility btn-bar-danger {
-    @apply px-3 py-1 rounded-lg text-sm border border-red-300 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-50 transition-colors;
-}
-
-/* Global background */
-body {
-    @apply bg-light-soft text-light-text;
-}
-
-.dark body {
-    background-color: var(--color-dark);
-    color: var(--color-dark-text);
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-white bg-white px-3 text-sm/6 font-semibold text-danger-fill transition-colors not-disabled:hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50;
 }

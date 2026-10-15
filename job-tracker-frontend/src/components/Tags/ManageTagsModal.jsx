@@ -14,11 +14,11 @@ export default function ManageTagsModal({ tags, onCreate, onUpdate, onDelete, on
       <NewTagForm onCreate={onCreate} />
 
       {tags.length === 0 ? (
-        <p className="text-sm text-light-muted dark:text-dark-muted">
+        <p className="text-muted">
           No tags yet. Create one above, or add one on an application.
         </p>
       ) : (
-        <ul className="flex flex-col gap-5">
+        <ul className="flex flex-col divide-y divide-subtle">
           {tags.map((tag) => (
             <ManagedTagRow key={tag.id} tag={tag} onUpdate={onUpdate} onDelete={onDelete} />
           ))}
@@ -44,19 +44,19 @@ function NewTagForm({ onCreate }) {
   };
 
   return (
-    <form onSubmit={submit} className="flex gap-2 mb-5">
+    <form onSubmit={submit} className="mb-4 flex gap-2">
       <input
         value={name}
         maxLength={TAG_NAME_MAX}
         onChange={(event) => setName(event.target.value)}
         placeholder="New tag…"
         aria-label="New tag name"
-        className="input-field py-1 text-sm"
+        className="input-field min-w-0 flex-1"
       />
       <button
         type="submit"
         disabled={!trimmedName || saving}
-        className="px-3 py-1 text-sm rounded-lg bg-accent text-surface hover:bg-accent-soft disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap transition-colors"
+        className="btn-primary shrink-0"
       >
         Create
       </button>
@@ -86,7 +86,7 @@ function ManagedTagRow({ tag, onUpdate, onDelete }) {
   };
 
   return (
-    <li className="flex flex-col gap-2">
+    <li className="flex flex-col gap-2 py-4">
       <div className="flex items-center gap-2">
         <TagChip tag={tag} />
         <input
@@ -100,20 +100,20 @@ function ManagedTagRow({ tag, onUpdate, onDelete }) {
             }
           }}
           aria-label={`Rename ${tag.name}`}
-          className="input-field py-1 text-sm flex-1 min-w-0"
+          className="input-field min-w-0 flex-1"
         />
-        <span className="text-xs text-light-muted dark:text-dark-muted whitespace-nowrap">{usageCount} used</span>
+        <span className="text-sm whitespace-nowrap text-muted">{usageCount} used</span>
         <button
           type="button"
           onClick={confirmDelete}
           aria-label={`Delete ${tag.name}`}
-          className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 p-1 rounded-full transition-colors"
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-danger transition-colors hover:bg-rejected-bg"
         >
-          <Trash2 size={16} />
+          <Trash2 size={18} aria-hidden="true" />
         </button>
       </div>
 
-      <div className="flex gap-1" role="group" aria-label={`Colour for ${tag.name}`}>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={`Colour for ${tag.name}`}>
         {TAG_COLORS.map((color) => (
           <button
             key={color}
@@ -121,7 +121,8 @@ function ManagedTagRow({ tag, onUpdate, onDelete }) {
             onClick={() => onUpdate(tag, { color })}
             aria-label={color}
             aria-pressed={tag.color === color}
-            className={`w-6 h-6 rounded-full ${TAG_COLOR_CLASSES[color]} ${tag.color === color ? "ring-2 ring-accent ring-offset-1" : ""}`}
+            title={color}
+            className={`size-8 rounded-full border border-line ${TAG_COLOR_CLASSES[color]} ${tag.color === color ? "ring-2 ring-accent-text ring-offset-2 ring-offset-surface" : ""}`}
           />
         ))}
       </div>

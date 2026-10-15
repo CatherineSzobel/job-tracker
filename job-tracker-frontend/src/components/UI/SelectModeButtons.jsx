@@ -3,7 +3,7 @@
 export default function SelectModeButtons({ selecting, visibleCount, onStart, onSelectAll, onCancel }) {
   if (!selecting) {
     return (
-      <button type="button" onClick={onStart} className="btn-toolbar">
+      <button type="button" onClick={onStart} className="btn-secondary">
         Select
       </button>
     );
@@ -11,10 +11,10 @@ export default function SelectModeButtons({ selecting, visibleCount, onStart, on
 
   return (
     <>
-      <button type="button" onClick={onSelectAll} className="btn-toolbar">
+      <button type="button" onClick={onSelectAll} className="btn-secondary">
         Select all ({visibleCount})
       </button>
-      <button type="button" onClick={onCancel} className="btn-toolbar">
+      <button type="button" onClick={onCancel} className="btn-secondary">
         Cancel
       </button>
     </>

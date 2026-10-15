@@ -42,20 +42,16 @@ export default function TodoItem({ todo, onUpdate, onDelete, showApplication = t
 
   return (
     <li
-      className={`flex items-center gap-3 px-4 py-3 border rounded-lg transition-all hover:shadow-sm
-        ${todo.done
-          ? "text-light-muted dark:text-dark-muted bg-light-soft dark:bg-dark-subtle border-light-muted dark:border-dark-subtle opacity-80"
-          : overdue
-            ? "bg-light dark:bg-dark border-red-300 dark:border-red-800 text-light-text dark:text-white"
-            : "bg-light dark:bg-dark border-light-muted dark:border-dark-subtle hover:bg-light-soft dark:hover:bg-dark-soft text-light-text dark:text-white"
-        }`}
+      className={`flex items-center gap-3 rounded-xl border py-3 pr-2 pl-4 ${
+        todo.done ? "border-line bg-soft text-muted" : overdue ? "border-rejected-line bg-surface" : "border-line bg-surface"
+      }`}
     >
       <input
         type="checkbox"
         checked={todo.done}
         onChange={() => onUpdate(todo, { done: !todo.done })}
-        aria-label={todo.done ? "Mark as not done" : "Mark as done"}
-        className="h-5 w-5 cursor-pointer rounded accent-accent"
+        aria-label={todo.done ? `Mark as not done: ${todo.text}` : `Mark done: ${todo.text}`}
+        className="size-5 shrink-0 cursor-pointer"
       />
 
       <div className="flex-1 min-w-0 flex flex-col gap-1">
@@ -67,24 +63,25 @@ export default function TodoItem({ todo, onUpdate, onDelete, showApplication = t
             onChange={(event) => setText(event.target.value)}
             onBlur={finishEditing}
             onKeyDown={handleEditKeyDown}
-            className="input-field py-1"
+            aria-label="To-do text"
+            className="input-field"
           />
         ) : (
           <button
             type="button"
             onClick={startEditing}
             title="Click to edit"
-            className={`text-left font-medium break-words ${todo.done ? "line-through" : ""}`}
+            className={`text-left font-semibold break-words ${todo.done ? "line-through" : ""}`}
           >
             {todo.text}
           </button>
         )}
 
         {(todo.due_date || (showApplication && todo.job_application)) && (
-          <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
             <DueChip dueDate={todo.due_date} done={todo.done} />
             {showApplication && todo.job_application && (
-              <Link to={`/jobs/${todo.job_application.id}`} className="text-accent dark:text-accent-muted hover:underline truncate">
+              <Link to={`/jobs/${todo.job_application.id}`} className="min-w-0 truncate text-accent-text hover:underline">
                 {todo.job_application.company_name} · {todo.job_application.position}
               </Link>
             )}
@@ -98,18 +95,20 @@ export default function TodoItem({ todo, onUpdate, onDelete, showApplication = t
           onClick={() => onUpdate(todo, { due_date: isoDateFromToday(1) })}
           aria-label="Move to tomorrow"
           title="Move to tomorrow"
-          className="text-light-muted dark:text-dark-muted hover:text-accent dark:hover:text-accent-muted p-1 rounded-full transition-colors"
+          className="btn-icon-sm"
         >
-          <CalendarClock size={16} />
+          <CalendarClock size={18} aria-hidden="true" />
         </button>
       )}
 
       <button
+        type="button"
         onClick={() => onDelete(todo)}
         aria-label="Delete to-do"
-        className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 p-1 rounded-full transition-colors"
+        title="Delete to-do"
+        className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-danger transition-colors hover:bg-rejected-bg"
       >
-        <Trash2 size={16} />
+        <Trash2 size={18} aria-hidden="true" />
       </button>
     </li>
   );

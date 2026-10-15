@@ -1,21 +1,42 @@
 import { useEffect, useState } from "react";
-import { confirmAction } from "../stores/useConfirmStore";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { format, isPast, parseISO } from "date-fns";
+import { ChevronLeft, ClipboardList, EllipsisVertical, ExternalLink, MapPin, Pencil, Plus, StickyNote, Tag } from "lucide-react";
 import API from "../api/axios";
 import AttachedDocuments from "../components/Documents/AttachedDocuments";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
+import useArchiveWithTodos, { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
 import TagChip from "../components/Tags/TagChip";
 import TagInput from "../components/Tags/TagInput";
 import useTags from "../components/Tags/useTags";
 import JobFollowUps from "../components/Todo/JobFollowUps";
+import Card from "../components/UI/Card";
+import Menu, { MenuDivider, MenuItem } from "../components/UI/Menu";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
-import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
+import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, STATUS_BADGE_CLASSES, priorityLabel } from "../constants/jobs";
+import { confirmAction } from "../stores/useConfirmStore";
+import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { useToastStore } from "../stores/useToastStore";
+
+// The 2×2 status picker's buttons: the chosen one in its status colours with a border of the same hue
+const statusOptionClasses = (isChosen, status) =>
+  `min-h-10 rounded-lg border text-sm font-semibold transition-colors ${
+    isChosen ? `border-current ${STATUS_BADGE_CLASSES[status]}` : "border-line bg-surface text-muted-2 hover:bg-soft"
+  }`;
+
+// The fields the header shows as inputs while editing
+const HEADER_FIELDS = [
+  { name: "position", label: "Position", required: true },
+  { name: "company_name", label: "Company", required: true },
+  { name: "location", label: "Location", required: true },
+  { name: "job_link", label: "Link to the posting", type: "url" },
+];
 
 export default function Application() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { id } = useParams();
 
   const [job, setJob] = useState(null);
@@ -24,12 +45,13 @@ export default function Application() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // "+ Add interview" form (null while closed)
+  // "Add interview" form (null while closed)
   const [newInterview, setNewInterview] = useState(null);
   const [savingInterview, setSavingInterview] = useState(false);
 
   const { tags: allTags, createTag } = useTags();
   const showToast = useToastStore((state) => state.showToast);
+  const setPageTitle = usePageTitleStore((state) => state.setPageTitle);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -46,6 +68,12 @@ export default function Application() {
     fetchJob();
   }, [id]);
 
+  // The breadcrumb shows the position instead of "Application"
+  const savedPosition = editing ? originalJob?.position : job?.position;
+  useEffect(() => {
+    if (savedPosition) setPageTitle(pathname, savedPosition);
+  }, [pathname, savedPosition, setPageTitle]);
+
   const handleChange = (e) => {
     setJob({ ...job, [e.target.name]: e.target.value });
   };
@@ -61,7 +89,8 @@ export default function Application() {
     setEditing(false);
   };
 
-  const saveChanges = async () => {
+  const saveChanges = async (event) => {
+    event?.preventDefault();
     setSaving(true);
     try {
       const res = await API.put(`/job-applications/${id}`, job);
@@ -73,6 +102,37 @@ export default function Application() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // While editing, the picker is part of the form (saved with Save); otherwise one click saves it
+  const changeStatus = async (status) => {
+    if (status === job.status) return;
+    if (editing) {
+      setJob({ ...job, status });
+      return;
+    }
+
+    const previousStatus = job.status;
+    setJob((currentJob) => ({ ...currentJob, status }));
+    try {
+      const res = await API.put(`/job-applications/${id}`, { ...job, status });
+      setJob(res.data.data);
+    } catch (err) {
+      console.error(err);
+      setJob((currentJob) => ({ ...currentJob, status: previousStatus }));
+      showToast("Failed to change the status");
+    }
+  };
+
+  // Left/Right/Up/Down move through the statuses, as in any radio group
+  const moveStatusWithArrowKeys = (event) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+    if (!step) return;
+    event.preventDefault();
+    const currentIndex = JOB_STATUSES.findIndex(({ value }) => value === job.status);
+    const next = JOB_STATUSES[(currentIndex + step + JOB_STATUSES.length) % JOB_STATUSES.length];
+    changeStatus(next.value);
+    document.getElementById(`status-${next.value}`)?.focus();
   };
 
   const addInterview = async (e) => {
@@ -90,6 +150,20 @@ export default function Application() {
       setSavingInterview(false);
     }
   };
+
+  // deleteOpenTodos: the answer from the to-dos prompt, or undefined to follow the user's setting
+  const archive = async (deleteOpenTodos) => {
+    try {
+      await API.put(`/job-applications/${job.id}`, archiveChanges(deleteOpenTodos));
+      showToast("Application archived", "success");
+      navigate("/applications");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to archive the application");
+    }
+  };
+
+  const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archive);
 
   const deleteJob = async () => {
     if (!(await confirmAction({ message: "Delete this job application?", confirmLabel: "Delete", danger: true }))) return;
@@ -119,185 +193,223 @@ export default function Application() {
   }
 
   if (!job) {
-    return <p className="text-center mt-10 text-light-muted dark:text-dark-muted">Not found</p>;
+    return <p className="text-muted">This application could not be found.</p>;
   }
 
   const jobTags = job.tags ?? [];
   const jobTagIds = jobTags.map((tag) => tag.id);
+  const interviews = [...(job.interviews ?? [])].sort((first, second) => new Date(first.interview_date) - new Date(second.interview_date));
+  const nextInterviewId = interviews.find((interview) => !isPast(new Date(interview.interview_date)))?.id;
 
   return (
-    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-10 bg-light dark:bg-dark-soft rounded-2xl transition-colors">
+    <div className="flex flex-col gap-6">
+      {/* Phones have no breadcrumb */}
+      <Link to="/applications" className="inline-flex min-h-10 items-center gap-1 self-start font-semibold text-accent-text lg:hidden">
+        <ChevronLeft size={16} aria-hidden="true" />
+        All applications
+      </Link>
 
-      {/* HEADER: title above the buttons on phones, side by side from sm */}
-      <div className="bg-light-soft dark:bg-dark rounded-2xl p-4 sm:p-6 mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 transition-colors">
-        <div className="min-w-0 break-words">
-          {editing ? (
-            <input
-              name="position"
-              value={job.position}
-              onChange={handleChange}
-              className="text-2xl font-semibold w-full px-3 py-1 rounded-2xl   bg-light dark:bg-dark-subtle text-light-text dark:text-dark-text transition-colors"
-            />
-          ) : (
-            <h1 className="text-2xl font-semibold rounded-2xl text-light-text dark:text-dark-text">{job.position}</h1>
-          )}
-
-          {editing ? (
-            <input
-              name="company_name"
-              value={job.company_name}
-              onChange={handleChange}
-              className="mt-2 text-sm w-full px-3 py-1 rounded-md e bg-light-soft dark:bg-dark-subtle text-light-muted dark:text-dark-muted transition-colors"
-            />
-          ) : (
-            <p className="mt-1 text-sm text-light-muted dark:text-dark-muted">{job.company_name}</p>
-          )}
-
-          {/* Tags save straight away, also while the other fields are being edited */}
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {jobTags.map((tag) => (
-              <TagChip key={tag.id} tag={tag} onRemove={() => saveTags(jobTagIds.filter((id) => id !== tag.id))} />
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        {editing ? (
+          // Only the header fields are a <form>: the tag and follow-up forms below can't sit inside one
+          <form id="application-edit-form" onSubmit={saveChanges} className="grid min-w-0 flex-[1_1_480px] gap-4 sm:grid-cols-2">
+            {HEADER_FIELDS.map(({ name, label, type = "text", required = false }) => (
+              <div key={name}>
+                <label htmlFor={`edit-${name}`} className="input-label">
+                  {label}
+                </label>
+                <input
+                  id={`edit-${name}`}
+                  type={type}
+                  name={name}
+                  value={job[name] ?? ""}
+                  onChange={handleChange}
+                  required={required}
+                  className="input-field"
+                />
+              </div>
             ))}
-            <div className="w-full sm:w-64">
-              <TagInput
-                tags={allTags}
-                excludeIds={jobTagIds}
-                onCreate={createTag}
-                // Typing the name of a tag the job already has selects it too; adding it twice would fail
-                onSelect={(tag) => {
-                  if (!jobTagIds.includes(tag.id)) saveTags([...jobTagIds, tag.id]);
-                }}
-              />
+          </form>
+        ) : (
+          <div className="flex min-w-0 flex-col gap-2">
+            <h1 className="page-title break-words">{job.position}</h1>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted">
+              <span className="font-semibold text-ink">{job.company_name}</span>
+              {job.location && (
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin size={16} aria-hidden="true" />
+                  {job.location}
+                </span>
+              )}
+              {job.job_link && (
+                <a
+                  href={job.job_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 font-semibold text-accent-text hover:underline"
+                >
+                  View posting
+                  <ExternalLink size={14} strokeWidth={2.5} aria-hidden="true" />
+                </a>
+              )}
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="flex gap-3 sm:mt-2 shrink-0">
-          {editing && (
-            <button
-              className="text-sm text-light-muted dark:text-dark-muted hover:text-accent dark:hover:text-accent transition-colors"
-              onClick={cancelEditing}
-            >
-              Cancel
-            </button>
+        <div className="flex gap-2">
+          {editing ? (
+            <>
+              <button type="button" onClick={cancelEditing} className="btn-secondary">
+                Cancel
+              </button>
+              <button type="submit" form="application-edit-form" disabled={saving} className="btn-primary">
+                {saving ? "Saving…" : "Save changes"}
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={startEditing} className="btn-secondary">
+                <Pencil size={16} aria-hidden="true" />
+                Edit
+              </button>
+              <Menu label="More actions" buttonClassName="btn-secondary w-12 px-0" buttonContent={<EllipsisVertical size={20} aria-hidden="true" />}>
+                <MenuItem onClick={() => requestArchive({ openTodosCount: job.open_todos_count ?? 0 })}>Archive</MenuItem>
+                <MenuDivider />
+                <MenuItem onClick={deleteJob} danger>
+                  Delete application
+                </MenuItem>
+              </Menu>
+            </>
           )}
-
-          <button
-            onClick={() => (editing ? saveChanges() : startEditing())}
-            className="text-sm font-medium text-accent hover:text-accent-soft transition-colors px-3 py-1"
-          >
-            {editing ? (saving ? "Saving…" : "Save") : "Edit"}
-          </button>
-
-          <button
-            className="text-sm text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors px-3 py-1"
-            onClick={deleteJob}
-          >
-            Delete
-          </button>
         </div>
       </div>
 
-      {/* META ROW */}
-      <div className="bg-light-soft dark:bg-dark-soft  rounded-xl p-4 mb-6 flex flex-wrap gap-4 sm:gap-8 text-sm transition-colors">
-        <div>
-          <span className="block text-light-muted dark:text-dark-muted">Status</span>
-          {editing ? (
-            <select
-              name="status"
-              value={job.status}
-              onChange={handleChange}
-              className=" bg-transparent text-dark dark:text-light dark:bg-dark-subtle transition-colors rounded-2xl"
-            >
-              {JOB_STATUSES.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          ) : (
-            <span className="capitalize text-light-muted dark:text-dark-muted">{job.status}</span>
-          )}
+      <div className="flex flex-wrap items-start gap-6">
+        <div className="flex min-w-0 flex-[2_1_480px] flex-col gap-6">
+          <Card title="Notes" icon={StickyNote}>
+            {editing ? (
+              <>
+                <label htmlFor="edit-notes" className="sr-only">
+                  Notes
+                </label>
+                <textarea
+                  id="edit-notes"
+                  name="notes"
+                  value={job.notes || ""}
+                  onChange={handleChange}
+                  rows={6}
+                  className="input-field resize-y"
+                  placeholder="Notes about this application…"
+                />
+              </>
+            ) : job.notes ? (
+              <p className="max-w-[72ch] whitespace-pre-wrap">{job.notes}</p>
+            ) : (
+              <p className="text-muted">No notes yet.</p>
+            )}
+          </Card>
+
+          <Card
+            title="Interviews"
+            icon={ClipboardList}
+            action={
+              <button type="button" className="btn-soft" onClick={() => setNewInterview({ ...EMPTY_INTERVIEW, job_id: job.id })}>
+                <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
+                Add interview
+              </button>
+            }
+          >
+            {interviews.length ? (
+              <ul className="flex flex-col gap-2">
+                {interviews.map((interview) => (
+                  <InterviewCard key={interview.id} interview={interview} isNext={interview.id === nextInterviewId} />
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted">No interviews scheduled.</p>
+            )}
+          </Card>
+
+          <JobFollowUps job={job} />
         </div>
 
-        <div>
-          <span className="block text-light-muted dark:text-dark-muted">Priority</span>
-          {editing ? (
-            <select
-              name="priority"
-              value={job.priority}
-              onChange={handleChange}
-              className=" bg-transparent text-dark dark:text-light transition-colors dark:bg-dark-subtle rounded-2xl"
-            >
-              {PRIORITIES.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          ) : (
-            <span className="capitalize text-light-muted dark:text-dark-muted">{job.priority}</span>
-          )}
-        </div>
+        <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-6">
+          <Card title="Details">
+            <div className="flex flex-col gap-2">
+              <span id="status-label" className="text-sm font-semibold text-muted">
+                Status
+              </span>
+              <div role="radiogroup" aria-labelledby="status-label" onKeyDown={moveStatusWithArrowKeys} className="grid grid-cols-2 gap-2">
+                {JOB_STATUSES.map(({ value, label }) => {
+                  const isChosen = job.status === value;
+                  return (
+                    <button
+                      key={value}
+                      id={`status-${value}`}
+                      type="button"
+                      role="radio"
+                      aria-checked={isChosen}
+                      tabIndex={isChosen ? 0 : -1}
+                      onClick={() => changeStatus(value)}
+                      className={statusOptionClasses(isChosen, value)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-        <div>
-          <span className="block text-light-muted dark:text-dark-muted">Applied</span>
-          <span className="text-light-muted dark:text-dark-muted">{job.applied_date}</span>
-        </div>
-      </div>
+            <dl className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3">
+              <dt className="text-muted">Priority</dt>
+              <dd className={`font-semibold ${editing ? "" : PRIORITY_TEXT_CLASSES[job.priority] ?? ""}`}>
+                {editing ? (
+                  <select name="priority" aria-label="Priority" value={job.priority} onChange={handleChange} className="input-field min-h-10 py-1 font-normal">
+                    {PRIORITIES.map(({ value, label }) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  priorityLabel(job.priority)
+                )}
+              </dd>
+              <dt className="text-muted">Applied</dt>
+              <dd className="font-semibold">{job.applied_date ? format(parseISO(job.applied_date), "d MMM yyyy") : "—"}</dd>
+              <dt className="text-muted">Location</dt>
+              <dd className="font-semibold break-words">{job.location || "—"}</dd>
+            </dl>
+          </Card>
 
-      {/* NOTES */}
-      <div className="mb-10">
-        <h2 className="text-accent font-semibold mb-2">Notes</h2>
+          {/* Tags save straight away, also while the other fields are being edited */}
+          <Card title="Tags" icon={Tag}>
+            {jobTags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {jobTags.map((tag) => (
+                  <TagChip key={tag.id} tag={tag} onRemove={() => saveTags(jobTagIds.filter((id) => id !== tag.id))} />
+                ))}
+              </div>
+            )}
+            <TagInput
+              tags={allTags}
+              excludeIds={jobTagIds}
+              onCreate={createTag}
+              // Typing the name of a tag the job already has selects it too; adding it twice would fail
+              onSelect={(tag) => {
+                if (!jobTagIds.includes(tag.id)) saveTags([...jobTagIds, tag.id]);
+              }}
+            />
+          </Card>
 
-        {editing ? (
-          <textarea
-            name="notes"
-            value={job.notes || ""}
-            onChange={handleChange}
-            rows={6}
-            className="w-full  rounded-md px-3 py-2 bg-light-soft text-dark dark:text-light dark:bg-dark-subtle focus:ring-2 focus:ring-accent transition-colors"
-            placeholder="Notes about this application…"
+          <AttachedDocuments
+            jobId={job.id}
+            documents={job.documents ?? []}
+            onChange={(documents) => setJob((prev) => ({ ...prev, documents }))}
           />
-        ) : job.notes ? (
-          <p className="text-light-text dark:text-dark-text whitespace-pre-wrap">{job.notes}</p>
-        ) : (
-          <p className="text-light-muted dark:text-dark-muted text-sm">No notes yet.</p>
-        )}
-      </div>
-
-      {/* FOLLOW-UPS */}
-      <JobFollowUps job={job} />
-
-      {/* DOCUMENTS */}
-      <AttachedDocuments
-        jobId={job.id}
-        documents={job.documents ?? []}
-        onChange={(documents) => setJob((prev) => ({ ...prev, documents }))}
-      />
-
-      {/* INTERVIEWS */}
-      <div className="bg-light-soft dark:bg-dark-soft rounded-xl p-6 transition-colors">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="font-semibold text-accent dark:text-accent">Interviews</h2>
-
-          <button
-            className="text-sm text-accent dark:text-accent hover:text-accent-soft dark:hover:text-accent-soft transition-colors"
-            onClick={() => setNewInterview({ ...EMPTY_INTERVIEW, job_id: job.id })}
-          >
-            + Add interview
-          </button>
         </div>
-
-        {job.interviews?.length ? (
-          <ul className="flex flex-col gap-3">
-            {job.interviews.map((interview) => (
-              <InterviewCard key={interview.id} interview={interview} />
-            ))}
-          </ul>
-        ) : (
-          <p className="text-light-muted dark:text-dark-muted text-sm">No interviews scheduled.</p>
-        )}
       </div>
 
       {newInterview && (
-        <Modal title="Add Interview" onClose={() => setNewInterview(null)}>
+        <Modal title="Add interview" onClose={() => setNewInterview(null)}>
           <InterviewForm
             handleSubmit={addInterview}
             handleChange={(e) => setNewInterview((prev) => ({ ...prev, [e.target.name]: e.target.value }))}
@@ -309,6 +421,7 @@ export default function Application() {
           />
         </Modal>
       )}
+      {archivePrompt}
     </div>
   );
 }

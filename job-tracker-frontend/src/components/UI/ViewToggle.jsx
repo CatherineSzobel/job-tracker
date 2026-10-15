@@ -1,14 +1,15 @@
 import { CalendarDays, LayoutGrid } from "lucide-react";
+import { SEGMENTED_TRACK_CLASSES, segmentClasses } from "./segmentedClasses";
 
 const VIEW_OPTIONS = [
   { value: "grid", label: "Grid", icon: LayoutGrid },
-  { value: "grouped", label: "Grouped by date", icon: CalendarDays },
+  { value: "grouped", label: "By date", icon: CalendarDays },
 ];
 
-// Icon buttons for the list's view; the name shows as a tooltip
+// Segmented control for the list's view: Grid or grouped by date
 export default function ViewToggle({ view, onChange }) {
   return (
-    <div role="group" aria-label="View" className="flex rounded-md border border-light-muted dark:border-dark-subtle overflow-hidden">
+    <div role="group" aria-label="View" className={SEGMENTED_TRACK_CLASSES}>
       {VIEW_OPTIONS.map((option) => {
         const ViewIcon = option.icon;
         return (
@@ -17,11 +18,10 @@ export default function ViewToggle({ view, onChange }) {
             type="button"
             onClick={() => onChange(option.value)}
             aria-pressed={view === option.value}
-            aria-label={option.label}
-            title={option.label}
-            className={`w-9 h-9 flex items-center justify-center transition-colors ${view === option.value ? "bg-accent text-surface" : "text-light-muted dark:text-dark-muted hover:bg-light-soft dark:hover:bg-dark-subtle"}`}
+            className={segmentClasses(view === option.value)}
           >
-            <ViewIcon size={18} aria-hidden="true" />
+            <ViewIcon size={16} aria-hidden="true" />
+            {option.label}
           </button>
         );
       })}

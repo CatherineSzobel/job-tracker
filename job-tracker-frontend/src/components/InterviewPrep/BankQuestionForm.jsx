@@ -24,7 +24,7 @@ export default function BankQuestionForm({ initialValues = EMPTY_BANK_QUESTION, 
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className="flex flex-col gap-4">
       <div>
         <label htmlFor="bank-question" className="input-label">Question</label>
         <textarea
@@ -35,7 +35,7 @@ export default function BankQuestionForm({ initialValues = EMPTY_BANK_QUESTION, 
           required
           value={values.question}
           onChange={changeField}
-          className="input-field resize-none"
+          className="input-field resize-y"
         />
       </div>
       <div>
@@ -56,12 +56,12 @@ export default function BankQuestionForm({ initialValues = EMPTY_BANK_QUESTION, 
           value={values.answer}
           onChange={changeField}
           placeholder="Optional, you can add it later"
-          className="input-field"
+          className="input-field resize-y"
         />
       </div>
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-wrap justify-end gap-2 pt-2">
         {onCancel && (
-          <button type="button" onClick={onCancel} className="btn-small">
+          <button type="button" onClick={onCancel} className="btn-secondary">
             Cancel
           </button>
         )}
@@ -70,7 +70,7 @@ export default function BankQuestionForm({ initialValues = EMPTY_BANK_QUESTION, 
           disabled={saving || !values.question.trim()}
           className="btn-primary"
         >
-          {saving ? "Saving..." : submitLabel}
+          {saving ? "Saving…" : submitLabel}
         </button>
       </div>
     </form>

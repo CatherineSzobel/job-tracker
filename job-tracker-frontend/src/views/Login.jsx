@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye } from "lucide-react";
 import { DEMO_EMAIL, useAuthStore } from "../stores/useAuthStore";
+import AuthCard, { AuthError } from "../components/Layouts/AuthCard";
+import PasswordInput from "../components/UI/PasswordInput";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const loginAction = useAuthStore((state) => state.loginAction);
@@ -37,36 +41,52 @@ export default function Login() {
   };
 
   return (
-    <div className="w-full max-w-md rounded-2xl shadow-xl p-8 bg-light dark:bg-dark-soft text-light-text dark:text-white transition-colors">
-      <Link to="/" className="inline-block mb-4 text-sm text-accent dark:text-accent-muted hover:underline">
-        ← Back to the home page
-      </Link>
-      <h2 className="text-2xl font-bold text-center mb-2">Welcome back 👋</h2>
-      <p className="text-sm text-light-text/70 dark:text-dark-muted text-center mb-6">
-        Log in to continue tracking your job applications
-      </p>
-
-      <div className="bg-accent text-light border border-dark dark:border-light rounded-xl p-3 flex items-center justify-between mb-4">
-        <div>
-          <div className="text-xs font-bold">👀 Just browsing?</div>
-          <div className="text-xs mt-0.5 opacity-90">Log in instantly with our demo account</div>
+    <AuthCard
+      title="Welcome back"
+      intro="Log in to keep tracking your job applications."
+      footer={
+        <>
+          New here?{" "}
+          <Link to="/register" className="font-semibold text-accent-text hover:underline">
+            Create an account
+          </Link>
+        </>
+      }
+    >
+      <div className="flex flex-wrap items-center gap-4 rounded-xl bg-accent-soft p-4">
+        <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface text-accent-text">
+          <Eye size={20} aria-hidden="true" />
+        </span>
+        <div className="flex min-w-0 flex-[1_1_160px] flex-col">
+          <strong className="font-semibold">Just looking around?</strong>
+          <span className="text-sm text-muted">Open the shared demo account — no sign-up.</span>
         </div>
-        <button type="button" onClick={demoLogin} className="shrink-0 rounded-lg bg-light text-accent hover:bg-light-soft font-semibold text-xs px-3 py-1.5 transition-colors">
-          Use Demo
+        <button
+          type="button"
+          onClick={demoLogin}
+          className="inline-flex min-h-12 items-center rounded-lg border border-accent-text bg-surface px-4 font-semibold text-accent-text transition-colors hover:bg-soft"
+        >
+          Use demo
         </button>
       </div>
 
-      {error && (
-        <div className="mb-4 text-red-700 bg-red-100 border border-red-300 p-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
+      <div className="flex items-center gap-4 text-sm text-muted">
+        <span className="h-px flex-auto bg-line" />
+        or log in with email
+        <span className="h-px flex-auto bg-line" />
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {error && <AuthError message={error} />}
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label className="input-label">Email</label>
+          <label htmlFor="login-email" className="input-label">
+            Email
+          </label>
           <input
+            id="login-email"
             type="email"
+            autoComplete="email"
             placeholder="you@example.com"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -76,28 +96,25 @@ export default function Login() {
         </div>
 
         <div>
-          <label className="input-label">Password</label>
-          <input
-            type="password"
+          <label htmlFor="login-password" className="input-label">
+            Password
+          </label>
+          <PasswordInput
+            id="login-password"
+            autoComplete="current-password"
             placeholder="••••••••"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="input-field"
+            shown={showPassword}
+            onToggleShown={() => setShowPassword(!showPassword)}
             required
           />
         </div>
 
-        <button type="submit" className="w-full py-2 rounded-lg font-semibold bg-accent hover:bg-accent-soft text-white">
-          Log In
+        <button type="submit" className="btn-primary mt-2 w-full">
+          Log in
         </button>
       </form>
-
-      <p className="text-sm mt-6 text-light-text/70 dark:text-dark-muted text-center">
-        Don’t have an account?{" "}
-        <Link to="/register" className="font-medium text-accent hover:underline">
-          Sign up
-        </Link>
-      </p>
-    </div>
+    </AuthCard>
   );
 }

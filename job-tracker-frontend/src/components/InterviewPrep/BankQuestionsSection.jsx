@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Link2 } from "lucide-react";
+import Card from "../UI/Card";
 import RemoveButton from "../UI/RemoveButton";
 import BankPickerModal from "./BankPickerModal";
 import BankQuestionSummary from "./BankQuestionSummary";
 import { BANK_LINKS_MAX } from "../../constants/interviewPrep";
 
-// Bank questions linked to this interview: the bank's current answer plus a note for this interview.
+// The "Answers from your question bank" card: the bank's current answer plus a note for this interview.
 // links: [{ id, question, answer, category, note }]
 export default function BankQuestionsSection({ links, onChange }) {
   const [picking, setPicking] = useState(false);
@@ -19,16 +21,28 @@ export default function BankQuestionsSection({ links, onChange }) {
     ]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <Card
+      title="Answers from your question bank"
+      action={
+        links.length < BANK_LINKS_MAX && (
+          <button type="button" onClick={() => setPicking(true)} className="btn-soft">
+            <Link2 size={16} aria-hidden="true" />
+            Link answer
+          </button>
+        )
+      }
+    >
       {links.length === 0 ? (
-        <p className="text-sm text-light-muted dark:text-dark-muted">Link questions from your bank to have your prepared answers at hand.</p>
+        <p className="text-muted">Link questions from your bank to have your prepared answers at hand.</p>
       ) : (
-        <ul className="flex flex-col gap-4">
+        <ul className="flex flex-col gap-2">
           {links.map((link) => (
-            <li key={link.id} className="flex flex-col gap-2 pb-4 border-b last:border-b-0 border-border dark:border-dark-subtle">
+            <li key={link.id} className="flex flex-col gap-2 rounded-xl bg-soft p-4">
               <div className="flex items-start gap-2">
                 <BankQuestionSummary question={link} />
-                <RemoveButton label={`Remove "${link.question}" from this interview`} onClick={() => removeLink(link.id)} />
+                <span className="-mt-2 -mr-2">
+                  <RemoveButton label={`Remove "${link.question}" from this interview`} onClick={() => removeLink(link.id)} />
+                </span>
               </div>
               <textarea
                 value={link.note ?? ""}
@@ -37,23 +51,16 @@ export default function BankQuestionsSection({ links, onChange }) {
                 rows={2}
                 placeholder="Note for this interview"
                 aria-label={`Note for: ${link.question}`}
-                className="input-field text-sm"
+                className="input-field"
               />
             </li>
           ))}
         </ul>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {links.length < BANK_LINKS_MAX && (
-          <button type="button" onClick={() => setPicking(true)} className="btn-small">
-            Add from bank
-          </button>
-        )}
-        <Link to="/question-bank" className="text-sm text-accent dark:text-accent-muted hover:underline">
-          Edit answers in the question bank →
-        </Link>
-      </div>
+      <Link to="/question-bank" className="self-start text-sm font-semibold text-accent-text hover:underline">
+        Edit answers in the question bank →
+      </Link>
       {picking && <BankPickerModal linkedIds={links.map((link) => link.id)} onAdd={addQuestions} onClose={() => setPicking(false)} />}
-    </div>
+    </Card>
   );
 }
