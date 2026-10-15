@@ -41,9 +41,10 @@ export function groupByDate(items, getDateString, order = "newest") {
 }
 
 // Groups items by how recent their date is, newest first: "This week", "Last week", then one group per month
-// ("September", or "September 2025" outside this year), and "No date" last. Weeks start on Monday.
+// ("September", or "September 2025" outside this year), and the items without a date in one group, last unless
+// undatedFirst, labelled undatedLabel ("No date"). Weeks start on Monday.
 // Returns [{ key, label, items }]; inside a group the newest item comes first.
-export function groupByRecency(items, getDateString, today = new Date()) {
+export function groupByRecency(items, getDateString, { today = new Date(), undatedLabel = "No date", undatedFirst = false } = {}) {
   const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
   const lastWeekStart = subWeeks(thisWeekStart, 1);
   const groups = new Map();
@@ -71,6 +72,7 @@ export function groupByRecency(items, getDateString, today = new Date()) {
   }
 
   const result = [...groups.values()];
-  if (undatedItems.length > 0) result.push({ key: "undated", label: "No date", items: undatedItems });
-  return result;
+  if (undatedItems.length === 0) return result;
+  const undatedGroup = { key: "undated", label: undatedLabel, items: undatedItems };
+  return undatedFirst ? [undatedGroup, ...result] : [...result, undatedGroup];
 }

@@ -23,6 +23,13 @@ class JobApplicationResource extends JsonResource
             'applied_date' => $this->applied_date?->format('Y-m-d'),
             'job_link' => $this->job_link,
             'notes' => $this->notes,
+            'salary_min' => $this->salary_min,
+            'salary_max' => $this->salary_max,
+            'salary_currency' => $this->salary_currency,
+            'source' => $this->source,
+            'contact_name' => $this->contact_name,
+            'contact_details' => $this->contact_details,
+            'deadline' => $this->deadline?->format('Y-m-d'),
             'is_archived' => (bool) $this->is_archived,
             'archived_at' => $this->archived_at,
             // "Last update" on the detail page

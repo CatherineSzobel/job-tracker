@@ -1,15 +1,17 @@
 import { Link } from "react-router-dom";
-import { Archive, CalendarDays, ExternalLink, MapPin } from "lucide-react";
+import { isBefore, parseISO, startOfToday } from "date-fns";
+import { Archive, Banknote, CalendarClock, CalendarDays, ExternalLink, MapPin } from "lucide-react";
 import API from "../../api/axios";
 import { showUndoToast, useToastStore } from "../../stores/useToastStore";
 import { formatShortDate } from "../../utils/formatDate";
+import { formatSalary } from "../../utils/formatSalary";
 import CardTags from "../Tags/CardTags";
 import PriorityLabel from "../UI/PriorityLabel";
 import StatusChip from "../UI/StatusChip";
 import useArchiveWithTodos, { archiveChanges, archivedMessage, deletedOpenTodos } from "./useArchiveWithTodos";
 
 // One application in the grid: status and priority, the position (link to the detail page) and company,
-// when and where, tags, then "View posting" and Archive. Delete lives on the detail page.
+// when and where (and "Apply by" while it's only saved), the salary range, tags, then "View posting" and Archive. Delete lives on the detail page.
 // onRemove(id) is called after the job is archived so the parent can drop it. The toast then offers Undo
 // (unless open to-dos were deleted with it); onUndone() is called once it's restored, to reload the list.
 // In select mode (selecting) clicking the card calls onToggleSelect(id) and the footer actions are hidden.
@@ -18,6 +20,8 @@ export default function JobCard({ job, onRemove, onUndone, selecting = false, se
   const showToast = useToastStore((state) => state.showToast);
   const newStatus = pendingChanges?.status && pendingChanges.status !== job.status ? pendingChanges.status : null;
   const shownStatus = newStatus ?? job.status;
+  const deadlinePassed = job.deadline && isBefore(parseISO(job.deadline), startOfToday());
+  const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency, { compact: true });
 
   const undoArchive = async () => {
     try {
@@ -94,10 +98,24 @@ export default function JobCard({ job, onRemove, onUndone, selecting = false, se
             Applied {formatShortDate(job.applied_date)}
           </span>
         )}
+        {/* The deadline only matters until it's applied for; red once it has passed */}
+        {job.status === "saved" && job.deadline && (
+          <span className={`inline-flex items-center gap-1.5 ${deadlinePassed ? "font-semibold text-rejected-fg" : ""}`}>
+            <CalendarClock size={16} aria-hidden="true" />
+            Apply by {formatShortDate(job.deadline)}
+          </span>
+        )}
         {job.location && (
           <span className="inline-flex items-center gap-1.5">
             <MapPin size={16} aria-hidden="true" />
             {job.location}
+          </span>
+        )}
+        {salary && (
+          <span className="inline-flex items-center gap-1.5" title={formatSalary(job.salary_min, job.salary_max, job.salary_currency)}>
+            <Banknote size={16} aria-hidden="true" />
+            <span className="sr-only">Salary</span>
+            {salary}
           </span>
         )}
       </div>

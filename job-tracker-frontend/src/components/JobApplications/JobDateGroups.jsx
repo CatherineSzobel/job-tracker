@@ -1,11 +1,13 @@
 import { groupByRecency } from "../../utils/groupByDate";
 import JobRow from "./JobRow";
 
-// Applications "By date": "This week", "Last week", then month by month, each a list of compact rows.
+// Applications "By date": "Not applied yet" (Saved ones), "This week", "Last week", then month by month, each a
+// list of compact rows.
 // In select mode each group shows the cards instead (renderCard), so batch changes can be previewed,
 // with a "Select all" for the group (onSelectAll(jobs)).
 export default function JobDateGroups({ jobs, selecting = false, renderCard, onSelectAll }) {
-  const groups = groupByRecency(jobs, (job) => job.applied_date);
+  // Saved applications have no applied date yet: they come first, as the ones still to apply for
+  const groups = groupByRecency(jobs, (job) => job.applied_date, { undatedLabel: "Not applied yet", undatedFirst: true });
 
   return (
     <div className="flex flex-col gap-6">

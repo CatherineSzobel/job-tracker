@@ -4,6 +4,8 @@ import { format, formatDistanceToNow, isPast, parseISO } from "date-fns";
 import { ChevronLeft, ClipboardList, EllipsisVertical, ExternalLink, MapPin, Pencil, Plus, StickyNote, Tag } from "lucide-react";
 import API from "../api/axios";
 import AttachedDocuments from "../components/Documents/AttachedDocuments";
+import ApplicationDetailsFields from "../components/JobApplications/ApplicationDetailsFields";
+import ContactLink from "../components/JobApplications/ContactLink";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
 import useArchiveWithTodos, { archiveChanges, archivedMessage, deletedOpenTodos } from "../components/JobApplications/useArchiveWithTodos";
@@ -15,10 +17,11 @@ import Card from "../components/UI/Card";
 import Menu, { MenuDivider, MenuItem } from "../components/UI/Menu";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
-import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, STATUS_BADGE_CLASSES, priorityLabel, APPLICATION_EDIT_FIELDS } from "../constants/jobs";
+import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, STATUS_BADGE_CLASSES, priorityLabel, sourceLabel, APPLICATION_EDIT_FIELDS } from "../constants/jobs";
 import { confirmAction } from "../stores/useConfirmStore";
 import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { showUndoToast, useToastStore } from "../stores/useToastStore";
+import { formatSalary } from "../utils/formatSalary";
 
 // The two-column status picker's buttons: the chosen one in its status colours with a border of the same hue
 const statusOptionClasses = (isChosen, status) =>
@@ -90,7 +93,7 @@ export default function Application() {
       setEditing(false);
     } catch (err) {
       console.error(err);
-      showToast("Failed to save changes");
+      showToast(err.response?.data?.message || "Failed to save changes");
     } finally {
       setSaving(false);
     }
@@ -206,6 +209,7 @@ export default function Application() {
   }
 
   const jobTags = job.tags ?? [];
+  const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
   const jobTagIds = jobTags.map((tag) => tag.id);
   const interviews = [...(job.interviews ?? [])].sort((first, second) => new Date(first.interview_date) - new Date(second.interview_date));
   const nextInterviewId = interviews.find((interview) => !isPast(new Date(interview.interview_date)))?.id;
@@ -386,11 +390,45 @@ export default function Application() {
               <dd className="font-semibold">{job.applied_date ? format(parseISO(job.applied_date), "d MMM yyyy") : "—"}</dd>
               <dt className="text-muted">Location</dt>
               <dd className="font-semibold break-words">{job.location || "—"}</dd>
+              {/* The optional details only when filled in; while editing they're the inputs below */}
+              {!editing && (
+                <>
+                  {job.deadline && (
+                    <>
+                      <dt className="text-muted">Apply by</dt>
+                      <dd className="font-semibold">{format(parseISO(job.deadline), "d MMM yyyy")}</dd>
+                    </>
+                  )}
+                  {salary && (
+                    <>
+                      <dt className="text-muted">Salary</dt>
+                      <dd className="font-semibold break-words">{salary}</dd>
+                    </>
+                  )}
+                  {job.source && (
+                    <>
+                      <dt className="text-muted">Found via</dt>
+                      <dd className="font-semibold">{sourceLabel(job.source)}</dd>
+                    </>
+                  )}
+                  {(job.contact_name || job.contact_details) && (
+                    <>
+                      <dt className="self-start text-muted">Contact</dt>
+                      <dd className="flex min-w-0 flex-col">
+                        {job.contact_name && <span className="font-semibold break-words">{job.contact_name}</span>}
+                        {job.contact_details && <ContactLink contact={job.contact_details} />}
+                      </dd>
+                    </>
+                  )}
+                </>
+              )}
               <dt className="text-muted">Last update</dt>
               <dd className="font-semibold" title={format(parseISO(job.updated_at), "d MMM yyyy, HH:mm")}>
                 {formatDistanceToNow(parseISO(job.updated_at), { addSuffix: true })}
               </dd>
             </dl>
+
+            {editing && <ApplicationDetailsFields values={job} onChange={handleChange} idPrefix="edit" form="application-edit-form" />}
           </Card>
 
           {/* Tags save straight away, also while the other fields are being edited */}

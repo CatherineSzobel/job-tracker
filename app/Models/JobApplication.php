@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\ApplicationSource;
+use App\Enums\Currency;
 use App\Enums\JobStatus;
 use App\Enums\Priority;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,6 +31,22 @@ class JobApplication extends Model
         'job_link',
         'notes',
         'is_archived',
+        'salary_min',
+        'salary_max',
+        'salary_currency',
+        'source',
+        'contact_name',
+        'contact_details',
+        'deadline',
+    ];
+
+    /**
+     * Mirrors the column default, so a newly created application's response shows it too.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'salary_currency' => 'EUR',
     ];
 
     protected function casts(): array
@@ -39,6 +57,11 @@ class JobApplication extends Model
             'applied_date' => 'date:Y-m-d',
             'is_archived' => 'boolean',
             'archived_at' => 'datetime',
+            'salary_min' => 'integer',
+            'salary_max' => 'integer',
+            'salary_currency' => Currency::class,
+            'source' => ApplicationSource::class,
+            'deadline' => 'date:Y-m-d',
             'reminder_hidden_until' => 'datetime',
             'reminder_dismissed_at' => 'datetime',
         ];

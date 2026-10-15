@@ -2,9 +2,12 @@
 
 namespace App\Imports;
 
+use App\Enums\ApplicationSource;
+use App\Enums\Currency;
 use App\Enums\JobStatus;
 use App\Enums\Priority;
 use App\Models\JobApplication;
+use App\Rules\EmailOrUrl;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
@@ -16,6 +19,12 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, WithValidation
 {
     use SkipsFailures;
+
+    /**
+     * Columns added after the first exports. A file without one leaves that field as it is, so re-importing
+     * an older export doesn't clear it.
+     */
+    private const DETAIL_COLUMNS = ['salary_min', 'salary_max', 'salary_currency', 'source', 'contact_name', 'contact_details', 'deadline'];
 
     public function model(array $row)
     {
@@ -35,6 +44,7 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
             'location' => $row['location'] ?? null,
             'notes' => $this->sanitizeText($row['notes'] ?? null),
             'job_link' => $this->sanitizeUrl($row['job_link'] ?? null),
+            ...array_intersect_key($row, array_flip(self::DETAIL_COLUMNS)),
         ]);
     }
 
@@ -50,16 +60,38 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
             'location' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:2000',
             'job_link' => 'nullable|url:http,https|max:255',
+            // Each on its own: unlike the API, a file isn't checked for max below min
+            'salary_min' => 'nullable|integer|min:0|max:100000000',
+            'salary_max' => 'nullable|integer|min:0|max:100000000',
+            'salary_currency' => ['nullable', Rule::enum(Currency::class)],
+            'source' => ['nullable', Rule::enum(ApplicationSource::class)],
+            'contact_name' => 'nullable|string|max:255',
+            'contact_details' => ['nullable', 'string', 'max:255', new EmailOrUrl],
+            'deadline' => 'nullable|date',
         ];
     }
 
     /**
      * The status as a JobStatus value ("No response" or "no-response" → no_response, Applied when empty), and
-     * applied today when the date is empty, unless it's only Saved (not applied yet).
+     * applied today when the date is empty, unless it's only Saved (not applied yet). Of the later columns,
+     * only those in the file: empty cells become null, the currency EUR when empty, and the source a value
+     * ("Company website" → company_website).
      */
     public function prepareForValidation($data, $index)
     {
         $status = isset($data['status']) ? str_replace([' ', '-'], '_', strtolower(trim($data['status']))) : JobStatus::Applied->value;
+
+        foreach (self::DETAIL_COLUMNS as $column) {
+            if (array_key_exists($column, $data)) {
+                $data[$column] = $this->nullIfEmpty($data[$column]);
+            }
+        }
+        if (array_key_exists('salary_currency', $data)) {
+            $data['salary_currency'] = strtoupper($data['salary_currency'] ?? Currency::Eur->value);
+        }
+        if (isset($data['source'])) {
+            $data['source'] = str_replace([' ', '-'], '_', strtolower($data['source']));
+        }
 
         return [
             ...$data,

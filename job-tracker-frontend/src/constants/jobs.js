@@ -26,9 +26,26 @@ export const INTERVIEW_TYPES = [
 // "On-site" for "onsite"; an unknown type is shown as is
 export const interviewTypeLabel = (type) => INTERVIEW_TYPES.find((option) => option.value === type)?.label ?? type;
 
-// Same defaults as the backend (JobStatus::Applied, Priority::Medium)
+// Where the job was found (ApplicationSource)
+export const APPLICATION_SOURCES = [
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "company_website", label: "Company website" },
+  { value: "job_board", label: "Job board" },
+  { value: "referral", label: "Referral" },
+  { value: "recruiter", label: "Recruiter" },
+  { value: "other", label: "Other" },
+];
+
+// "Company website" for "company_website"; an unknown source is shown as is
+export const sourceLabel = (source) => APPLICATION_SOURCES.find((option) => option.value === source)?.label ?? source;
+
+// The salary currencies (Currency, ISO 4217 codes); euros unless picked otherwise
+export const CURRENCIES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "CAD", "AUD"];
+
+// Same defaults as the backend (JobStatus::Applied, Priority::Medium, Currency::Eur)
 export const DEFAULT_STATUS = "applied";
 export const DEFAULT_PRIORITY = "medium";
+export const DEFAULT_CURRENCY = "EUR";
 
 // Blank "Add job" / "Add interview" form state
 export const EMPTY_JOB = {
@@ -39,6 +56,13 @@ export const EMPTY_JOB = {
   priority: DEFAULT_PRIORITY,
   notes: "",
   job_link: "",
+  salary_min: "",
+  salary_max: "",
+  salary_currency: DEFAULT_CURRENCY,
+  source: "",
+  contact_name: "",
+  contact_details: "",
+  deadline: "",
 };
 
 export const EMPTY_INTERVIEW = {

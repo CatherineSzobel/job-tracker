@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ApplicationSource;
+use App\Enums\Currency;
 use App\Enums\JobStatus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,10 +18,15 @@ class BrokenFeaturesTest extends TestCase
 
     private const HEADINGS = ['company_name', 'position', 'status', 'priority', 'applied_date', 'location', 'notes', 'job_link'];
 
-    private function xlsx(array $rows): UploadedFile
+    private const DETAIL_HEADINGS = ['salary_min', 'salary_max', 'salary_currency', 'source', 'contact_name', 'contact_details', 'deadline'];
+
+    /**
+     * @param  list<string>  $headings
+     */
+    private function xlsx(array $rows, array $headings = self::HEADINGS): UploadedFile
     {
         $spreadsheet = new Spreadsheet;
-        $spreadsheet->getActiveSheet()->fromArray([self::HEADINGS, ...$rows]);
+        $spreadsheet->getActiveSheet()->fromArray([$headings, ...$rows]);
 
         $path = tempnam(sys_get_temp_dir(), 'import').'.xlsx';
         (new Xlsx($spreadsheet))->save($path);
@@ -74,6 +81,43 @@ class BrokenFeaturesTest extends TestCase
         $this->assertSame(JobStatus::NoResponse, $jobs[0]->status);
         $this->assertSame(JobStatus::Saved, $jobs[1]->status);
         $this->assertNull($jobs[1]->applied_date);
+    }
+
+    public function test_import_reads_the_salary_source_contact_and_deadline_columns(): void
+    {
+        $user = User::factory()->create();
+        $headings = [...self::HEADINGS, ...self::DETAIL_HEADINGS];
+
+        $this->actingAs($user)
+            ->postJson('/api/job-applications/import', ['file' => $this->xlsx([
+                ['Acme', 'Developer', 'applied', 'high', '2026-09-01', null, null, null, 50000, 60000, 'gbp', 'Company website', 'Jane Doe', 'jane@acme.test', '2026-10-31'],
+                ['Globex', 'Designer', 'applied', 'low', '2026-09-02', null, null, null, null, null, null, 'Newspaper', null, null, null],
+            ], $headings)])
+            ->assertOk()
+            ->assertJsonCount(1, 'failures')
+            ->assertJsonPath('failures.0.attribute', 'source');
+
+        $job = $user->jobApplications()->sole();
+        $this->assertSame(['salary_min' => 50000, 'salary_max' => 60000, 'contact_name' => 'Jane Doe', 'contact_details' => 'jane@acme.test'], $job->only(['salary_min', 'salary_max', 'contact_name', 'contact_details']));
+        $this->assertSame(Currency::Gbp, $job->salary_currency);
+        $this->assertSame(ApplicationSource::CompanyWebsite, $job->source);
+        $this->assertSame('2026-10-31', $job->deadline->toDateString());
+    }
+
+    public function test_reimporting_a_file_without_the_detail_columns_keeps_the_details(): void
+    {
+        $user = User::factory()->create();
+        $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer', 'salary_min' => 50000, 'salary_currency' => 'CHF', 'deadline' => '2026-10-31']);
+
+        $this->actingAs($user)
+            ->postJson('/api/job-applications/import', ['file' => $this->xlsx([['Acme', 'Developer', 'interview', 'high', '2026-09-01', null, null, null]])])
+            ->assertOk();
+
+        $job = $user->jobApplications()->sole();
+        $this->assertSame(JobStatus::Interview, $job->status);
+        $this->assertSame(50000, $job->salary_min);
+        $this->assertSame(Currency::Chf, $job->salary_currency);
+        $this->assertSame('2026-10-31', $job->deadline->toDateString());
     }
 
     public function test_reimporting_updates_existing_jobs_instead_of_duplicating(): void

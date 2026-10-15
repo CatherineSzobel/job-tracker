@@ -18,7 +18,11 @@ class ApiResponseShapeTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const JOB = ['id', 'company_name', 'position', 'location', 'status', 'priority', 'applied_date', 'job_link', 'notes', 'is_archived', 'archived_at', 'updated_at'];
+    private const JOB = [
+        'id', 'company_name', 'position', 'location', 'status', 'priority', 'applied_date', 'job_link', 'notes',
+        'salary_min', 'salary_max', 'salary_currency', 'source', 'contact_name', 'contact_details', 'deadline',
+        'is_archived', 'archived_at', 'updated_at',
+    ];
 
     private const INTERVIEW = ['id', 'job_application_id', 'interview_date', 'type', 'location', 'notes', 'rating', 'prep_progress' => ['done', 'total']];
 

@@ -24,6 +24,13 @@ class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadi
                 'location',
                 'notes',
                 'job_link',
+                'salary_min',
+                'salary_max',
+                'salary_currency',
+                'source',
+                'contact_name',
+                'contact_details',
+                'deadline',
             ])
             ->with('tags')
             ->orderBy('applied_date', 'desc')
@@ -42,6 +49,14 @@ class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadi
             'notes',
             'job_link',
             'tags',
+            // Added later, so they come after tags and older files keep their column positions
+            'salary_min',
+            'salary_max',
+            'salary_currency',
+            'source',
+            'contact_name',
+            'contact_details',
+            'deadline',
         ];
     }
 
@@ -57,6 +72,13 @@ class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadi
             $this->cleanText($job->notes),
             $job->job_link,
             $job->tags->pluck('name')->implode(', ') ?: null,
+            $job->salary_min,
+            $job->salary_max,
+            $job->salary_currency?->value,
+            $job->source?->value,
+            $job->contact_name,
+            $job->contact_details,
+            $job->deadline?->format('Y-m-d'),
         ];
     }
 

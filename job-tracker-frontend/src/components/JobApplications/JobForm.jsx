@@ -1,4 +1,5 @@
 import { JOB_STATUSES, PRIORITIES } from "../../constants/jobs";
+import ApplicationDetailsFields from "./ApplicationDetailsFields";
 
 export default function JobForm({ setShowForm, newJob, saving, handleSubmit, handleChange }) {
   return (
@@ -89,6 +90,8 @@ export default function JobForm({ setShowForm, newJob, saving, handleSubmit, han
           className="input-field"
         />
       </div>
+
+      <ApplicationDetailsFields values={newJob} onChange={handleChange} idPrefix="job" />
 
       <div>
         <label htmlFor="job-notes" className="input-label">
