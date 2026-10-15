@@ -1,11 +1,11 @@
 import { SEGMENTED_TRACK_CLASSES, segmentClasses } from "./segmentedClasses";
 import { LIST_VIEWS } from "../../constants/views";
 
-// Segmented control for the list's view: Grid or grouped by date
-export default function ViewToggle({ view, onChange }) {
+// Segmented control for the list's view: Grid or grouped by date, or the given views (e.g. with Board)
+export default function ViewToggle({ view, onChange, views = LIST_VIEWS }) {
   return (
     <div role="group" aria-label="View" className={SEGMENTED_TRACK_CLASSES}>
-      {LIST_VIEWS.map((option) => {
+      {views.map((option) => {
         const ViewIcon = option.icon;
         return (
           <button
