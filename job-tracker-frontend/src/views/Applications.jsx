@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { EllipsisVertical, Plus } from "lucide-react";
 import API from "../api/axios";
+import { APPLICATION_SORTS, sortApplications } from "../components/JobApplications/applicationSorts";
 import BatchBar from "../components/JobApplications/BatchBar";
 import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
 import JobCard from "../components/JobApplications/JobCard";
@@ -41,6 +42,7 @@ export default function Applications() {
   const [search, setSearch] = useState("");
   const [showManageTags, setShowManageTags] = useState(false);
   const [view, changeView] = useSavedView("applications-view");
+  const [sort, changeSort] = useSavedView("applications-sort", APPLICATION_SORTS);
   const { tags, reloadTags, createTag, updateTag, deleteTag } = useTags();
   // Unsaved status and tag changes, per application; leaving select mode (any way) drops them
   const batchChanges = useBatchChanges();
@@ -275,7 +277,7 @@ export default function Applications() {
           </>
         }
       >
-        {/* Filters: search, status chips with counts, then priority and tags */}
+        {/* Filters: search, status chips with counts, then priority, sort (grid only) and tags */}
         <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
           <SearchInput label="Search position, company or location" value={search} onChange={setSearch} />
 
@@ -305,6 +307,18 @@ export default function Applications() {
                 ))}
               </select>
             </label>
+
+            {/* "By date" is always in applied-date order */}
+            {view === "grid" && (
+              <label className="inline-flex items-center gap-2 font-semibold">
+                Sort
+                <select className="input-field min-h-10 w-auto py-1 font-normal" value={sort} onChange={(e) => changeSort(e.target.value)}>
+                  {APPLICATION_SORTS.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             {tags.length > 0 && (
               <div role="group" aria-label="Filter by tag" className="flex flex-wrap items-center gap-2">
@@ -336,7 +350,7 @@ export default function Applications() {
           onSelectAll={(groupJobs) => selectMany(groupJobs.map((job) => job.id))}
         />
       ) : (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">{filteredJobs.map(renderJob)}</ul>
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">{sortApplications(filteredJobs, sort).map(renderJob)}</ul>
       )}
 
       {showForm && (
