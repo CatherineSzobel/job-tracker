@@ -10,6 +10,7 @@ use App\Exports\JobApplicationsExport;
 use App\Imports\JobApplicationsImport;
 use App\Models\Interview;
 use App\Models\JobApplication;
+use App\Models\StatusChange;
 use App\Models\Todo;
 use App\Models\User;
 use Carbon\Carbon;
@@ -119,6 +120,20 @@ class JobApplicationService
                 ->each(fn (Collection $group, string $status) => $user->jobApplications()
                     ->whereKey($group->pluck('id'))
                     ->update(['status' => $status]));
+
+            // Query updates skip the model's own recording (JobApplication::booted()), so the history is written here,
+            // for the applications whose status really changed
+            $statusChanges = collect($changes)
+                ->filter(fn (array $change) => isset($change['status']) && $change['status'] !== $jobs[$change['id']]->status->value)
+                ->map(fn (array $change) => [
+                    'job_application_id' => $change['id'],
+                    'from_status' => $jobs[$change['id']]->status->value,
+                    'to_status' => $change['status'],
+                    'changed_at' => now(),
+                ]);
+            if ($statusChanges->isNotEmpty()) {
+                StatusChange::insert($statusChanges->values()->all());
+            }
 
             // Same rule as update(): moving on from Saved for the first time makes today the applied date
             $leavingSavedIds = collect($changes)

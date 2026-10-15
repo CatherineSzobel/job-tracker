@@ -12,6 +12,7 @@ use App\Http\Requests\JobApplication\UpdateJobApplicationRequest;
 use App\Http\Resources\InterviewResource;
 use App\Http\Resources\JobApplicationResource;
 use App\Models\JobApplication;
+use App\Services\ApplicationActivityService;
 use App\Services\JobApplicationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -48,6 +49,16 @@ class JobApplicationController extends Controller
         Gate::authorize('view', $jobApplication);
 
         return $this->detailed($jobApplication);
+    }
+
+    /**
+     * The application's activity timeline, newest first (ApplicationActivityService)
+     */
+    public function activity(JobApplication $jobApplication, ApplicationActivityService $activity): JsonResponse
+    {
+        Gate::authorize('view', $jobApplication);
+
+        return response()->json(['data' => $activity->timeline($jobApplication)]);
     }
 
     public function update(UpdateJobApplicationRequest $request, JobApplication $jobApplication): JobApplicationResource

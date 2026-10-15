@@ -32,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/job-applications/batch', [JobApplicationController::class, 'batchUpdate']);
     Route::patch('/job-applications/batch-changes', [JobApplicationController::class, 'saveChanges']);
     Route::apiResource('job-applications', JobApplicationController::class);
+    Route::get('/job-applications/{job_application}/activity', [JobApplicationController::class, 'activity']);
     Route::post('/job-applications/{job_application}/interviews', [JobApplicationController::class, 'scheduleInterview']);
     Route::put('/job-applications/{job_application}/tags', [JobApplicationController::class, 'syncTags']);
     Route::put('/job-applications/{job_application}/documents', [DocumentController::class, 'syncForApplication']);

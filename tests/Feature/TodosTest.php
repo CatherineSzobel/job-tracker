@@ -6,6 +6,7 @@ use App\Models\JobApplication;
 use App\Models\Todo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -177,5 +178,35 @@ class TodosTest extends TestCase
 
         $this->assertModelMissing($linked);
         $this->assertModelExists($general);
+    }
+
+    public function test_ticking_a_todo_off_records_when_and_unticking_clears_it(): void
+    {
+        $user = User::factory()->create();
+        $todo = Todo::factory()->for($user)->create();
+        $this->travelTo('2026-10-06 11:00:00');
+
+        $this->actingAs($user)->patchJson("/api/todos/{$todo->id}", ['done' => true])
+            ->assertOk()
+            ->assertJsonPath('data.completed_at', '2026-10-06T11:00:00.000000Z');
+
+        $this->travel(1)->day();
+        $this->patchJson("/api/todos/{$todo->id}", ['text' => 'Renamed'])->assertJsonPath('data.completed_at', '2026-10-06T11:00:00.000000Z');
+        $this->patchJson("/api/todos/{$todo->id}", ['done' => false])->assertJsonPath('data.completed_at', null);
+    }
+
+    public function test_the_migration_dates_done_todos_by_their_last_update(): void
+    {
+        $migration = require collect(glob(database_path('migrations/*_add_completed_at_to_todos_table.php')))->sole();
+        $migration->down();
+        $user = User::factory()->create();
+        // Straight into the table: the model would set completed_at, which isn't there before the migration
+        $doneId = DB::table('todos')->insertGetId(['user_id' => $user->id, 'text' => 'Done', 'done' => true, 'updated_at' => '2026-08-15 14:00:00']);
+        $openId = DB::table('todos')->insertGetId(['user_id' => $user->id, 'text' => 'Open', 'done' => false, 'updated_at' => '2026-08-15 14:00:00']);
+
+        $migration->up();
+
+        $this->assertSame('2026-08-15 14:00:00', Todo::find($doneId)->completed_at->toDateTimeString());
+        $this->assertNull(Todo::find($openId)->completed_at);
     }
 }

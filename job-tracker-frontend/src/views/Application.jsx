@@ -4,6 +4,7 @@ import { format, formatDistanceToNow, isPast, parseISO } from "date-fns";
 import { ChevronLeft, ClipboardList, EllipsisVertical, ExternalLink, MapPin, Pencil, Plus, StickyNote, Tag } from "lucide-react";
 import API from "../api/axios";
 import AttachedDocuments from "../components/Documents/AttachedDocuments";
+import ApplicationActivity from "../components/JobApplications/ApplicationActivity";
 import ApplicationDetailsFields from "../components/JobApplications/ApplicationDetailsFields";
 import ContactLink from "../components/JobApplications/ContactLink";
 import InterviewCard from "../components/Interview/InterviewCard";
@@ -43,6 +44,8 @@ export default function Application() {
   // "Add interview" form (null while closed)
   const [newInterview, setNewInterview] = useState(null);
   const [savingInterview, setSavingInterview] = useState(false);
+  // Counts to-do changes, so the activity timeline refetches (a ticked-off to-do shows there)
+  const [todoChanges, setTodoChanges] = useState(0);
 
   const { tags: allTags, createTag } = useTags();
   const showToast = useToastStore((state) => state.showToast);
@@ -210,6 +213,8 @@ export default function Application() {
 
   const jobTags = job.tags ?? [];
   const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
+  // Saves and status changes move updated_at; documents and to-dos are tracked separately
+  const activityKey = [job.updated_at, (job.documents ?? []).map((document) => document.id).join(","), todoChanges].join("|");
   const jobTagIds = jobTags.map((tag) => tag.id);
   const interviews = [...(job.interviews ?? [])].sort((first, second) => new Date(first.interview_date) - new Date(second.interview_date));
   const nextInterviewId = interviews.find((interview) => !isPast(new Date(interview.interview_date)))?.id;
@@ -343,7 +348,9 @@ export default function Application() {
             )}
           </Card>
 
-          <JobFollowUps job={job} />
+          <JobFollowUps job={job} onChange={() => setTodoChanges((count) => count + 1)} />
+
+          <ApplicationActivity jobId={job.id} refreshKey={activityKey} />
         </div>
 
         <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-6">

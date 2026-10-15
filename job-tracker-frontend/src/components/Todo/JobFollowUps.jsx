@@ -9,9 +9,20 @@ import useTodos from "./useTodos";
 import { EMPTY_TODO_DRAFT } from "../../constants/todos";
 
 // This application's to-dos. Quick-add chips only prefill the form; nothing is created until Add.
-export default function JobFollowUps({ job }) {
+// onChange() runs after a to-do is changed or deleted (ticking one off shows in the activity timeline).
+export default function JobFollowUps({ job, onChange }) {
   const { todos, loading, addTodo, updateTodo, deleteTodo } = useTodos({ job_application_id: job.id });
   const [draft, setDraft] = useState(EMPTY_TODO_DRAFT);
+
+  const updateAndNotify = async (todo, changes) => {
+    await updateTodo(todo, changes);
+    onChange?.();
+  };
+
+  const deleteAndNotify = async (todo) => {
+    await deleteTodo(todo);
+    onChange?.();
+  };
 
   const quickAdds = followUpQuickAdds(job);
 
@@ -24,7 +35,7 @@ export default function JobFollowUps({ job }) {
       ) : (
         <ul className="flex flex-col gap-2">
           {todos.map((todo) => (
-            <TodoItem key={todo.id} todo={todo} onUpdate={updateTodo} onDelete={deleteTodo} showApplication={false} />
+            <TodoItem key={todo.id} todo={todo} onUpdate={updateAndNotify} onDelete={deleteAndNotify} showApplication={false} />
           ))}
         </ul>
       )}

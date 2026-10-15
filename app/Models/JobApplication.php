@@ -68,6 +68,23 @@ class JobApplication extends Model
     }
 
     /**
+     * Records each status change made by saving the model (the API's update, re-imports). Batch saves use a
+     * query update instead, so JobApplicationService::saveChanges() records those itself.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (JobApplication $job) {
+            if ($job->wasChanged('status')) {
+                $job->statusChanges()->create([
+                    'from_status' => $job->getOriginal('status'),
+                    'to_status' => $job->status,
+                    'changed_at' => now(),
+                ]);
+            }
+        });
+    }
+
+    /**
      * Applied, active applications with no update for $days days that the user hasn't dismissed:
      * not hidden for today, and not dismissed since their last update (dismissing never moves updated_at).
      */
@@ -94,6 +111,11 @@ class JobApplication extends Model
     public function todos(): HasMany
     {
         return $this->hasMany(Todo::class);
+    }
+
+    public function statusChanges(): HasMany
+    {
+        return $this->hasMany(StatusChange::class);
     }
 
     public function tags(): BelongsToMany
