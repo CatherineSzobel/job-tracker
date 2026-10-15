@@ -1,10 +1,14 @@
 // Mirrors the backend enums in app/Enums (JobStatus, Priority, InterviewType)
 
+// In pipeline order, then the ways an application ends without an offer. Saved: not applied for yet.
 export const JOB_STATUSES = [
+  { value: "saved", label: "Saved" },
   { value: "applied", label: "Applied" },
   { value: "interview", label: "Interview" },
   { value: "offer", label: "Offer" },
   { value: "rejected", label: "Rejected" },
+  { value: "no_response", label: "No response" },
+  { value: "withdrawn", label: "Withdrawn" },
 ];
 
 export const PRIORITIES = [
@@ -49,11 +53,15 @@ export const EMPTY_INTERVIEW = {
 export const jobStatusLabel = (status) => JOB_STATUSES.find((option) => option.value === status)?.label ?? status;
 
 // Status chip colours (UI/StatusChip). Full class strings (not built at runtime) so Tailwind can find them.
+// Saved, No response and Withdrawn borrow tag colours (index.css), so no new tokens are needed.
 export const STATUS_BADGE_CLASSES = {
+  saved: "bg-tag-violet-bg text-tag-violet-fg",
   applied: "bg-applied-bg text-applied-fg",
   interview: "bg-interview-bg text-interview-fg",
   offer: "bg-offer-bg text-offer-fg",
   rejected: "bg-rejected-bg text-rejected-fg",
+  no_response: "bg-tag-slate-bg text-tag-slate-fg",
+  withdrawn: "bg-tag-teal-bg text-tag-teal-fg",
 };
 
 // Priority is coloured text with a flag (UI/PriorityLabel), not a second chip. Full class strings for Tailwind.
@@ -71,10 +79,13 @@ export const DEFAULT_GOALS = { daily_goal: 5, weekly_goal: 20 };
 
 // The Dashboard's "Applications by status" bar colours. Full class strings (not built at runtime) so Tailwind can find them.
 export const STATUS_BAR_CLASSES = {
+  saved: "bg-tag-violet-fg",
   applied: "bg-accent",
   interview: "bg-bar-interview",
   offer: "bg-bar-offer",
   rejected: "bg-bar-rejected",
+  no_response: "bg-tag-slate-fg",
+  withdrawn: "bg-tag-teal-fg",
 };
 
 // The application page's header fields, shown as inputs while editing

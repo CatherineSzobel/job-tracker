@@ -61,8 +61,9 @@ class DocumentSeeder extends Seeder
         // Points back at the app's own library, so the demo never links to a site someone could own
         $this->link($user, DocumentCategory::Portfolio, 'Portfolio site', rtrim(config('app.frontend_url'), '/').'/documents');
 
-        // What was "sent": the oldest application got the old CV (since archived), the next few the current set
-        $applications = $user->jobApplications()->oldest('applied_date')->take(5)->get();
+        // What was "sent" (Saved ones weren't sent anything): the oldest application got the old CV (since archived),
+        // the next few the current set
+        $applications = $user->jobApplications()->whereNotNull('applied_date')->oldest('applied_date')->take(5)->get();
         $applications->first()?->documents()->attach($oldCv, ['attached_at' => $applications->first()->applied_date]);
         $applications->skip(1)->each(fn (JobApplication $application) => $application->documents()->attach(
             [$cv->id, $coverLetter->id, $linkedIn->id],

@@ -27,10 +27,11 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
             'position' => trim($row['position'] ?? ''),
         ]);
 
+        // status and applied_date come normalised from prepareForValidation()
         return $job->fill([
-            'status' => strtolower($row['status'] ?? JobStatus::Applied->value),
+            'status' => $row['status'],
             'priority' => strtolower($row['priority'] ?? Priority::Medium->value),
-            'applied_date' => $row['applied_date'] ?? now()->format('Y-m-d'), // default today
+            'applied_date' => $row['applied_date'],
             'location' => $row['location'] ?? null,
             'notes' => $this->sanitizeText($row['notes'] ?? null),
             'job_link' => $this->sanitizeUrl($row['job_link'] ?? null),
@@ -52,13 +53,19 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
         ];
     }
 
+    /**
+     * The status as a JobStatus value ("No response" or "no-response" → no_response, Applied when empty), and
+     * applied today when the date is empty, unless it's only Saved (not applied yet).
+     */
     public function prepareForValidation($data, $index)
     {
+        $status = isset($data['status']) ? str_replace([' ', '-'], '_', strtolower(trim($data['status']))) : JobStatus::Applied->value;
+
         return [
             ...$data,
-            'status' => isset($data['status']) ? strtolower(trim($data['status'])) : JobStatus::Applied->value,
+            'status' => $status,
             'priority' => isset($data['priority']) ? strtolower(trim($data['priority'])) : Priority::Medium->value,
-            'applied_date' => $data['applied_date'] ?? now()->format('Y-m-d'),
+            'applied_date' => $data['applied_date'] ?? ($status === JobStatus::Saved->value ? null : now()->format('Y-m-d')),
             'notes' => $this->nullIfEmpty($data['notes'] ?? null),
             'location' => $this->nullIfEmpty($data['location'] ?? null),
             'job_link' => $this->nullIfEmpty($data['job_link'] ?? null),

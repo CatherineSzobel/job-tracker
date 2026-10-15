@@ -22,14 +22,16 @@ class JobApplicationSeeder extends Seeder
         // Each user has 20–30 job applications
         $jobCount = rand(20, 30);
         for ($i = 0; $i < $jobCount; $i++) {
+            $status = $faker->randomElement(JobStatus::cases());
             $job = JobApplication::create([
                 'user_id' => $user->id,
                 'company_name' => $faker->company,
                 'position' => $faker->jobTitle,
                 'location' => $faker->city,
-                'status' => $faker->randomElement(JobStatus::values()),
+                'status' => $status,
                 'priority' => $faker->randomElement(Priority::values()),
-                'applied_date' => $faker->dateTimeBetween('-3 months', 'now'),
+                // Saved ones aren't applied for yet
+                'applied_date' => $status === JobStatus::Saved ? null : $faker->dateTimeBetween('-3 months', 'now'),
                 'job_link' => $faker->url,
                 'notes' => $faker->sentence,
                 'is_archived' => false,

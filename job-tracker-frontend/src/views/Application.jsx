@@ -20,7 +20,7 @@ import { confirmAction } from "../stores/useConfirmStore";
 import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { showUndoToast, useToastStore } from "../stores/useToastStore";
 
-// The 2×2 status picker's buttons: the chosen one in its status colours with a border of the same hue
+// The two-column status picker's buttons: the chosen one in its status colours with a border of the same hue
 const statusOptionClasses = (isChosen, status) =>
   `min-h-10 rounded-lg border text-sm font-semibold transition-colors ${
     isChosen ? `border-current ${STATUS_BADGE_CLASSES[status]}` : "border-line bg-surface text-muted-2 hover:bg-soft"

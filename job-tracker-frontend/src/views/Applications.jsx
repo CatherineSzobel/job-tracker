@@ -230,7 +230,13 @@ export default function Applications() {
 
   // Status chips count every active application, whatever the other filters are
   const statusCounts = Object.fromEntries(JOB_STATUSES.map(({ value }) => [value, jobs.filter((job) => job.status === value).length]));
-  const statusChips = [{ value: "all", label: "All", count: jobs.length }, ...JOB_STATUSES.map((status) => ({ ...status, count: statusCounts[status.value] }))];
+  // Statuses nobody is in are left out (seven chips take five rows on a phone), unless that's the current filter
+  const statusChips = [
+    { value: "all", label: "All", count: jobs.length },
+    ...JOB_STATUSES.map((status) => ({ ...status, count: statusCounts[status.value] })).filter(
+      ({ value, count }) => count > 0 || value === statusFilter
+    ),
+  ];
   const isFiltered = filteredJobs.length !== jobs.length;
 
   return (

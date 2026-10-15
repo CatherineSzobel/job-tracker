@@ -59,6 +59,23 @@ class BrokenFeaturesTest extends TestCase
         $this->assertSame(['Acme', 'Initech'], $user->jobApplications()->orderBy('company_name')->pluck('company_name')->all());
     }
 
+    public function test_import_reads_status_labels_and_leaves_saved_rows_without_an_applied_date(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/job-applications/import', ['file' => $this->xlsx([
+                ['Acme', 'Developer', 'No response', 'high', '2026-09-01', null, null, null],
+                ['Globex', 'Designer', 'Saved', 'low', null, null, null, null],
+            ])])
+            ->assertOk();
+
+        $jobs = $user->jobApplications()->orderBy('company_name')->get();
+        $this->assertSame(JobStatus::NoResponse, $jobs[0]->status);
+        $this->assertSame(JobStatus::Saved, $jobs[1]->status);
+        $this->assertNull($jobs[1]->applied_date);
+    }
+
     public function test_reimporting_updates_existing_jobs_instead_of_duplicating(): void
     {
         $user = User::factory()->create();

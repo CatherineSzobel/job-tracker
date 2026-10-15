@@ -27,11 +27,11 @@ class JobApplicationService
     public function __construct(private InterviewPrepService $interviewPrep) {}
 
     /**
-     * Create a new job application for a user
+     * Create a new job application for a user, applied today unless it's only saved for later
      */
     public function create(array $data, User $user): JobApplication
     {
-        $data['applied_date'] = now()->toDateString();
+        $data['applied_date'] = ($data['status'] ?? null) === JobStatus::Saved->value ? null : now()->toDateString();
 
         return $user->jobApplications()->create($data);
     }
@@ -39,15 +39,19 @@ class JobApplicationService
     /**
      * Update an existing job application. Archiving it sets archived_at and also deletes its open to-dos
      * when $deleteOpenTodos is true, or when it's null and the owner's setting is "delete". Restoring
-     * clears archived_at.
+     * clears archived_at. Moving on from Saved for the first time makes today the applied date.
      */
     public function update(JobApplication $job, array $data, ?bool $deleteOpenTodos = null): JobApplication
     {
         return DB::transaction(function () use ($job, $data, $deleteOpenTodos) {
             // Only active → archived counts: the job page re-sends is_archived: true on every save
             $isBeingArchived = ! $job->is_archived && (bool) ($data['is_archived'] ?? false);
+            $wasSaved = $job->status === JobStatus::Saved;
 
             $job->fill($data);
+            if ($wasSaved && $job->status !== JobStatus::Saved && $job->applied_date === null) {
+                $job->applied_date = now()->toDateString();
+            }
             // Keeps the date it was first archived when an archived application is edited
             $job->archived_at = $job->is_archived ? ($job->archived_at ?? now()) : null;
             $job->save();
@@ -115,6 +119,17 @@ class JobApplicationService
                 ->each(fn (Collection $group, string $status) => $user->jobApplications()
                     ->whereKey($group->pluck('id'))
                     ->update(['status' => $status]));
+
+            // Same rule as update(): moving on from Saved for the first time makes today the applied date
+            $leavingSavedIds = collect($changes)
+                ->filter(fn (array $change) => isset($change['status'])
+                    && $change['status'] !== JobStatus::Saved->value
+                    && $jobs[$change['id']]->status === JobStatus::Saved)
+                ->pluck('id');
+            if ($leavingSavedIds->isNotEmpty()) {
+                $user->jobApplications()->whereKey($leavingSavedIds)->whereNull('applied_date')
+                    ->update(['applied_date' => now()->toDateString()]);
+            }
 
             foreach ($changes as $change) {
                 $job = $jobs[$change['id']];
@@ -234,14 +249,14 @@ class JobApplicationService
     /**
      * Dashboard counts for a user's jobs (archived included), counted in the database.
      *
-     * @return array{total: int, archived: int, applied: int, interview: int, offer: int, rejected: int, todayApplications: int, weekApplications: int, upcomingInterviews: int}
+     * @return array{total: int, archived: int, saved: int, applied: int, interview: int, offer: int, rejected: int, no_response: int, withdrawn: int, todayApplications: int, weekApplications: int, upcomingInterviews: int}
      */
     public function getStatsForUser(User $user): array
     {
         $today = Carbon::today();
         $jobs = $user->jobApplications();
 
-        // One count per status: applied, interview, offer, rejected
+        // One count per JobStatus value (saved, applied, …, withdrawn)
         $statusCounts = collect(JobStatus::cases())
             ->mapWithKeys(fn (JobStatus $status) => [$status->value => $jobs->clone()->where('status', $status)->count()]);
 

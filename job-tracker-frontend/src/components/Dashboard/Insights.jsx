@@ -55,7 +55,7 @@ export default function Insights({ stats, dailyGoal, weeklyGoal }) {
             {JOB_STATUSES.map(({ value, label }) => {
               const count = stats[value] ?? 0;
               return (
-                <li key={value} className="grid grid-cols-[88px_minmax(0,1fr)_32px] items-center gap-4">
+                <li key={value} className="grid grid-cols-[112px_minmax(0,1fr)_32px] items-center gap-4">
                   <span className="font-medium">{label}</span>
                   <div className="h-6 rounded bg-soft">
                     <div className={`h-full rounded ${STATUS_BAR_CLASSES[value]}`} style={{ width: `${percentOf(count, largestStatus)}%` }} />
