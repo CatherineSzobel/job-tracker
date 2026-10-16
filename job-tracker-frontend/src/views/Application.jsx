@@ -161,13 +161,13 @@ export default function Application() {
   };
 
   // deleteOpenTodos: the answer from the to-dos prompt, or undefined to follow the user's setting.
-  // The toast offers Undo, unless open to-dos were deleted too or it was already archived.
+  // The toast offers Undo, unless open to-dos were deleted too.
   const archive = async (deleteOpenTodos) => {
     try {
       const res = await API.put(`/job-applications/${job.id}`, archiveChanges(deleteOpenTodos));
       const todosDeleted = deletedOpenTodos([job], [res.data.data]);
-      if (todosDeleted || job.is_archived) {
-        showToast(archivedMessage(1, todosDeleted), "success");
+      if (todosDeleted) {
+        showToast(archivedMessage(1, true), "success");
       } else {
         showUndoToast(archivedMessage(1, false), undoArchive);
       }
@@ -179,6 +179,29 @@ export default function Application() {
   };
 
   const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archive);
+
+  // Archives it again; delete_open_todos: false, since its to-dos were kept when it was archived before
+  const undoRestore = async () => {
+    try {
+      const res = await API.put(`/job-applications/${job.id}`, archiveChanges(false));
+      setJob(res.data.data);
+    } catch (err) {
+      console.error(err);
+      showToast("Couldn't undo restoring the application");
+    }
+  };
+
+  // An archived application's ⋮ offers Restore instead of Archive; it stays on this page
+  const restore = async () => {
+    try {
+      const res = await API.put(`/job-applications/${job.id}`, { is_archived: false });
+      setJob(res.data.data);
+      showUndoToast("Application restored", undoRestore);
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to restore the application");
+    }
+  };
 
   const deleteJob = async () => {
     if (!(await confirmAction({ message: "Delete this job application?", confirmLabel: "Delete", danger: true }))) return;
@@ -291,7 +314,11 @@ export default function Application() {
                 Edit
               </button>
               <Menu label="More actions" buttonClassName="btn-secondary w-12 px-0" buttonContent={<EllipsisVertical size={20} aria-hidden="true" />}>
-                <MenuItem onClick={() => requestArchive({ openTodosCount: job.open_todos_count ?? 0 })}>Archive</MenuItem>
+                {job.is_archived ? (
+                  <MenuItem onClick={restore}>Restore</MenuItem>
+                ) : (
+                  <MenuItem onClick={() => requestArchive({ openTodosCount: job.open_todos_count ?? 0 })}>Archive</MenuItem>
+                )}
                 <MenuDivider />
                 <MenuItem onClick={deleteJob} danger>
                   Delete application

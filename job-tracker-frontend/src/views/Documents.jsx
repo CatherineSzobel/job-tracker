@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { confirmAction } from "../stores/useConfirmStore";
-import { Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { Archive, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import API from "../api/axios";
-import { showToast } from "../stores/useToastStore";
+import { showToast, showUndoToast } from "../stores/useToastStore";
 import Modal from "../components/UI/Modal";
 import PageHeader from "../components/UI/PageHeader";
 import PageLoader from "../components/UI/PageLoader";
@@ -23,12 +23,18 @@ export default function Documents() {
   const [addTab, setAddTab] = useState(null); // "file" | "link" while the Add modal is open
   const [editingDocument, setEditingDocument] = useState(null);
 
+  // Also run after an archive is undone, to put the document back in its place
+  const loadDocuments = useCallback(
+    () =>
+      API.get("/documents", { params: { include_archived: showArchived ? 1 : 0 } })
+        .then((res) => setDocuments(res.data.data))
+        .catch((err) => console.error(err)),
+    [showArchived]
+  );
+
   useEffect(() => {
-    API.get("/documents", { params: { include_archived: showArchived ? 1 : 0 } })
-      .then((res) => setDocuments(res.data.data))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, [showArchived]);
+    loadDocuments().finally(() => setLoading(false));
+  }, [loadDocuments]);
 
   const visibleDocuments =
     categoryFilter === "all" ? documents : documents.filter((item) => item.category === categoryFilter);
@@ -46,12 +52,24 @@ export default function Documents() {
     setEditingDocument(null);
   };
 
+  const undoArchive = async (item) => {
+    try {
+      await API.post(`/documents/${item.id}/restore`);
+      loadDocuments();
+    } catch (err) {
+      console.error(err);
+      showToast(apiErrorMessage(err, "Couldn't undo archiving the document"));
+    }
+  };
+
+  // The server deletes a document that isn't attached anywhere, and archives one that is (the applications keep
+  // it). A real delete asks first; an archive happens straight away and the toast offers Undo.
   const deleteDocument = async (item) => {
     const count = item.applications_count;
-    const message = count > 0
-      ? `"${item.name}" is attached to ${countOf(count, "application")}, so it will be archived instead of deleted. It stays visible on those applications and you can restore it later.`
-      : `Delete "${item.name}"? This can't be undone.`;
-    if (!(await confirmAction({ message, confirmLabel: count > 0 ? "Archive" : "Delete", danger: count === 0 }))) return;
+    const willArchive = count > 0;
+    if (!willArchive && !(await confirmAction({ message: `Delete "${item.name}"? This can't be undone.`, confirmLabel: "Delete", danger: true }))) {
+      return;
+    }
 
     try {
       const res = await API.delete(`/documents/${item.id}`);
@@ -59,6 +77,9 @@ export default function Documents() {
         setDocuments((prev) => prev.filter((other) => other.id !== item.id));
       } else {
         replaceDocument(res.data.data);
+      }
+      if (res.status !== 204) {
+        showUndoToast(`"${item.name}" archived; it stays on the ${countOf(count, "application")} it was sent with`, () => undoArchive(item));
       }
     } catch (err) {
       console.error(err);
@@ -156,15 +177,28 @@ export default function Documents() {
                       <button type="button" onClick={() => setEditingDocument(item)} aria-label={`Rename ${item.name}`} title="Rename" className="btn-icon-sm">
                         <Pencil size={18} aria-hidden="true" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteDocument(item)}
-                        aria-label={`Delete ${item.name}`}
-                        title="Delete"
-                        className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-danger transition-colors hover:bg-rejected-bg"
-                      >
-                        <Trash2 size={18} aria-hidden="true" />
-                      </button>
+                      {/* Says what it will do: archive one that's attached to applications, delete one that isn't */}
+                      {item.applications_count > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => deleteDocument(item)}
+                          aria-label={`Archive ${item.name}`}
+                          title="Archive (it stays on its applications)"
+                          className="btn-icon-sm"
+                        >
+                          <Archive size={18} aria-hidden="true" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => deleteDocument(item)}
+                          aria-label={`Delete ${item.name}`}
+                          title="Delete"
+                          className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-danger transition-colors hover:bg-rejected-bg"
+                        >
+                          <Trash2 size={18} aria-hidden="true" />
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
