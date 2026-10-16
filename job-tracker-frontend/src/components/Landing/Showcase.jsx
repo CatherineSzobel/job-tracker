@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { LANDING_SHOWCASE, screenshotFor } from "../../constants/landing";
 import { useThemeStore } from "../../stores/useThemeStore";
 import Screenshot from "./Screenshot";
@@ -24,6 +24,7 @@ const featureClasses = (isSelected) =>
 export default function Showcase() {
   const darkMode = useThemeStore((state) => state.darkMode);
   const [activeSlideId, setActiveSlideId] = useState(AVAILABLE_SLIDES[0]?.id);
+  const preloaded = useRef(false);
 
   if (AVAILABLE_SLIDES.length === 0) return null;
 
@@ -33,6 +34,15 @@ export default function Showcase() {
   const selectSlide = (slide) => {
     setActiveSlideId(slide.id);
     document.getElementById(tabId(slide.id))?.focus();
+  };
+
+  // The first time someone reaches for the list, fetch the other screenshots so switching tabs is instant
+  const preloadScreenshots = () => {
+    if (preloaded.current) return;
+    preloaded.current = true;
+    AVAILABLE_SLIDES.forEach((slide) => {
+      new Image().src = screenshotFor(slide.fileName, darkMode);
+    });
   };
 
   const moveWithKeys = (event) => {
@@ -62,6 +72,8 @@ export default function Showcase() {
               aria-label="Features"
               aria-orientation="vertical"
               onKeyDown={moveWithKeys}
+              onPointerEnter={preloadScreenshots}
+              onFocus={preloadScreenshots}
               className="flex max-w-full flex-[1_1_280px] flex-wrap gap-2"
             >
               {AVAILABLE_SLIDES.map((slide) => {
@@ -92,16 +104,26 @@ export default function Showcase() {
             aria-labelledby={showList ? tabId(activeSlide.id) : undefined}
             className="flex min-w-0 flex-[999_1_560px] flex-col gap-4"
           >
+            {/* One <img> whose src changes (no key): the current picture stays until the next has loaded */}
             <Screenshot
-              key={activeSlide.id}
               src={screenshotFor(activeSlide.fileName, darkMode)}
               alt={activeSlide.alt}
               frameClassName="bg-surface"
               lazy
             />
-            <figcaption className="flex flex-col gap-1">
-              <strong className="text-xl/8 font-semibold">{activeSlide.label}</strong>
-              <span className="text-lg/8 text-muted">{activeSlide.caption}</span>
+            {/* Every caption in the same grid cell, only the active one visible: the cell is as tall as the longest,
+                so a caption that wraps to more lines doesn't move what's below (visibility also hides the others
+                from screen readers) */}
+            <figcaption className="grid">
+              {AVAILABLE_SLIDES.map((slide) => (
+                <div
+                  key={slide.id}
+                  className={`col-start-1 row-start-1 flex flex-col gap-1 ${slide.id === activeSlide.id ? "" : "invisible"}`}
+                >
+                  <strong className="text-xl/8 font-semibold">{slide.label}</strong>
+                  <span className="text-lg/8 text-muted">{slide.caption}</span>
+                </div>
+              ))}
             </figcaption>
           </figure>
         </div>
