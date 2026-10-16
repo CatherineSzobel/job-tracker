@@ -42,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Registered before the resource so "batch" isn't read as an {interview} id
     Route::delete('/interviews/batch', [InterviewController::class, 'batchDestroy']);
     Route::apiResource('interviews', InterviewController::class)->only(['index', 'show', 'update', 'destroy']);
+    Route::get('/interviews/{interview}/calendar', [InterviewController::class, 'calendar']);
     Route::put('/interviews/{interview}/prep', [InterviewController::class, 'updatePrep']);
     Route::put('/interviews/{interview}/bank-questions', [InterviewController::class, 'syncBankQuestions']);
     Route::apiResource('bank-questions', BankQuestionController::class)->except('show');

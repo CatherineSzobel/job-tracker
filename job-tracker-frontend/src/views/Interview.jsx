@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { differenceInCalendarDays, format } from "date-fns";
-import { Check, ChevronLeft, Pencil, Video } from "lucide-react";
+import { CalendarPlus, Check, ChevronLeft, Pencil, Video } from "lucide-react";
 import API from "../api/axios";
 import Tabs, { TabPanel } from "../components/UI/Tabs";
 import Card from "../components/UI/Card";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
 import InterviewForm from "../components/Interview/InterviewForm";
+import { downloadInterviewCalendar } from "../components/Interview/interviewCalendar";
 import BankQuestionForm from "../components/InterviewPrep/BankQuestionForm";
 import BankQuestionsSection from "../components/InterviewPrep/BankQuestionsSection";
 import EditableList from "../components/InterviewPrep/EditableList";
@@ -238,6 +239,15 @@ function InterviewPage({ interviewId }) {
   const pill = whenPill(interviewDate);
   const isUpcoming = interviewDate >= new Date();
 
+  const addToCalendar = async () => {
+    try {
+      await downloadInterviewCalendar(interview);
+    } catch (err) {
+      console.error(err);
+      showToast("Couldn't download the calendar file");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* Phones have no breadcrumb */}
@@ -263,12 +273,18 @@ function InterviewPage({ interviewId }) {
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <SaveStatus status={saveState.status} onRetry={saveState.retry} />
-          {/* Join only matters until it has happened */}
+          {/* Join and Add to calendar only matter until it has happened */}
           {isUpcoming && interview.meeting_url && (
             <a href={interview.meeting_url} target="_blank" rel="noopener noreferrer" className="btn-primary">
               <Video size={16} aria-hidden="true" />
               Join
             </a>
+          )}
+          {isUpcoming && (
+            <button type="button" onClick={addToCalendar} className="btn-secondary">
+              <CalendarPlus size={16} aria-hidden="true" />
+              Add to calendar
+            </button>
           )}
           <button type="button" onClick={startEditing} className="btn-secondary">
             <Pencil size={16} aria-hidden="true" />
