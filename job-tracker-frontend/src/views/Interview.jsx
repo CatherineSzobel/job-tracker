@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
-import { differenceInCalendarDays, format } from "date-fns";
+import { format } from "date-fns";
 import { CalendarPlus, Check, ChevronLeft, Pencil, Video } from "lucide-react";
 import API from "../api/axios";
 import Tabs, { TabPanel } from "../components/UI/Tabs";
@@ -24,15 +24,14 @@ import { BANK_LINKS_MAX, EMPTY_BANK_QUESTION, PREP_LIMITS, PREP_TABS } from "../
 import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { useToastStore } from "../stores/useToastStore";
 import { toDateTimeInputValue } from "../utils/dateInput";
+import { countdownLabel } from "../utils/countdown";
 
 const showToast = (message) => useToastStore.getState().showToast(message);
 
 // The pill above the title: "Today", "Tomorrow", "In 5 days", or "Done" once it's over
 const whenPill = (date) => {
-  if (date < new Date()) return { label: "Done", classes: "bg-subtle text-muted-2" };
-  const days = differenceInCalendarDays(date, new Date());
-  const label = days === 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
-  return { label, classes: "bg-accent text-white" };
+  const countdown = countdownLabel(date);
+  return countdown ? { label: countdown, classes: "bg-accent text-white" } : { label: "Done", classes: "bg-subtle text-muted-2" };
 };
 
 // Keyed by id: opening another interview starts a fresh page, so a save still waiting goes to the

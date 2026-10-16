@@ -8,9 +8,11 @@ import { isUpcoming } from "./interviewFilters";
 import { RATING_VALUES } from "../../constants/interviewPrep";
 import { interviewTypeLabel } from "../../constants/jobs";
 import { showToast } from "../../stores/useToastStore";
+import { countdownLabel } from "../../utils/countdown";
 
 // An interview on the Interviews page: date block (filled for the next one), company (link to the prep page)
-// and position, ⋮ with Edit, Add to calendar (upcoming) and Delete, type / time / place / "Join call", then prep progress, or the debrief rating and link.
+// and position, ⋮ with Edit, Add to calendar (upcoming) and Delete, type / time and countdown / place / "Join call",
+// then prep progress, or the debrief rating and link.
 // In select mode clicking the card calls onToggleSelect(id), and the links and actions are hidden.
 export default function InterviewListCard({ interview, isNext = false, onEdit, onDelete, selecting = false, selected = false, onToggleSelect }) {
   const upcoming = isUpcoming(interview);
@@ -75,7 +77,7 @@ export default function InterviewListCard({ interview, isNext = false, onEdit, o
         <span className="rounded-full bg-accent-soft px-2.5 leading-6 font-semibold text-accent-text">{interviewTypeLabel(interview.type)}</span>
         <span className="inline-flex items-center gap-1.5">
           <Clock size={16} aria-hidden="true" />
-          {format(date, upcoming ? "HH:mm" : "d MMM yyyy · HH:mm")}
+          {upcoming ? `${format(date, "HH:mm")} · ${countdownLabel(date)}` : format(date, "d MMM yyyy · HH:mm")}
         </span>
         {interview.location && (
           <span className="inline-flex min-w-0 items-center gap-1.5 break-words">
