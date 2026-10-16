@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\DocumentKind;
+use App\Enums\JobStatus;
 use App\Models\Interview;
+use App\Models\StatusChange;
 use App\Models\User;
 use Database\Seeders\DocumentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,6 +28,27 @@ class SeederTest extends TestCase
         $this->assertGreaterThanOrEqual(20, $demo->jobApplications()->count());
     }
 
+    public function test_demo_data_shows_every_part_of_the_app_relative_to_today(): void
+    {
+        Storage::fake(config('filesystems.documents_disk'));
+
+        $this->seed();
+
+        $demo = User::where('email', config('app.demo_email'))->sole();
+        $jobs = $demo->jobApplications()->get();
+
+        $this->assertEqualsCanonicalizing(JobStatus::cases(), $jobs->pluck('status')->unique()->values()->all(), 'every status is on the board');
+        $this->assertTrue($jobs->where('status', JobStatus::Saved)->every(fn ($job) => $job->applied_date === null));
+        $this->assertTrue($jobs->contains(fn ($job) => $job->applied_date?->isToday()), 'something applied today, for the goals');
+        $this->assertTrue($jobs->where('is_archived', true)->every(fn ($job) => $job->archived_at !== null));
+        $this->assertGreaterThan(0, StatusChange::count());
+        $this->assertTrue(Interview::where('user_id', $demo->id)->where('interview_date', '>', now())->whereNotNull('meeting_url')->exists());
+        $this->assertTrue(Interview::where('user_id', $demo->id)->where('interview_date', '<', now())->whereNotNull('rating')->exists());
+        $this->assertTrue($demo->todos()->where('done', false)->whereDate('due_date', today())->exists(), 'a to-do due today');
+        $this->assertTrue($demo->todos()->where('done', true)->whereNotNull('completed_at')->exists());
+        $this->assertTrue($demo->notes()->where('is_pinned', true)->exists());
+    }
+
     public function test_demo_user_gets_a_question_bank_linked_to_their_next_interview(): void
     {
         Storage::fake(config('filesystems.documents_disk'));
@@ -33,7 +56,7 @@ class SeederTest extends TestCase
         $this->seed();
 
         $demo = User::where('email', config('app.demo_email'))->sole();
-        $nextInterview = Interview::where('user_id', $demo->id)->orderBy('interview_date')->first();
+        $nextInterview = Interview::where('user_id', $demo->id)->where('interview_date', '>=', now())->orderBy('interview_date')->first();
 
         $this->assertGreaterThanOrEqual(10, $demo->bankQuestions()->count());
         $this->assertSame(5, $demo->bankQuestions()->distinct()->count('category'));
