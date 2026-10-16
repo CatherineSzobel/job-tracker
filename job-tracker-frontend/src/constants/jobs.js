@@ -70,6 +70,7 @@ export const EMPTY_INTERVIEW = {
   type: "",
   interview_date: "",
   location: "",
+  meeting_url: "",
   notes: "",
 };
 

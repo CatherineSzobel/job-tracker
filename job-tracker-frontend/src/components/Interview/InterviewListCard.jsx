@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { Clock, EllipsisVertical, MapPin, Star } from "lucide-react";
+import { Clock, EllipsisVertical, MapPin, Star, Video } from "lucide-react";
 import DateBlock from "../UI/DateBlock";
 import Menu, { MenuDivider, MenuItem } from "../UI/Menu";
 import { isUpcoming } from "./interviewFilters";
@@ -8,7 +8,7 @@ import { RATING_VALUES } from "../../constants/interviewPrep";
 import { interviewTypeLabel } from "../../constants/jobs";
 
 // An interview on the Interviews page: date block (filled for the next one), company (link to the prep page)
-// and position, ⋮ with Edit and Delete, type / time / place, then prep progress, or the debrief rating and link.
+// and position, ⋮ with Edit and Delete, type / time / place / "Join call", then prep progress, or the debrief rating and link.
 // In select mode clicking the card calls onToggleSelect(id), and the links and actions are hidden.
 export default function InterviewListCard({ interview, isNext = false, onEdit, onDelete, selecting = false, selected = false, onToggleSelect }) {
   const upcoming = isUpcoming(interview);
@@ -70,6 +70,17 @@ export default function InterviewListCard({ interview, isNext = false, onEdit, o
             <MapPin size={16} aria-hidden="true" className="shrink-0" />
             {interview.location}
           </span>
+        )}
+        {upcoming && interview.meeting_url && !selecting && (
+          <a
+            href={interview.meeting_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-10 items-center gap-1.5 font-semibold text-accent-text hover:underline"
+          >
+            <Video size={16} aria-hidden="true" />
+            Join call
+          </a>
         )}
       </div>
 

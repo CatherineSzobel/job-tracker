@@ -99,6 +99,7 @@ export default function Interviews() {
         type: newInterview.type || "online",
         interview_date: newInterview.interview_date,
         location: newInterview.location,
+        meeting_url: newInterview.meeting_url || null,
         notes: newInterview.notes || "",
       };
 
@@ -170,6 +171,7 @@ export default function Interviews() {
       type: interview.type || "",
       interview_date: toDateTimeInputValue(interview.interview_date),
       location: interview.location || "",
+      meeting_url: interview.meeting_url || "",
       notes: interview.notes || "",
     });
     setShowForm(true);

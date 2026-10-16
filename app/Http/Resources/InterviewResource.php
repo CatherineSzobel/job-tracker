@@ -21,6 +21,8 @@ class InterviewResource extends JsonResource
             'interview_date' => $this->interview_date,
             'type' => $this->type,
             'location' => $this->location,
+            // The video call link, for the Join button
+            'meeting_url' => $this->meeting_url,
             'notes' => $this->notes,
             // The debrief's 1–5 stars, shown on past interview cards
             'rating' => $this->rating,

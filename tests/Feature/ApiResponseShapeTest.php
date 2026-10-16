@@ -24,7 +24,7 @@ class ApiResponseShapeTest extends TestCase
         'is_archived', 'archived_at', 'updated_at',
     ];
 
-    private const INTERVIEW = ['id', 'job_application_id', 'interview_date', 'type', 'location', 'notes', 'rating', 'prep_progress' => ['done', 'total']];
+    private const INTERVIEW = ['id', 'job_application_id', 'interview_date', 'type', 'location', 'meeting_url', 'notes', 'rating', 'prep_progress' => ['done', 'total']];
 
     private const INTERVIEW_DETAIL = [
         ...self::INTERVIEW,

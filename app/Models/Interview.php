@@ -19,6 +19,7 @@ class Interview extends Model
         'interview_date',
         'type',
         'location',
+        'meeting_url',
         'notes',
         'prep',
         'rating',

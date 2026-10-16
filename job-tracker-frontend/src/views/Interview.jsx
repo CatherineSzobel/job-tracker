@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { differenceInCalendarDays, format } from "date-fns";
-import { Check, ChevronLeft, Pencil } from "lucide-react";
+import { Check, ChevronLeft, Pencil, Video } from "lucide-react";
 import API from "../api/axios";
 import Tabs, { TabPanel } from "../components/UI/Tabs";
 import Card from "../components/UI/Card";
@@ -179,6 +179,7 @@ function InterviewPage({ interviewId }) {
       type: interview.type ?? "",
       interview_date: toDateTimeInputValue(interview.interview_date),
       location: interview.location ?? "",
+      meeting_url: interview.meeting_url ?? "",
       notes,
     });
 
@@ -192,6 +193,7 @@ function InterviewPage({ interviewId }) {
         type: editForm.type || "online",
         interview_date: editForm.interview_date,
         location: editForm.location,
+        meeting_url: editForm.meeting_url || null,
         notes: editForm.notes || null,
       });
       setInterview(res.data.data);
@@ -234,6 +236,7 @@ function InterviewPage({ interviewId }) {
 
   const interviewDate = new Date(interview.interview_date);
   const pill = whenPill(interviewDate);
+  const isUpcoming = interviewDate >= new Date();
 
   return (
     <div className="flex flex-col gap-6">
@@ -258,8 +261,15 @@ function InterviewPage({ interviewId }) {
             </Link>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <SaveStatus status={saveState.status} onRetry={saveState.retry} />
+          {/* Join only matters until it has happened */}
+          {isUpcoming && interview.meeting_url && (
+            <a href={interview.meeting_url} target="_blank" rel="noopener noreferrer" className="btn-primary">
+              <Video size={16} aria-hidden="true" />
+              Join
+            </a>
+          )}
           <button type="button" onClick={startEditing} className="btn-secondary">
             <Pencil size={16} aria-hidden="true" />
             Edit
