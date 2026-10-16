@@ -13,6 +13,7 @@ use App\Http\Resources\InterviewResource;
 use App\Http\Resources\JobApplicationResource;
 use App\Models\JobApplication;
 use App\Services\ApplicationActivityService;
+use App\Services\InsightsService;
 use App\Services\JobApplicationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -156,5 +157,13 @@ class JobApplicationController extends Controller
     public function stats(Request $request): JsonResponse
     {
         return response()->json(['data' => $this->jobApplicationService->getStatsForUser($request->user())]);
+    }
+
+    /**
+     * Response rate, interview → offer rate, days to a first reply and applications by source (InsightsService)
+     */
+    public function insights(Request $request, InsightsService $insights): JsonResponse
+    {
+        return response()->json(['data' => $insights->forUser($request->user())]);
     }
 }

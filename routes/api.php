@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->get('/user', fn (Request $request) => new Use
 Route::middleware('auth:sanctum')->group(function () {
     // Registered before the resource so they aren't read as a {job_application} id
     Route::get('/job-applications/stats', [JobApplicationController::class, 'stats']);
+    Route::get('/job-applications/insights', [JobApplicationController::class, 'insights']);
     Route::get('/job-applications/export', [JobApplicationController::class, 'export']);
     Route::post('/job-applications/import', [JobApplicationController::class, 'import']);
     Route::patch('/job-applications/batch', [JobApplicationController::class, 'batchUpdate']);
