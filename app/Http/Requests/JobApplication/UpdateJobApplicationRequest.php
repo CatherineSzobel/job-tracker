@@ -2,13 +2,9 @@
 
 namespace App\Http\Requests\JobApplication;
 
-use App\Enums\ApplicationSource;
-use App\Enums\Currency;
 use App\Enums\JobStatus;
 use App\Enums\Priority;
-use App\Rules\EmailOrUrl;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Fluent;
 use Illuminate\Validation\Rule;
 
 class UpdateJobApplicationRequest extends FormRequest
@@ -37,14 +33,7 @@ class UpdateJobApplicationRequest extends FormRequest
             'job_link' => 'sometimes|nullable|url:http,https|max:255',
             'company_name' => 'sometimes|string|max:255',
             'position' => 'sometimes|string|max:255',
-            'salary_min' => 'sometimes|nullable|integer|min:0|max:100000000',
-            // Not below the minimum, when both are sent
-            'salary_max' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100000000', Rule::when(fn (Fluent $input) => $input->salary_min !== null, 'gte:salary_min')],
-            'salary_currency' => ['sometimes', Rule::enum(Currency::class)],
-            'source' => ['sometimes', 'nullable', Rule::enum(ApplicationSource::class)],
-            'contact_name' => 'sometimes|nullable|string|max:255',
-            'contact_details' => ['sometimes', 'nullable', 'string', 'max:255', new EmailOrUrl],
-            'deadline' => 'sometimes|nullable|date_format:Y-m-d',
+            ...ApplicationDetailRules::rules(partial: true),
             'delete_open_todos' => 'sometimes|boolean',
         ];
     }

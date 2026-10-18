@@ -10,7 +10,6 @@ use App\Exports\JobApplicationsExport;
 use App\Imports\JobApplicationsImport;
 use App\Models\Interview;
 use App\Models\JobApplication;
-use App\Models\StatusChange;
 use App\Models\Todo;
 use App\Models\User;
 use Carbon\Carbon;
@@ -47,15 +46,9 @@ class JobApplicationService
         return DB::transaction(function () use ($job, $data, $deleteOpenTodos) {
             // Only active → archived counts: the job page re-sends is_archived: true on every save
             $isBeingArchived = ! $job->is_archived && (bool) ($data['is_archived'] ?? false);
-            $wasSaved = $job->status === JobStatus::Saved;
 
-            $job->fill($data);
-            if ($wasSaved && $job->status !== JobStatus::Saved && $job->applied_date === null) {
-                $job->applied_date = now()->toDateString();
-            }
-            // Keeps the date it was first archived when an archived application is edited
-            $job->archived_at = $job->is_archived ? ($job->archived_at ?? now()) : null;
-            $job->save();
+            // The applied date and archived_at follow from the model's own rules (JobApplication::booted())
+            $job->update($data);
 
             if ($isBeingArchived && ($deleteOpenTodos ?? $job->user->archive_todos === ArchiveTodosAction::Delete)) {
                 $job->todos()->where('done', false)->delete();
@@ -82,12 +75,8 @@ class JobApplicationService
 
             $newlyArchivedIds = $isArchived ? $jobs->where('is_archived', false)->modelKeys() : [];
 
-            // Query updates (no model events), so archived_at is set here; updated_at moves too
-            // (archiving counts as an update)
-            $user->jobApplications()->whereKey($ids)->update($isArchived ? ['is_archived' => true] : ['is_archived' => false, 'archived_at' => null]);
-            if ($newlyArchivedIds !== []) {
-                $user->jobApplications()->whereKey($newlyArchivedIds)->update(['archived_at' => now()]);
-            }
+            // Saved one by one, so each follows the model's rules (archived_at); a selection is small
+            $jobs->each(fn (JobApplication $job) => $job->update(['is_archived' => $isArchived]));
 
             if ($newlyArchivedIds !== [] && ($deleteOpenTodos ?? $user->archive_todos === ArchiveTodosAction::Delete)) {
                 Todo::whereIn('job_application_id', $newlyArchivedIds)->where('done', false)->delete();
@@ -114,40 +103,12 @@ class JobApplicationService
             $jobs = $user->jobApplications()->whereKey($ids)->get()->keyBy('id');
             abort_if($jobs->count() !== count($ids), 404);
 
-            // One query per status, not per application. A query update, so updated_at moves too
-            // (a status change counts as an update)
-            collect($changes)->whereNotNull('status')->groupBy('status')
-                ->each(fn (Collection $group, string $status) => $user->jobApplications()
-                    ->whereKey($group->pluck('id'))
-                    ->update(['status' => $status]));
-
-            // Query updates skip the model's own recording (JobApplication::booted()), so the history is written here,
-            // for the applications whose status really changed
-            $statusChanges = collect($changes)
-                ->filter(fn (array $change) => isset($change['status']) && $change['status'] !== $jobs[$change['id']]->status->value)
-                ->map(fn (array $change) => [
-                    'job_application_id' => $change['id'],
-                    'from_status' => $jobs[$change['id']]->status->value,
-                    'to_status' => $change['status'],
-                    'changed_at' => now(),
-                ]);
-            if ($statusChanges->isNotEmpty()) {
-                StatusChange::insert($statusChanges->values()->all());
-            }
-
-            // Same rule as update(): moving on from Saved for the first time makes today the applied date
-            $leavingSavedIds = collect($changes)
-                ->filter(fn (array $change) => isset($change['status'])
-                    && $change['status'] !== JobStatus::Saved->value
-                    && $jobs[$change['id']]->status === JobStatus::Saved)
-                ->pluck('id');
-            if ($leavingSavedIds->isNotEmpty()) {
-                $user->jobApplications()->whereKey($leavingSavedIds)->whereNull('applied_date')
-                    ->update(['applied_date' => now()->toDateString()]);
-            }
-
             foreach ($changes as $change) {
                 $job = $jobs[$change['id']];
+                // Saved one by one, so the model records the history and the applied date (JobApplication::booted())
+                if (isset($change['status'])) {
+                    $job->update(['status' => $change['status']]);
+                }
                 if (! empty($change['add_tag_ids'])) {
                     $job->tags()->syncWithoutDetaching($change['add_tag_ids']);
                 }

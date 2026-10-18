@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * An application's status going from one value to another, for its activity timeline. Recorded by
- * JobApplication (single saves) and JobApplicationService::saveChanges() (batches).
+ * JobApplication whenever it's saved with a new status.
  */
 class StatusChange extends Model
 {

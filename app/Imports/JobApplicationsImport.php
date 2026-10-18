@@ -2,12 +2,11 @@
 
 namespace App\Imports;
 
-use App\Enums\ApplicationSource;
 use App\Enums\Currency;
 use App\Enums\JobStatus;
 use App\Enums\Priority;
+use App\Http\Requests\JobApplication\ApplicationDetailRules;
 use App\Models\JobApplication;
-use App\Rules\EmailOrUrl;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
@@ -63,13 +62,9 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
             'location' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:2000',
             'job_link' => 'nullable|url:http,https|max:255',
-            // Each on its own: unlike the API, a file isn't checked for max below min
-            'salary_min' => 'nullable|integer|min:0|max:100000000',
+            ...ApplicationDetailRules::rules(),
+            // Unlike the API, a file isn't checked for max below min, and any date format a spreadsheet uses goes
             'salary_max' => 'nullable|integer|min:0|max:100000000',
-            'salary_currency' => ['nullable', Rule::enum(Currency::class)],
-            'source' => ['nullable', Rule::enum(ApplicationSource::class)],
-            'contact_name' => 'nullable|string|max:255',
-            'contact_details' => ['nullable', 'string', 'max:255', new EmailOrUrl],
             'deadline' => 'nullable|date',
         ];
     }

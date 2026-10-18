@@ -68,11 +68,22 @@ class JobApplication extends Model
     }
 
     /**
-     * Records each status change made by saving the model (the API's update, re-imports). Batch saves use a
-     * query update instead, so JobApplicationService::saveChanges() records those itself.
+     * The rules every save follows (single updates, batches, re-imports): moving on from Saved for the first time
+     * makes today the applied date; archived_at follows is_archived (an archived one keeps the date it was first
+     * archived); and each status change is recorded in the history.
      */
     protected static function booted(): void
     {
+        static::saving(function (JobApplication $job) {
+            if ($job->isDirty('status') && $job->getOriginal('status') === JobStatus::Saved
+                && $job->status !== JobStatus::Saved && $job->applied_date === null) {
+                $job->applied_date = now()->toDateString();
+            }
+            if ($job->isDirty('is_archived')) {
+                $job->archived_at = $job->is_archived ? ($job->archived_at ?? now()) : null;
+            }
+        });
+
         static::updated(function (JobApplication $job) {
             if ($job->wasChanged('status')) {
                 $job->statusChanges()->create([

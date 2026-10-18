@@ -67,8 +67,8 @@ class ArchiveDateTest extends TestCase
         $migration = $this->migration();
         $migration->down();
         $user = User::factory()->create();
-        $archived = $this->jobFor($user, archived: true);
-        $active = $this->jobFor($user);
+        // Without the model's events: before the migration there's no archived_at column for it to fill in
+        [$archived, $active] = JobApplication::withoutEvents(fn () => [$this->jobFor($user, archived: true), $this->jobFor($user)]);
         DB::table('job_applications')->update(['updated_at' => '2026-08-15 14:00:00']);
 
         $migration->up();
