@@ -63,27 +63,30 @@ export default function Documents() {
   };
 
   // The server deletes a document that isn't attached anywhere, and archives one that is (the applications keep
-  // it). A real delete asks first; an archive happens straight away and the toast offers Undo.
+  // it). A real delete asks first; an archive happens straight away and the toast offers Undo. archive_only makes
+  // sure an archive never turns into an unasked delete: if it was detached meanwhile, the server refuses (409) and
+  // the reloaded list shows it with Delete.
   const deleteDocument = async (item) => {
-    const count = item.applications_count;
-    const willArchive = count > 0;
+    const willArchive = item.applications_count > 0;
     if (!willArchive && !(await confirmAction({ message: `Delete "${item.name}"? This can't be undone.`, confirmLabel: "Delete", danger: true }))) {
       return;
     }
 
     try {
-      const res = await API.delete(`/documents/${item.id}`);
+      const res = await API.delete(`/documents/${item.id}`, { params: willArchive ? { archive_only: 1 } : {} });
       if (res.status === 204 || !showArchived) {
         setDocuments((prev) => prev.filter((other) => other.id !== item.id));
       } else {
         replaceDocument(res.data.data);
       }
       if (res.status !== 204) {
+        const count = res.data.data.applications_count;
         showUndoToast(`"${item.name}" archived; it stays on the ${countOf(count, "application")} it was sent with`, () => undoArchive(item));
       }
     } catch (err) {
       console.error(err);
       showToast(apiErrorMessage(err, "Failed to delete document"));
+      if (err.response?.status === 409) loadDocuments();
     }
   };
 

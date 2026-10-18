@@ -21,7 +21,7 @@ import useSavedView from "../components/UI/useSavedView";
 import useSelection from "../components/UI/useSelection";
 import { EMPTY_INTERVIEW } from "../constants/jobs";
 import { useToastStore } from "../stores/useToastStore";
-import { toDateTimeInputValue } from "../utils/dateInput";
+import { fromDateTimeInputValue, toDateTimeInputValue } from "../utils/dateInput";
 import { countOf } from "../utils/plural";
 
 const showToast = (message) => useToastStore.getState().showToast(message);
@@ -97,7 +97,7 @@ export default function Interviews() {
     try {
       const payload = {
         type: newInterview.type || "online",
-        interview_date: newInterview.interview_date,
+        interview_date: fromDateTimeInputValue(newInterview.interview_date),
         location: newInterview.location,
         meeting_url: newInterview.meeting_url || null,
         notes: newInterview.notes || "",

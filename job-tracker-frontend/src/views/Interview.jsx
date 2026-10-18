@@ -23,7 +23,7 @@ import { interviewTypeLabel } from "../constants/jobs";
 import { BANK_LINKS_MAX, EMPTY_BANK_QUESTION, PREP_LIMITS, PREP_TABS } from "../constants/interviewPrep";
 import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { useToastStore } from "../stores/useToastStore";
-import { toDateTimeInputValue } from "../utils/dateInput";
+import { fromDateTimeInputValue, toDateTimeInputValue } from "../utils/dateInput";
 import { countdownLabel } from "../utils/countdown";
 
 const showToast = (message) => useToastStore.getState().showToast(message);
@@ -191,7 +191,7 @@ function InterviewPage({ interviewId }) {
     try {
       const res = await API.put(`/interviews/${interviewId}`, {
         type: editForm.type || "online",
-        interview_date: editForm.interview_date,
+        interview_date: fromDateTimeInputValue(editForm.interview_date),
         location: editForm.location,
         meeting_url: editForm.meeting_url || null,
         notes: editForm.notes || null,

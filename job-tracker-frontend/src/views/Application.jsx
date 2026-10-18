@@ -22,6 +22,7 @@ import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, STATU
 import { confirmAction } from "../stores/useConfirmStore";
 import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { showUndoToast, useToastStore } from "../stores/useToastStore";
+import { fromDateTimeInputValue } from "../utils/dateInput";
 import { formatSalary } from "../utils/formatSalary";
 
 // The two-column status picker's buttons: the chosen one in its status colours with a border of the same hue
@@ -138,7 +139,10 @@ export default function Application() {
     setSavingInterview(true);
     try {
       const { job_id, ...payload } = newInterview;
-      const res = await API.post(`/job-applications/${job_id}/interviews`, payload);
+      const res = await API.post(`/job-applications/${job_id}/interviews`, {
+        ...payload,
+        interview_date: fromDateTimeInputValue(payload.interview_date),
+      });
       setJob((prev) => ({ ...prev, interviews: [...(prev.interviews ?? []), res.data.data] }));
       setNewInterview(null);
     } catch (err) {
@@ -149,11 +153,16 @@ export default function Application() {
     }
   };
 
-  // Restores it and comes back to this page (the list has moved on to Applications by then)
+  // Restores it. Still on Applications (where archiving went), it comes back to this page; anywhere else the
+  // user has moved on, so they stay where they are. Read at undo time: this page has unmounted by then.
   const undoArchive = async () => {
     try {
       await API.put(`/job-applications/${job.id}`, { is_archived: false });
-      navigate(`/jobs/${job.id}`);
+      if (window.location.pathname === "/applications") {
+        navigate(`/jobs/${job.id}`);
+      } else {
+        showToast("Application restored", "success");
+      }
     } catch (err) {
       console.error(err);
       showToast("Couldn't undo archiving the application");

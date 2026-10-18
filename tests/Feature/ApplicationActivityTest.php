@@ -105,6 +105,23 @@ class ApplicationActivityTest extends TestCase
             ->assertExactJson(['data' => [['type' => 'applied', 'at' => '2026-09-15']]]);
     }
 
+    public function test_an_application_added_as_applied_and_moved_back_to_saved_was_never_saved_at_the_start(): void
+    {
+        $user = User::factory()->create();
+        $this->travelTo('2026-10-01 09:00:00');
+        $job = $this->jobFor($user, ['status' => 'applied', 'applied_date' => '2026-10-01']);
+        $this->travelTo('2026-10-05 10:00:00');
+
+        $this->actingAs($user)->putJson("/api/job-applications/{$job->id}", ['status' => 'saved'])->assertOk();
+
+        $this->getJson("/api/job-applications/{$job->id}/activity")
+            ->assertOk()
+            ->assertExactJson(['data' => [
+                ['type' => 'status', 'at' => '2026-10-05T10:00:00.000000Z', 'from' => 'applied', 'to' => 'saved'],
+                ['type' => 'applied', 'at' => '2026-10-01'],
+            ]]);
+    }
+
     public function test_another_users_activity_is_not_found(): void
     {
         $job = $this->jobFor(User::factory()->create());

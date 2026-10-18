@@ -35,8 +35,9 @@ function Toast({ toast, onDismiss }) {
   return (
     <div
       role={toast.type === "error" ? "alert" : "status"}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      // Mouse only: a tap counts as entering but never leaves, so the toast would stay forever
+      onPointerEnter={(event) => event.pointerType === "mouse" && setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
       onFocus={() => setFocused(true)}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);

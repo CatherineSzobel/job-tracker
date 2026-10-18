@@ -98,6 +98,27 @@ class InterviewMeetingAndCalendarTest extends TestCase
         }
     }
 
+    public function test_an_interview_time_with_an_offset_is_stored_and_put_in_the_calendar_file_in_utc(): void
+    {
+        $user = User::factory()->create();
+        $job = $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer']);
+
+        // 14:00 in Brussels (summer time) is 12:00 UTC
+        $interviewId = $this->actingAs($user)->postJson("/api/job-applications/{$job->id}/interviews", [
+            'interview_date' => '2026-10-20T14:00:00+02:00',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.interview_date', '2026-10-20T12:00:00.000000Z')
+            ->json('data.id');
+
+        $this->putJson("/api/interviews/{$interviewId}", ['interview_date' => '2026-10-21T09:30:00.000Z'])
+            ->assertOk()
+            ->assertJsonPath('data.interview_date', '2026-10-21T09:30:00.000000Z');
+
+        $lines = $this->unfold(explode("\r\n", $this->get("/api/interviews/{$interviewId}/calendar")->getContent()));
+        $this->assertContains('DTSTART:20261021T093000Z', $lines);
+    }
+
     public function test_long_calendar_lines_are_folded_to_75_bytes(): void
     {
         $user = User::factory()->create();

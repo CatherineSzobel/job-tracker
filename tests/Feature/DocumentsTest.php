@@ -299,6 +299,31 @@ class DocumentsTest extends TestCase
         $disk->assertExists($document->path);
     }
 
+    public function test_archive_only_refuses_to_delete_a_document_that_is_no_longer_attached(): void
+    {
+        $disk = $this->fakeDocumentsDisk();
+        $user = User::factory()->create();
+        $document = $this->storedFileFor($user);
+
+        $this->actingAs($user)->deleteJson("/api/documents/{$document->id}?archive_only=1")->assertConflict();
+
+        $this->assertModelExists($document);
+        $this->assertNull($document->fresh()->archived_at);
+        $disk->assertExists($document->path);
+    }
+
+    public function test_archive_only_archives_an_attached_document(): void
+    {
+        $this->fakeDocumentsDisk();
+        $user = User::factory()->create();
+        $document = $this->storedFileFor($user);
+        $this->jobFor($user)->documents()->attach($document, ['attached_at' => now()]);
+
+        $this->actingAs($user)->deleteJson("/api/documents/{$document->id}?archive_only=1")->assertOk();
+
+        $this->assertNotNull($document->fresh()->archived_at);
+    }
+
     public function test_restore_clears_archived_at(): void
     {
         $user = User::factory()->create();

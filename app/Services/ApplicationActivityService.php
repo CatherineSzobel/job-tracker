@@ -29,12 +29,13 @@ class ApplicationActivityService
         $job->loadMissing(['statusChanges', 'interviews', 'documents']);
 
         $statusChanges = $job->statusChanges->sortBy('changed_at');
-        $leftSaved = $statusChanges->first(fn (StatusChange $change) => $change->from_status === JobStatus::Saved);
+        // The status it was added with: where the first change started from, or today's status if it never changed
+        $addedAsSaved = ($statusChanges->first()?->from_status ?? $job->status) === JobStatus::Saved;
 
         $events = collect()
-            ->when($job->status === JobStatus::Saved || $leftSaved !== null, fn (Collection $events) => $events->push(['type' => 'saved', 'at' => $job->created_at]))
-            // Leaving Saved already shows as a status change, which is when it was applied for
-            ->when($job->applied_date !== null && $leftSaved === null, fn (Collection $events) => $events->push(['type' => 'applied', 'at' => $job->applied_date]))
+            ->when($addedAsSaved, fn (Collection $events) => $events->push(['type' => 'saved', 'at' => $job->created_at]))
+            // Added as Saved: leaving Saved already shows as a status change, which is when it was applied for
+            ->when(! $addedAsSaved && $job->applied_date !== null, fn (Collection $events) => $events->push(['type' => 'applied', 'at' => $job->applied_date]))
             ->concat($statusChanges->map(fn (StatusChange $change) => [
                 'type' => 'status',
                 'at' => $change->changed_at,

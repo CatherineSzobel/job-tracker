@@ -120,6 +120,24 @@ class BrokenFeaturesTest extends TestCase
         $this->assertSame('2026-10-31', $job->deadline->toDateString());
     }
 
+    public function test_reimporting_a_row_without_an_applied_date_keeps_the_existing_one(): void
+    {
+        $user = User::factory()->create();
+        $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer', 'applied_date' => '2026-09-01']);
+        $user->jobApplications()->create(['company_name' => 'Globex', 'position' => 'Designer', 'applied_date' => '2026-09-02']);
+
+        $this->actingAs($user)
+            ->postJson('/api/job-applications/import', ['file' => $this->xlsx([
+                ['Acme', 'Developer', 'Saved', 'high', null, null, null, null],
+                ['Globex', 'Designer', 'interview', 'low', null, null, null, null],
+            ])])
+            ->assertOk();
+
+        $jobs = $user->jobApplications()->orderBy('company_name')->get();
+        $this->assertSame('2026-09-01', $jobs[0]->applied_date->toDateString());
+        $this->assertSame('2026-09-02', $jobs[1]->applied_date->toDateString());
+    }
+
     public function test_reimporting_updates_existing_jobs_instead_of_duplicating(): void
     {
         $user = User::factory()->create();

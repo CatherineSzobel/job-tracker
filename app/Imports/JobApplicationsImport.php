@@ -36,11 +36,14 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
             'position' => trim($row['position'] ?? ''),
         ]);
 
-        // status and applied_date come normalised from prepareForValidation()
+        // status comes normalised from prepareForValidation(). An empty applied date keeps the existing job's,
+        // so re-importing doesn't clear it or move it to today; a new one is applied today unless only Saved.
         return $job->fill([
             'status' => $row['status'],
             'priority' => strtolower($row['priority'] ?? Priority::Medium->value),
-            'applied_date' => $row['applied_date'],
+            'applied_date' => $row['applied_date']
+                ?? $job->applied_date
+                ?? ($row['status'] === JobStatus::Saved->value ? null : now()->format('Y-m-d')),
             'location' => $row['location'] ?? null,
             'notes' => $this->sanitizeText($row['notes'] ?? null),
             'job_link' => $this->sanitizeUrl($row['job_link'] ?? null),
@@ -72,8 +75,8 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
     }
 
     /**
-     * The status as a JobStatus value ("No response" or "no-response" → no_response, Applied when empty), and
-     * applied today when the date is empty, unless it's only Saved (not applied yet). Of the later columns,
+     * The status as a JobStatus value ("No response" or "no-response" → no_response, Applied when empty)
+     * (an empty applied date is filled in by model()). Of the later columns,
      * only those in the file: empty cells become null, the currency EUR when empty, and the source a value
      * ("Company website" → company_website).
      */
@@ -97,7 +100,6 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
             ...$data,
             'status' => $status,
             'priority' => isset($data['priority']) ? strtolower(trim($data['priority'])) : Priority::Medium->value,
-            'applied_date' => $data['applied_date'] ?? ($status === JobStatus::Saved->value ? null : now()->format('Y-m-d')),
             'notes' => $this->nullIfEmpty($data['notes'] ?? null),
             'location' => $this->nullIfEmpty($data['location'] ?? null),
             'job_link' => $this->nullIfEmpty($data['job_link'] ?? null),

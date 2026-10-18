@@ -65,6 +65,17 @@ class Interview extends Model
     }
 
     /**
+     * Stored in UTC. A time with an offset ("2026-10-20T12:00:00.000Z", "…T14:00+02:00") is converted first;
+     * the datetime cast alone would keep its clock time and drop the offset.
+     */
+    protected function interviewDate(): Attribute
+    {
+        return Attribute::make(
+            set: fn (mixed $value) => $value === null ? null : $this->fromDateTime($this->asDateTime($value)->utc()),
+        );
+    }
+
+    /**
      * The prep document, always with every list of EMPTY_PREP.
      */
     protected function prep(): Attribute
