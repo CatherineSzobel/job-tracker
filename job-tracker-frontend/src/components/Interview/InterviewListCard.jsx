@@ -3,11 +3,10 @@ import { format } from "date-fns";
 import { Clock, EllipsisVertical, MapPin, Star, Video } from "lucide-react";
 import DateBlock from "../UI/DateBlock";
 import Menu, { MenuDivider, MenuItem } from "../UI/Menu";
-import { downloadInterviewCalendar } from "./interviewCalendar";
+import { addInterviewToCalendar } from "./interviewCalendar";
 import { isUpcoming } from "./interviewFilters";
 import { RATING_VALUES } from "../../constants/interviewPrep";
 import { interviewTypeLabel } from "../../constants/jobs";
-import { showToast } from "../../stores/useToastStore";
 import { countdownLabel } from "../../utils/countdown";
 
 // An interview on the Interviews page: date block (filled for the next one), company (link to the prep page)
@@ -21,15 +20,6 @@ export default function InterviewListCard({ interview, isNext = false, onEdit, o
   const progress = interview.prep_progress;
   const hasChecklist = progress?.total > 0;
   const progressPercent = hasChecklist ? Math.round((progress.done / progress.total) * 100) : 0;
-
-  const addToCalendar = async () => {
-    try {
-      await downloadInterviewCalendar(interview);
-    } catch (err) {
-      console.error(err);
-      showToast("Couldn't download the calendar file");
-    }
-  };
 
   return (
     <li
@@ -63,7 +53,7 @@ export default function InterviewListCard({ interview, isNext = false, onEdit, o
           <div className="-mt-1 -mr-2">
             <Menu label={`Actions for ${company}`} buttonClassName="btn-icon-sm" buttonContent={<EllipsisVertical size={20} aria-hidden="true" />} width="w-48">
               <MenuItem onClick={() => onEdit(interview)}>Edit</MenuItem>
-              {upcoming && <MenuItem onClick={addToCalendar}>Add to calendar</MenuItem>}
+              {upcoming && <MenuItem onClick={() => addInterviewToCalendar(interview)}>Add to calendar</MenuItem>}
               <MenuDivider />
               <MenuItem onClick={() => onDelete(interview)} danger>
                 Delete

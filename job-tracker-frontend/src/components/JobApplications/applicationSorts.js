@@ -12,6 +12,9 @@ export const APPLICATION_SORTS = [
 
 const PRIORITY_RANK = { high: 0, medium: 1, low: 2 };
 
+// Ignores case and accents; built once rather than per comparison
+const companyCollator = new Intl.Collator(undefined, { sensitivity: "base" });
+
 // Stand-ins that put applications without a value last: no deadline counts as the far future, and no salary as
 // -1 (salaries can't be negative)
 const NO_DEADLINE = "9999-12-31";
@@ -32,8 +35,7 @@ const COMPARE = {
   },
   // ISO timestamps, so comparing the strings compares the times
   updated: (first, second) => (second.updated_at ?? "").localeCompare(first.updated_at ?? "") || byAppliedNewest(first, second),
-  company: (first, second) =>
-    first.company_name.localeCompare(second.company_name, undefined, { sensitivity: "base" }) || byAppliedNewest(first, second),
+  company: (first, second) => companyCollator.compare(first.company_name, second.company_name) || byAppliedNewest(first, second),
   priority: (first, second) =>
     (PRIORITY_RANK[first.priority] ?? 3) - (PRIORITY_RANK[second.priority] ?? 3) || byAppliedNewest(first, second),
   deadline: (first, second) =>

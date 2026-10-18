@@ -2,8 +2,7 @@ import Card, { CardLink } from "../UI/Card";
 import { JOB_STATUSES, STATUS_BAR_CLASSES } from "../../constants/jobs";
 import { INSIGHT_STAT_TILES } from "../../constants/dashboard";
 import SearchInsights from "./SearchInsights";
-
-const percentOf = (part, whole) => (whole > 0 ? Math.min((part / whole) * 100, 100) : 0);
+import { percentOf } from "../../utils/percent";
 
 // The Dashboard's Insights tab: four stat tiles, progress towards the goals, applications by status, then how the
 // search is going (response and offer rates, days to a first reply, applications by source)

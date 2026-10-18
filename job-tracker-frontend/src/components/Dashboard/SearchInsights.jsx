@@ -3,6 +3,7 @@ import API from "../../api/axios";
 import Card from "../UI/Card";
 import PageLoader from "../UI/PageLoader";
 import { sourceLabel } from "../../constants/jobs";
+import { percentOf } from "../../utils/percent";
 import { countOf } from "../../utils/plural";
 
 // How the search is going (GET /job-applications/insights, InsightsService): three tiles with what each number
@@ -65,7 +66,7 @@ export default function SearchInsights() {
               <li key={source ?? "none"} className="grid grid-cols-[136px_minmax(0,1fr)_32px] items-center gap-4">
                 <span className="font-medium">{source ? sourceLabel(source) : "Not set"}</span>
                 <div className="h-6 rounded bg-soft">
-                  <div className="h-full rounded bg-accent" style={{ width: `${(count / largestSource) * 100}%` }} />
+                  <div className="h-full rounded bg-accent" style={{ width: `${percentOf(count, largestSource)}%` }} />
                 </div>
                 <span className="text-right font-bold">{count}</span>
               </li>

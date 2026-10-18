@@ -2,13 +2,13 @@ import { Link } from "react-router-dom";
 import { isBefore, parseISO, startOfToday } from "date-fns";
 import { Archive, Banknote, CalendarClock, CalendarDays, ExternalLink, MapPin } from "lucide-react";
 import API from "../../api/axios";
-import { showUndoToast, useToastStore } from "../../stores/useToastStore";
+import { useToastStore } from "../../stores/useToastStore";
 import { formatShortDate } from "../../utils/formatDate";
 import { formatSalary } from "../../utils/formatSalary";
 import CardTags from "../Tags/CardTags";
 import PriorityLabel from "../UI/PriorityLabel";
 import StatusChip from "../UI/StatusChip";
-import useArchiveWithTodos, { archiveChanges, archivedMessage, deletedOpenTodos } from "./useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, showArchivedToast } from "./useArchiveWithTodos";
 
 // One application in the grid: status and priority, the position (link to the detail page) and company,
 // when and where (and "Apply by" while it's only saved), the salary range, tags, then "View posting" and Archive. Delete lives on the detail page.
@@ -38,11 +38,7 @@ export default function JobCard({ job, onRemove, onUndone, selecting = false, se
     try {
       const res = await API.put(`/job-applications/${job.id}`, archiveChanges(deleteOpenTodos));
       onRemove?.(job.id);
-      if (deletedOpenTodos([job], [res.data.data])) {
-        showToast(archivedMessage(1, true), "success");
-      } else {
-        showUndoToast(archivedMessage(1, false), undoArchive);
-      }
+      showArchivedToast([job], [res.data.data], undoArchive);
     } catch (err) {
       console.error(err);
       showToast("Failed to archive job");

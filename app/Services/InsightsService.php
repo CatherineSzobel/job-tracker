@@ -82,9 +82,11 @@ class InsightsService
      */
     private function bySource(Collection $jobs): array
     {
+        $counts = $jobs->countBy(fn (JobApplication $job) => $job->source?->value ?? '');
+
         return collect(ApplicationSource::cases())
-            ->map(fn (ApplicationSource $source) => ['source' => $source->value, 'count' => $jobs->where('source', $source)->count()])
-            ->push(['source' => null, 'count' => $jobs->whereNull('source')->count()])
+            ->map(fn (ApplicationSource $source) => ['source' => $source->value, 'count' => $counts[$source->value] ?? 0])
+            ->push(['source' => null, 'count' => $counts[''] ?? 0])
             ->filter(fn (array $entry) => $entry['count'] > 0)
             ->values()
             ->all();

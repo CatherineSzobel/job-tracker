@@ -77,7 +77,7 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
      */
     public function prepareForValidation($data, $index)
     {
-        $status = isset($data['status']) ? str_replace([' ', '-'], '_', strtolower(trim($data['status']))) : JobStatus::Applied->value;
+        $status = isset($data['status']) ? $this->toEnumValue($data['status']) : JobStatus::Applied->value;
 
         foreach (self::DETAIL_COLUMNS as $column) {
             if (array_key_exists($column, $data)) {
@@ -88,7 +88,7 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
             $data['salary_currency'] = strtoupper($data['salary_currency'] ?? Currency::Eur->value);
         }
         if (isset($data['source'])) {
-            $data['source'] = str_replace([' ', '-'], '_', strtolower($data['source']));
+            $data['source'] = $this->toEnumValue($data['source']);
         }
 
         return [
@@ -99,6 +99,14 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
             'location' => $this->nullIfEmpty($data['location'] ?? null),
             'job_link' => $this->nullIfEmpty($data['job_link'] ?? null),
         ];
+    }
+
+    /**
+     * A label as an enum value: "No response" or "no-response" → no_response
+     */
+    private function toEnumValue(string $label): string
+    {
+        return str_replace([' ', '-'], '_', strtolower(trim($label)));
     }
 
     private function nullIfEmpty($value)

@@ -8,7 +8,8 @@ import Card from "../components/UI/Card";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
 import InterviewForm from "../components/Interview/InterviewForm";
-import { downloadInterviewCalendar } from "../components/Interview/interviewCalendar";
+import { addInterviewToCalendar } from "../components/Interview/interviewCalendar";
+import { isUpcoming } from "../components/Interview/interviewFilters";
 import BankQuestionForm from "../components/InterviewPrep/BankQuestionForm";
 import BankQuestionsSection from "../components/InterviewPrep/BankQuestionsSection";
 import EditableList from "../components/InterviewPrep/EditableList";
@@ -236,16 +237,7 @@ function InterviewPage({ interviewId }) {
 
   const interviewDate = new Date(interview.interview_date);
   const pill = whenPill(interviewDate);
-  const isUpcoming = interviewDate >= new Date();
-
-  const addToCalendar = async () => {
-    try {
-      await downloadInterviewCalendar(interview);
-    } catch (err) {
-      console.error(err);
-      showToast("Couldn't download the calendar file");
-    }
-  };
+  const upcoming = isUpcoming(interview);
 
   return (
     <div className="flex flex-col gap-6">
@@ -273,14 +265,14 @@ function InterviewPage({ interviewId }) {
         <div className="flex flex-wrap items-center gap-4">
           <SaveStatus status={saveState.status} onRetry={saveState.retry} />
           {/* Join and Add to calendar only matter until it has happened */}
-          {isUpcoming && interview.meeting_url && (
+          {upcoming && interview.meeting_url && (
             <a href={interview.meeting_url} target="_blank" rel="noopener noreferrer" className="btn-primary">
               <Video size={16} aria-hidden="true" />
               Join
             </a>
           )}
-          {isUpcoming && (
-            <button type="button" onClick={addToCalendar} className="btn-secondary">
+          {upcoming && (
+            <button type="button" onClick={() => addInterviewToCalendar(interview)} className="btn-secondary">
               <CalendarPlus size={16} aria-hidden="true" />
               Add to calendar
             </button>

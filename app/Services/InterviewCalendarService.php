@@ -23,7 +23,7 @@ class InterviewCalendarService
     public function ics(Interview $interview): string
     {
         $interview->loadMissing('job');
-        $start = $interview->interview_date->copy()->utc();
+        $start = $interview->interview_date;
         $type = $interview->type ? $interview->type->label().' interview' : 'Interview';
         $description = collect([
             $interview->meeting_url ? "Join: {$interview->meeting_url}" : null,

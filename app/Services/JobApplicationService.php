@@ -232,9 +232,10 @@ class JobApplicationService
         $today = Carbon::today();
         $jobs = $user->jobApplications();
 
-        // One count per JobStatus value (saved, applied, …, withdrawn)
+        // One count per JobStatus value (saved, applied, …, withdrawn), 0 for statuses nobody is in, in one query
+        $countsByStatus = $jobs->clone()->toBase()->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
         $statusCounts = collect(JobStatus::cases())
-            ->mapWithKeys(fn (JobStatus $status) => [$status->value => $jobs->clone()->where('status', $status)->count()]);
+            ->mapWithKeys(fn (JobStatus $status) => [$status->value => (int) ($countsByStatus[$status->value] ?? 0)]);
 
         return [
             'total' => $jobs->count(),

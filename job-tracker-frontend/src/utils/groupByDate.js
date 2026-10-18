@@ -1,4 +1,5 @@
 import { format, isThisYear, parseISO, startOfWeek, subWeeks } from "date-fns";
+import { CALENDAR_WEEK_OPTIONS } from "../constants/calendar";
 
 // Groups items by a date into years and months: [{ year: "2026", months: [{ key: "2026-09", label: "September", items }] }].
 // getDateString(item): an ISO date or date-time, or empty. order: "newest" (latest year and month first) or "oldest".
@@ -45,7 +46,7 @@ export function groupByDate(items, getDateString, order = "newest") {
 // undatedFirst, labelled undatedLabel ("No date"). Weeks start on Monday.
 // Returns [{ key, label, items }]; inside a group the newest item comes first.
 export function groupByRecency(items, getDateString, { today = new Date(), undatedLabel = "No date", undatedFirst = false } = {}) {
-  const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+  const thisWeekStart = startOfWeek(today, CALENDAR_WEEK_OPTIONS);
   const lastWeekStart = subWeeks(thisWeekStart, 1);
   const groups = new Map();
   const undatedItems = [];

@@ -8,7 +8,7 @@ import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/b
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
 import JobDateGroups from "../components/JobApplications/JobDateGroups";
-import useArchiveWithTodos, { archiveChanges, archivedMessage, deletedOpenTodos } from "../components/JobApplications/useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, showArchivedToast } from "../components/JobApplications/useArchiveWithTodos";
 import useBatchChanges from "../components/JobApplications/useBatchChanges";
 import useSendBatch from "../components/JobApplications/useSendBatch";
 import ManageTagsModal from "../components/Tags/ManageTagsModal";
@@ -26,8 +26,9 @@ import useSelection from "../components/UI/useSelection";
 import { filterChipClasses, filterChipCountClasses } from "../components/UI/filterChipClasses";
 import { EMPTY_JOB, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
 import { APPLICATION_VIEWS } from "../constants/views";
-import { showUndoToast, useToastStore } from "../stores/useToastStore";
+import { useToastStore } from "../stores/useToastStore";
 import { countOf } from "../utils/plural";
+import { saveBlob } from "../utils/saveBlob";
 
 export default function Applications() {
   const fileInputRef = useRef(null);
@@ -91,14 +92,17 @@ export default function Applications() {
   // The board's drag and "Move to…": shows at once, rolls back if the save fails. Resolves to whether it worked.
   // The response replaces the card (leaving Saved also sets the applied date).
   const moveJob = async (job, status) => {
-    setJobs((currentJobs) => currentJobs.map((existing) => (existing.id === job.id ? { ...existing, status } : existing)));
+    const replaceJob = (next) =>
+      setJobs((currentJobs) => currentJobs.map((existing) => (existing.id === job.id ? next(existing) : existing)));
+
+    replaceJob((existing) => ({ ...existing, status }));
     try {
       const res = await API.put(`/job-applications/${job.id}`, { status });
-      setJobs((currentJobs) => currentJobs.map((existing) => (existing.id === job.id ? { ...existing, ...res.data.data } : existing)));
+      replaceJob((existing) => ({ ...existing, ...res.data.data }));
       return true;
     } catch (err) {
       console.error(err);
-      setJobs((currentJobs) => currentJobs.map((existing) => (existing.id === job.id ? job : existing)));
+      replaceJob(() => job);
       showToast(err.response?.data?.message || "Failed to move the application");
       return false;
     }
@@ -170,11 +174,7 @@ export default function Applications() {
     const archivedJobs = await sendBatch(() => batchUpdateJobs(ids, archiveChanges(deleteOpenTodos)));
     if (!archivedJobs) return;
 
-    if (deletedOpenTodos(jobsBefore, archivedJobs)) {
-      showToast(archivedMessage(ids.length, true), "success");
-    } else {
-      showUndoToast(archivedMessage(ids.length, false), () => undoArchiveSelected(ids));
-    }
+    showArchivedToast(jobsBefore, archivedJobs, () => undoArchiveSelected(ids));
   };
 
   const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archiveSelected);
@@ -205,14 +205,7 @@ export default function Applications() {
   const exportJobs = async () => {
     try {
       const res = await API.get("/job-applications/export", { responseType: "blob" });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "job-applications.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      saveBlob(res, "job-applications.xlsx");
     } catch (err) {
       console.error("Export failed", err);
     }
@@ -264,6 +257,8 @@ export default function Applications() {
     ),
   ];
   const isFiltered = filteredJobs.length !== jobs.length;
+  // "By date" groups by applied date instead
+  const sortedJobs = view === "grouped" ? filteredJobs : sortApplications(filteredJobs, sort);
 
   return (
     <div className={`flex flex-col gap-6 ${selecting ? "pb-32" : ""}`}>
@@ -379,7 +374,7 @@ export default function Applications() {
       ) : filteredJobs.length === 0 ? (
         <p className="text-muted">No applications match these filters.</p>
       ) : isBoard ? (
-        <ApplicationBoard jobs={sortApplications(filteredJobs, sort)} onMove={moveJob} />
+        <ApplicationBoard jobs={sortedJobs} onMove={moveJob} />
       ) : view === "grouped" ? (
         <JobDateGroups
           jobs={filteredJobs}
@@ -388,7 +383,7 @@ export default function Applications() {
           onSelectAll={(groupJobs) => selectMany(groupJobs.map((job) => job.id))}
         />
       ) : (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">{sortApplications(filteredJobs, sort).map(renderJob)}</ul>
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">{sortedJobs.map(renderJob)}</ul>
       )}
 
       {showForm && (

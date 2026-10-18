@@ -9,7 +9,7 @@ import ApplicationDetailsFields from "../components/JobApplications/ApplicationD
 import ContactLink from "../components/JobApplications/ContactLink";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
-import useArchiveWithTodos, { archiveChanges, archivedMessage, deletedOpenTodos } from "../components/JobApplications/useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, showArchivedToast } from "../components/JobApplications/useArchiveWithTodos";
 import TagChip from "../components/Tags/TagChip";
 import TagInput from "../components/Tags/TagInput";
 import useTags from "../components/Tags/useTags";
@@ -174,12 +174,7 @@ export default function Application() {
   const archive = async (deleteOpenTodos) => {
     try {
       const res = await API.put(`/job-applications/${job.id}`, archiveChanges(deleteOpenTodos));
-      const todosDeleted = deletedOpenTodos([job], [res.data.data]);
-      if (todosDeleted) {
-        showToast(archivedMessage(1, true), "success");
-      } else {
-        showUndoToast(archivedMessage(1, false), undoArchive);
-      }
+      showArchivedToast([job], [res.data.data], undoArchive);
       navigate("/applications");
     } catch (err) {
       console.error(err);
