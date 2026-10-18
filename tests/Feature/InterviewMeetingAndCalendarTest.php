@@ -119,6 +119,32 @@ class InterviewMeetingAndCalendarTest extends TestCase
         $this->assertContains('DTSTART:20261021T093000Z', $lines);
     }
 
+    public function test_an_interview_time_is_stored_in_the_apps_time_zone_when_that_isnt_utc(): void
+    {
+        // As locally: APP_TIMEZONE=Europe/Brussels
+        $previousTimezone = date_default_timezone_get();
+        date_default_timezone_set('Europe/Brussels');
+
+        try {
+            $user = User::factory()->create();
+            $job = $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer']);
+
+            // 12:00 UTC is 14:00 in Brussels (summer time)
+            $interviewId = $this->actingAs($user)->postJson("/api/job-applications/{$job->id}/interviews", [
+                'interview_date' => '2026-10-20T12:00:00.000Z',
+            ])
+                ->assertCreated()
+                ->assertJsonPath('data.interview_date', '2026-10-20T12:00:00.000000Z')
+                ->json('data.id');
+
+            $this->assertDatabaseHas('interviews', ['id' => $interviewId, 'interview_date' => '2026-10-20 14:00:00']);
+            $lines = $this->unfold(explode("\r\n", $this->get("/api/interviews/{$interviewId}/calendar")->getContent()));
+            $this->assertContains('DTSTART:20261020T120000Z', $lines);
+        } finally {
+            date_default_timezone_set($previousTimezone);
+        }
+    }
+
     public function test_long_calendar_lines_are_folded_to_75_bytes(): void
     {
         $user = User::factory()->create();

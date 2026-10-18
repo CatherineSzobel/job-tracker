@@ -65,13 +65,16 @@ class Interview extends Model
     }
 
     /**
-     * Stored in UTC. A time with an offset ("2026-10-20T12:00:00.000Z", "…T14:00+02:00") is converted first;
-     * the datetime cast alone would keep its clock time and drop the offset.
+     * Stored in the app's time zone (APP_TIMEZONE), like every other date. A time with an offset
+     * ("2026-10-20T12:00:00.000Z", "…T14:00+02:00") is converted to it first; the datetime cast alone would
+     * keep its clock time and drop the offset.
      */
     protected function interviewDate(): Attribute
     {
         return Attribute::make(
-            set: fn (mixed $value) => $value === null ? null : $this->fromDateTime($this->asDateTime($value)->utc()),
+            set: fn (mixed $value) => $value === null
+                ? null
+                : $this->fromDateTime($this->asDateTime($value)->setTimezone(date_default_timezone_get())),
         );
     }
 
