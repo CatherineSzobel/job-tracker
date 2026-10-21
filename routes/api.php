@@ -19,12 +19,12 @@ use Illuminate\Support\Facades\Route;
 // Public routes
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 Route::post('/login', [AuthController::class, 'login']); // failed attempts are limited in LoginRequest
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
-Route::middleware('auth:sanctum')->get('/user', fn (Request $request) => new UserResource($request->user()));
+Route::middleware(['auth:sanctum', 'throttle:api'])->post('/logout', [AuthController::class, 'logout']);
+Route::middleware(['auth:sanctum', 'throttle:api'])->get('/user', fn (Request $request) => new UserResource($request->user()));
 
-// Protected routes. Single-record routes use route model binding;
+// Protected routes, limited by the "api" limiter (AppServiceProvider). Single-record routes use route model binding;
 // ownership is checked by the model's policy (app/Policies), which answers 404.
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Registered before the resource so they aren't read as a {job_application} id
     Route::get('/job-applications/stats', [JobApplicationController::class, 'stats']);
     Route::get('/job-applications/insights', [JobApplicationController::class, 'insights']);

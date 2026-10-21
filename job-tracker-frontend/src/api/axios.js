@@ -17,6 +17,10 @@ API.interceptors.response.use(
     if (error.response?.status === 401) {
       useAuthStore.getState().clearSession()
     }
+    // Rate limited (60 requests a minute): replace Laravel's "Too Many Attempts." for every caller's toast
+    if (error.response?.status === 429 && error.response.data) {
+      error.response.data.message = 'Too many requests — wait a minute and try again.'
+    }
     return Promise.reject(error)
   }
 )

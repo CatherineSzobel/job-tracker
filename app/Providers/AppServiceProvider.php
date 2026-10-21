@@ -30,5 +30,18 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('register', function (Request $request) {
             return Limit::perMinute(5)->by(strtolower((string) $request->input('email')).'|'.$request->ip());
         });
+
+        // Every logged-in API route: 60 a minute per user. The shared demo account also counts per IP,
+        // so one visitor can't use up the limit for the others.
+        RateLimiter::for('api', function (Request $request) {
+            $user = $request->user();
+            $key = match (true) {
+                $user === null => $request->ip(),
+                $user->isDemo() => $user->id.'|'.$request->ip(),
+                default => (string) $user->id,
+            };
+
+            return Limit::perMinute(60)->by($key);
+        });
     }
 }
