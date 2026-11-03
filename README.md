@@ -42,7 +42,7 @@ A full-stack app for running a job search: every application, interview, follow-
 | | |
 |---|---|
 | **Backend** | Laravel 12 · PHP 8.4 · MySQL · Laravel Sanctum (SPA cookie sessions) · Maatwebsite Excel |
-| **Frontend** | React 19 · React Router 7 · Vite · Tailwind CSS v4 · zustand · Axios · date-fns · ECharts · lucide-react |
+| **Frontend** | React 19 · React Router 7 · Vite · Tailwind CSS v4 · zustand · Axios · date-fns · lucide-react |
 | **Quality** | PHPUnit (300+ feature tests) · Laravel Pint · ESLint |
 
 ### How it's put together
@@ -51,7 +51,7 @@ A full-stack app for running a job search: every application, interview, follow-
 - **Ownership:** every record belongs to a user. Single-record routes use policies (`app/Policies`) that answer 404 for someone else's data, and lists are always queried through the logged-in user.
 - **Enums:** statuses, priorities, interview types, document kinds and the other fixed value sets are PHP enums (`app/Enums`), used in casts, validation and queries.
 - **All-or-nothing batch endpoints:** batch changes, archive or restore, and interview delete run in a transaction, and any id that isn't yours means a 404 with nothing changed.
-- **Status history:** every status change is stored. Single saves are recorded by a model event, and batch saves (bulk queries, which skip model events) record theirs explicitly. The activity timeline and the insights are built from that history and the data already there, not from a separate log.
+- **Status history:** every status change is stored. Every save, single or batch, goes through the model's save rules (`JobApplication::booted()`), which record it. The activity timeline and the insights are built from that history and the data already there, not from a separate log.
 - **Frontend structure:** pages are in `src/views`, shared pieces in `src/components/UI`, fixed values in `src/constants`, and app-wide state (auth, theme, toasts, confirm dialogs) in zustand stores.
 
 ---

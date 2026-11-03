@@ -4,14 +4,9 @@ use App\Models\User;
 use App\Notifications\RemindersDigest;
 use App\Services\DocumentService;
 use App\Services\ReminderService;
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
-
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
 
 Artisan::command('reminders:send', function (ReminderService $reminderService) {
     $sentCount = 0;

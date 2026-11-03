@@ -21,11 +21,12 @@ return [
     |--------------------------------------------------------------------------
     |
     | Shared public account offered on the login page. It can't change its
-    | password or delete itself, so it stays usable for everyone.
+    | password or delete itself, so it stays usable for everyone. Not read
+    | from .env: the frontend's demo button logs in with this same address.
     |
     */
 
-    'demo_email' => env('DEMO_EMAIL', 'test@example.com'),
+    'demo_email' => 'test@example.com',
 
     /*
     |--------------------------------------------------------------------------
