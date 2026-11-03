@@ -25,7 +25,7 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
         // user's existing job with the same company + position instead of duplicating it
         $job = JobApplication::firstOrNew([
             'user_id' => Auth::id(),
-            'company_name' => $row['company'] ?? $row['company_name'],
+            'company_name' => trim($row['company'] ?? $row['company_name']),
             'position' => trim($row['position'] ?? ''),
         ]);
 
@@ -56,7 +56,7 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
             'priority' => ['nullable', Rule::enum(Priority::class)],
             'applied_date' => 'nullable|date',
             'location' => 'nullable|string|max:255',
-            'notes' => 'nullable|string|max:2000',
+            'notes' => 'nullable|string|max:10000',
             'job_link' => 'nullable|url:http,https|max:255',
             ...ApplicationDetailRules::rules(),
             // Unlike the API, a file isn't checked for max below min, and any date format a spreadsheet uses goes

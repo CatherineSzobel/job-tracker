@@ -28,7 +28,7 @@ class ScheduleInterviewRequest extends FormRequest
             'type' => ['sometimes', Rule::enum(InterviewType::class)],
             'location' => 'nullable|string|max:255',
             'meeting_url' => 'nullable|url:http,https|max:2048',
-            'notes' => 'nullable|string',
+            'notes' => 'nullable|string|max:10000',
         ];
     }
 }

@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,11 +12,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
         // Demo account offered on the login page (see config/app.php demo_email). In-app reminders are on and the
-        // goals are small, so the dashboard has something to show.
-        $user = User::factory()->create([
+        // goals are small, so the dashboard has something to show. Not a factory: Faker isn't installed in production.
+        $user = User::create([
             'name' => 'Test User',
             'email' => config('app.demo_email'),
             'password' => 'secret123',

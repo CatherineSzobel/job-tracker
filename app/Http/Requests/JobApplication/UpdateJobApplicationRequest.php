@@ -30,7 +30,7 @@ class UpdateJobApplicationRequest extends FormRequest
             'status' => ['sometimes', Rule::enum(JobStatus::class)],
             'is_archived' => 'sometimes|boolean',
             'priority' => ['sometimes', Rule::enum(Priority::class)],
-            'notes' => 'sometimes|nullable|string',
+            'notes' => 'sometimes|nullable|string|max:10000',
             'location' => 'sometimes|nullable|string|max:255',
             'job_link' => 'sometimes|nullable|url:http,https|max:255',
             'company_name' => 'sometimes|string|max:255',
