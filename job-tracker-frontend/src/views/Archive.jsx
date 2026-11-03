@@ -5,7 +5,7 @@ import API from "../api/axios";
 import ArchivedJobCard from "../components/JobApplications/ArchivedJobCard";
 import BatchBar from "../components/JobApplications/BatchBar";
 import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
-import { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
+import { undoArchiving } from "../components/JobApplications/useArchiveWithTodos";
 import useBatchChanges from "../components/JobApplications/useBatchChanges";
 import useSendBatch from "../components/JobApplications/useSendBatch";
 import useSelection from "../components/UI/useSelection";
@@ -50,14 +50,9 @@ export default function Archive() {
     const selectedJobs = archivedJobs.filter((job) => selectedIds.includes(job.id));
     const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
 
-    // Archives them again; delete_open_todos: false, since their to-dos were kept when they were archived before
     const undoRestoreSelected = async (ids) => {
-        try {
-            await batchUpdateJobs(ids, archiveChanges(false));
+        if (await undoArchiving(ids, true)) {
             loadArchivedJobs();
-        } catch (err) {
-            console.error(err);
-            showToast("Couldn't undo restoring the applications");
         }
     };
 

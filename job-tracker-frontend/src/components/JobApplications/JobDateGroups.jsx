@@ -7,7 +7,7 @@ import JobRow from "./JobRow";
 // with a "Select all" for the group (onSelectAll(jobs)).
 export default function JobDateGroups({ jobs, selecting = false, renderCard, onSelectAll }) {
   // Saved applications have no applied date yet: they come first, as the ones still to apply for
-  const groups = groupByRecency(jobs, (job) => job.applied_date, { undatedLabel: "Not applied yet", undatedFirst: true });
+  const groups = groupByRecency(jobs, (job) => job.applied_date, "Not applied yet");
 
   return (
     <div className="flex flex-col gap-6">

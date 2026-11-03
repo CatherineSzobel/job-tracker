@@ -24,7 +24,7 @@ import { interviewTypeLabel } from "../constants/jobs";
 import { BANK_LINKS_MAX, EMPTY_BANK_QUESTION, PREP_LIMITS, PREP_TABS } from "../constants/interviewPrep";
 import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { useToastStore } from "../stores/useToastStore";
-import { fromDateTimeInputValue, toDateTimeInputValue } from "../utils/dateInput";
+import { toInterviewForm, toInterviewPayload } from "../components/Interview/interviewPayload";
 import { countdownLabel } from "../utils/countdown";
 
 const showToast = (message) => useToastStore.getState().showToast(message);
@@ -175,14 +175,7 @@ function InterviewPage({ interviewId }) {
   };
 
   const startEditing = () =>
-    setEditForm({
-      job_id: interview.job_application_id,
-      type: interview.type ?? "",
-      interview_date: toDateTimeInputValue(interview.interview_date),
-      location: interview.location ?? "",
-      meeting_url: interview.meeting_url ?? "",
-      notes,
-    });
+    setEditForm({ ...toInterviewForm(interview), notes });
 
   const changeEditForm = (event) => setEditForm((current) => ({ ...current, [event.target.name]: event.target.value }));
 
@@ -190,13 +183,7 @@ function InterviewPage({ interviewId }) {
     event.preventDefault();
     setSavingEdit(true);
     try {
-      const res = await API.put(`/interviews/${interviewId}`, {
-        type: editForm.type || "online",
-        interview_date: fromDateTimeInputValue(editForm.interview_date),
-        location: editForm.location,
-        meeting_url: editForm.meeting_url || null,
-        notes: editForm.notes || null,
-      });
+      const res = await API.put(`/interviews/${interviewId}`, toInterviewPayload(editForm));
       setInterview(res.data.data);
       setNotes(res.data.data.notes ?? "");
       setEditForm(null);

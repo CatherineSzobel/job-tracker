@@ -26,7 +26,11 @@ class ApplicationActivityService
      */
     public function timeline(JobApplication $job): array
     {
-        $job->loadMissing(['statusChanges', 'interviews', 'documents']);
+        $job->load([
+            'statusChanges',
+            'interviews' => fn ($query) => $query->where('interview_date', '<', now()),
+            'documents',
+        ]);
 
         $statusChanges = $job->statusChanges->sortBy('changed_at');
         // The status it was added with: where the first change started from, or today's status if it never changed
@@ -42,7 +46,7 @@ class ApplicationActivityService
                 'from' => $change->from_status,
                 'to' => $change->to_status,
             ]))
-            ->concat($job->interviews->filter(fn (Interview $interview) => $interview->interview_date->isPast())->map(fn (Interview $interview) => [
+            ->concat($job->interviews->map(fn (Interview $interview) => [
                 'type' => 'interview',
                 'at' => $interview->interview_date,
                 'interview_id' => $interview->id,

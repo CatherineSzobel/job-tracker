@@ -8,7 +8,7 @@ import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/b
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
 import JobDateGroups from "../components/JobApplications/JobDateGroups";
-import useArchiveWithTodos, { archiveChanges, showArchivedToast } from "../components/JobApplications/useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, showArchivedToast, undoArchiving } from "../components/JobApplications/useArchiveWithTodos";
 import useBatchChanges from "../components/JobApplications/useBatchChanges";
 import useSendBatch from "../components/JobApplications/useSendBatch";
 import ManageTagsModal from "../components/Tags/ManageTagsModal";
@@ -89,7 +89,7 @@ export default function Applications() {
     }
   };
 
-  // The board's drag and "Move to…": shows at once, rolls back if the save fails. Resolves to whether it worked.
+  // The board's drag: shows at once, rolls back if the save fails. Resolves to whether it worked.
   // The response replaces the card (leaving Saved also sets the applied date).
   const moveJob = async (job, status) => {
     const replaceJob = (next) =>
@@ -157,12 +157,8 @@ export default function Applications() {
   const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
 
   const undoArchiveSelected = async (ids) => {
-    try {
-      await batchUpdateJobs(ids, { is_archived: false });
+    if (await undoArchiving(ids, false)) {
       loadJobs();
-    } catch (err) {
-      console.error(err);
-      showToast("Couldn't undo archiving the applications");
     }
   };
 

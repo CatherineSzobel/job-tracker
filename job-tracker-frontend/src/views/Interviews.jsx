@@ -21,7 +21,7 @@ import useSavedView from "../components/UI/useSavedView";
 import useSelection from "../components/UI/useSelection";
 import { EMPTY_INTERVIEW } from "../constants/jobs";
 import { useToastStore } from "../stores/useToastStore";
-import { fromDateTimeInputValue, toDateTimeInputValue } from "../utils/dateInput";
+import { toInterviewForm, toInterviewPayload } from "../components/Interview/interviewPayload";
 import { countOf } from "../utils/plural";
 
 const showToast = (message) => useToastStore.getState().showToast(message);
@@ -95,13 +95,7 @@ export default function Interviews() {
     setSaving(true);
 
     try {
-      const payload = {
-        type: newInterview.type || "online",
-        interview_date: fromDateTimeInputValue(newInterview.interview_date),
-        location: newInterview.location,
-        meeting_url: newInterview.meeting_url || null,
-        notes: newInterview.notes || "",
-      };
+      const payload = toInterviewPayload(newInterview);
 
       if (editingInterview) {
         const res = await API.put(`/interviews/${editingInterview.id}`, payload);
@@ -166,14 +160,7 @@ export default function Interviews() {
 
   const startEdit = (interview) => {
     setEditingInterview(interview);
-    setNewInterview({
-      job_id: interview.job_application_id,
-      type: interview.type || "",
-      interview_date: toDateTimeInputValue(interview.interview_date),
-      location: interview.location || "",
-      meeting_url: interview.meeting_url || "",
-      notes: interview.notes || "",
-    });
+    setNewInterview(toInterviewForm(interview));
     setShowForm(true);
   };
 

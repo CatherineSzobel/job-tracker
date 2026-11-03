@@ -6,7 +6,7 @@ import { showUndoToast, useToastStore } from "../../stores/useToastStore";
 import { formatShortDate } from "../../utils/formatDate";
 import CardTags from "../Tags/CardTags";
 import StatusChip from "../UI/StatusChip";
-import { archiveChanges } from "./useArchiveWithTodos";
+import { undoArchiving } from "./useArchiveWithTodos";
 
 // An archived application: position (link to its page), company and status, when it was applied for and archived, tags,
 // then Restore and a trash button to delete it for good. onRemove(id) is called after it's restored or deleted.
@@ -16,14 +16,9 @@ import { archiveChanges } from "./useArchiveWithTodos";
 export default function ArchivedJobCard({ job, onRemove, onUndone, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
     const showToast = useToastStore((state) => state.showToast);
 
-    // delete_open_todos: false, since its to-dos were kept when it was archived before
     const undoRestore = async () => {
-        try {
-            await API.put(`/job-applications/${job.id}`, archiveChanges(false));
+        if (await undoArchiving([job.id], true)) {
             onUndone?.();
-        } catch (err) {
-            console.error(err);
-            showToast("Couldn't undo restoring the application");
         }
     };
 

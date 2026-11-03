@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
-import { isBefore, parseISO, startOfToday } from "date-fns";
 import { Archive, Banknote, CalendarClock, CalendarDays, ExternalLink, MapPin } from "lucide-react";
 import API from "../../api/axios";
 import { useToastStore } from "../../stores/useToastStore";
+import { describeDueDate } from "../../utils/dueDate";
 import { formatShortDate } from "../../utils/formatDate";
 import { formatSalary } from "../../utils/formatSalary";
 import CardTags from "../Tags/CardTags";
 import PriorityLabel from "../UI/PriorityLabel";
 import StatusChip from "../UI/StatusChip";
-import useArchiveWithTodos, { archiveChanges, showArchivedToast } from "./useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, showArchivedToast, undoArchiving } from "./useArchiveWithTodos";
 
 // One application in the grid: status and priority, the position (link to the detail page) and company,
 // when and where (and "Apply by" while it's only saved), the salary range, tags, then "View posting" and Archive. Delete lives on the detail page.
@@ -20,16 +20,12 @@ export default function JobCard({ job, onRemove, onUndone, selecting = false, se
   const showToast = useToastStore((state) => state.showToast);
   const newStatus = pendingChanges?.status && pendingChanges.status !== job.status ? pendingChanges.status : null;
   const shownStatus = newStatus ?? job.status;
-  const deadlinePassed = job.deadline && isBefore(parseISO(job.deadline), startOfToday());
+  const deadlinePassed = describeDueDate(job.deadline).state === "overdue";
   const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency, { compact: true });
 
   const undoArchive = async () => {
-    try {
-      await API.put(`/job-applications/${job.id}`, { is_archived: false });
+    if (await undoArchiving([job.id], false)) {
       onUndone?.();
-    } catch (err) {
-      console.error(err);
-      showToast("Couldn't undo archiving the application");
     }
   };
 

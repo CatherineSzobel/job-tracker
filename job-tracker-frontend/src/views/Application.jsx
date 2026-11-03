@@ -9,7 +9,7 @@ import ApplicationDetailsFields from "../components/JobApplications/ApplicationD
 import ContactLink from "../components/JobApplications/ContactLink";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
-import useArchiveWithTodos, { archiveChanges, showArchivedToast } from "../components/JobApplications/useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, showArchivedToast, undoArchiving } from "../components/JobApplications/useArchiveWithTodos";
 import TagChip from "../components/Tags/TagChip";
 import TagInput from "../components/Tags/TagInput";
 import useTags from "../components/Tags/useTags";
@@ -22,7 +22,7 @@ import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, STATU
 import { confirmAction } from "../stores/useConfirmStore";
 import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { showUndoToast, useToastStore } from "../stores/useToastStore";
-import { fromDateTimeInputValue } from "../utils/dateInput";
+import { toInterviewPayload } from "../components/Interview/interviewPayload";
 import { formatSalary } from "../utils/formatSalary";
 
 // The two-column status picker's buttons: the chosen one in its status colours with a border of the same hue
@@ -138,11 +138,7 @@ export default function Application() {
     e.preventDefault();
     setSavingInterview(true);
     try {
-      const { job_id, ...payload } = newInterview;
-      const res = await API.post(`/job-applications/${job_id}/interviews`, {
-        ...payload,
-        interview_date: fromDateTimeInputValue(payload.interview_date),
-      });
+      const res = await API.post(`/job-applications/${newInterview.job_id}/interviews`, toInterviewPayload(newInterview));
       setJob((prev) => ({ ...prev, interviews: [...(prev.interviews ?? []), res.data.data] }));
       setNewInterview(null);
     } catch (err) {
@@ -156,16 +152,11 @@ export default function Application() {
   // Restores it. Still on Applications (where archiving went), it comes back to this page; anywhere else the
   // user has moved on, so they stay where they are. Read at undo time: this page has unmounted by then.
   const undoArchive = async () => {
-    try {
-      await API.put(`/job-applications/${job.id}`, { is_archived: false });
-      if (window.location.pathname === "/applications") {
-        navigate(`/jobs/${job.id}`);
-      } else {
-        showToast("Application restored", "success");
-      }
-    } catch (err) {
-      console.error(err);
-      showToast("Couldn't undo archiving the application");
+    if (!(await undoArchiving([job.id], false))) return;
+    if (window.location.pathname === "/applications") {
+      navigate(`/jobs/${job.id}`);
+    } else {
+      showToast("Application restored", "success");
     }
   };
 
@@ -184,14 +175,11 @@ export default function Application() {
 
   const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archive);
 
-  // Archives it again; delete_open_todos: false, since its to-dos were kept when it was archived before
+  // Archives it again. The batch answer has no interviews or documents, so it's merged into what's shown.
   const undoRestore = async () => {
-    try {
-      const res = await API.put(`/job-applications/${job.id}`, archiveChanges(false));
-      setJob(res.data.data);
-    } catch (err) {
-      console.error(err);
-      showToast("Couldn't undo restoring the application");
+    const archived = await undoArchiving([job.id], true);
+    if (archived) {
+      setJob((current) => ({ ...current, ...archived[0] }));
     }
   };
 
