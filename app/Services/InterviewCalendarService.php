@@ -72,7 +72,7 @@ class InterviewCalendarService
      */
     private function text(string $value): string
     {
-        return str_replace(['\\', ';', ',', "\r\n", "\n"], ['\\\\', '\;', '\,', '\n', '\n'], $value);
+        return str_replace(['\\', ';', ',', "\r\n", "\n", "\r"], ['\\\\', '\;', '\,', '\n', '\n', '\n'], $value);
     }
 
     /**
