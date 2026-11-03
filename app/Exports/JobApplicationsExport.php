@@ -2,6 +2,9 @@
 
 namespace App\Exports;
 
+use App\Http\Requests\JobApplication\ApplicationDetailRules;
+use BackedEnum;
+use DateTimeInterface;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -24,13 +27,7 @@ class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadi
                 'location',
                 'notes',
                 'job_link',
-                'salary_min',
-                'salary_max',
-                'salary_currency',
-                'source',
-                'contact_name',
-                'contact_details',
-                'deadline',
+                ...ApplicationDetailRules::fields(),
             ])
             ->with('tags')
             ->orderBy('applied_date', 'desc')
@@ -50,13 +47,7 @@ class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadi
             'job_link',
             'tags',
             // Added later, so they come after tags and older files keep their column positions
-            'salary_min',
-            'salary_max',
-            'salary_currency',
-            'source',
-            'contact_name',
-            'contact_details',
-            'deadline',
+            ...ApplicationDetailRules::fields(),
         ];
     }
 
@@ -72,14 +63,20 @@ class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadi
             $this->cleanText($job->notes),
             $job->job_link,
             $job->tags->pluck('name')->implode(', ') ?: null,
-            $job->salary_min,
-            $job->salary_max,
-            $job->salary_currency?->value,
-            $job->source?->value,
-            $job->contact_name,
-            $job->contact_details,
-            $job->deadline?->format('Y-m-d'),
+            ...array_map(fn (string $field) => $this->cellValue($job->{$field}), ApplicationDetailRules::fields()),
         ];
+    }
+
+    /**
+     * An enum as its value and a date as Y-m-d; anything else as it is
+     */
+    private function cellValue(mixed $value): mixed
+    {
+        return match (true) {
+            $value instanceof BackedEnum => $value->value,
+            $value instanceof DateTimeInterface => $value->format('Y-m-d'),
+            default => $value,
+        };
     }
 
     private function cleanText(?string $value): ?string

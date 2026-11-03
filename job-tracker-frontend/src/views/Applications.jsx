@@ -156,10 +156,13 @@ export default function Applications() {
   // Every pending change, including ones on cards a filter now hides (they were made on purpose)
   const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
 
+  // The batch answer is in the list shape, so the restored applications go straight back in (the sort runs on render)
+  const addBack = (restoredJobs) =>
+    setJobs((currentJobs) => [...restoredJobs, ...currentJobs.filter((job) => !restoredJobs.some((restored) => restored.id === job.id))]);
+
   const undoArchiveSelected = async (ids) => {
-    if (await undoArchiving(ids, false)) {
-      loadJobs();
-    }
+    const restoredJobs = await undoArchiving(ids, false);
+    if (restoredJobs) addBack(restoredJobs);
   };
 
   // deleteOpenTodos: the answer from the to-dos prompt, or undefined to let the server follow the user's setting.
@@ -190,7 +193,7 @@ export default function Applications() {
       key={job.id}
       job={job}
       onRemove={(id) => setJobs((currentJobs) => currentJobs.filter((existing) => existing.id !== id))}
-      onUndone={loadJobs}
+      onUndone={addBack}
       selecting={selecting}
       selected={selectedIds.includes(job.id)}
       onToggleSelect={toggleSelected}

@@ -63,13 +63,8 @@ class DocumentController extends Controller
     public function destroy(Request $request, Document $document): DocumentResource|Response
     {
         Gate::authorize('delete', $document);
-        abort_if(
-            $request->boolean('archive_only') && ! $document->jobApplications()->exists(),
-            Response::HTTP_CONFLICT,
-            'This document is no longer attached to any application, so it would be deleted rather than archived.'
-        );
 
-        return $this->documentService->archiveOrDelete($document)
+        return $this->documentService->archiveOrDelete($document, $request->boolean('archive_only'))
             ? new DocumentResource($document->loadCount('jobApplications'))
             : response()->noContent();
     }

@@ -1,27 +1,24 @@
 import Card, { CardLink } from "../UI/Card";
 import { JOB_STATUSES, STATUS_BAR_CLASSES } from "../../constants/jobs";
 import { INSIGHT_STAT_TILES } from "../../constants/dashboard";
+import BarList from "./BarList";
 import SearchInsights from "./SearchInsights";
+import StatTile from "./StatTile";
 import { percentOf } from "../../utils/percent";
 
 // The Dashboard's Insights tab: four stat tiles, progress towards the goals, applications by status, then how the
-// search is going (response and offer rates, days to a first reply, applications by source)
-export default function Insights({ stats, dailyGoal, weeklyGoal }) {
+// search is going (response and offer rates, days to a first reply, applications by source: searchInsights)
+export default function Insights({ stats, dailyGoal, weeklyGoal, searchInsights }) {
   const goals = [
     { label: "Today", current: stats.todayApplications ?? 0, goal: dailyGoal },
     { label: "This week", current: stats.weekApplications ?? 0, goal: weeklyGoal },
   ];
-  const largestStatus = Math.max(...JOB_STATUSES.map(({ value }) => stats[value] ?? 0));
 
   return (
     <div className="flex flex-col gap-6">
       <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-4">
         {INSIGHT_STAT_TILES.map(({ label, valueKey }) => (
-          <li key={valueKey} className="card flex flex-col justify-between gap-2">
-            {/* Two lines reserved for the label, so the numbers line up when one wraps */}
-            <span className="min-h-12 font-medium text-muted">{label}</span>
-            <span className="text-[40px] leading-12 font-bold">{stats[valueKey] ?? 0}</span>
-          </li>
+          <StatTile key={valueKey} label={label} value={stats[valueKey] ?? 0} />
         ))}
       </ul>
 
@@ -52,24 +49,11 @@ export default function Insights({ stats, dailyGoal, weeklyGoal }) {
         </Card>
 
         <Card title="Applications by status" className="flex-[2_1_400px]">
-          <ul className="flex flex-col gap-4">
-            {JOB_STATUSES.map(({ value, label }) => {
-              const count = stats[value] ?? 0;
-              return (
-                <li key={value} className="grid grid-cols-[112px_minmax(0,1fr)_32px] items-center gap-4">
-                  <span className="font-medium">{label}</span>
-                  <div className="h-6 rounded bg-soft">
-                    <div className={`h-full rounded ${STATUS_BAR_CLASSES[value]}`} style={{ width: `${percentOf(count, largestStatus)}%` }} />
-                  </div>
-                  <span className="text-right font-bold">{count}</span>
-                </li>
-              );
-            })}
-          </ul>
+          <BarList rows={JOB_STATUSES.map(({ value, label }) => ({ key: value, label, count: stats[value] ?? 0, barClassName: STATUS_BAR_CLASSES[value] }))} />
         </Card>
       </div>
 
-      <SearchInsights />
+      <SearchInsights insights={searchInsights} />
     </div>
   );
 }

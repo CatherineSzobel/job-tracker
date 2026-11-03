@@ -43,6 +43,30 @@ class ApplicationDetailsTest extends TestCase
             ->assertJsonPath('data.salary_currency', 'GBP');
     }
 
+    public function test_one_end_of_the_salary_range_is_checked_against_the_stored_other_end(): void
+    {
+        $user = User::factory()->create();
+        $job = $user->jobApplications()->create([...self::NEW_JOB, 'salary_min' => 50000, 'salary_max' => 60000]);
+
+        $this->actingAs($user)->patchJson("/api/job-applications/{$job->id}", ['salary_min' => 90000])
+            ->assertJsonValidationErrors('salary_min');
+        $this->actingAs($user)->patchJson("/api/job-applications/{$job->id}", ['salary_max' => 40000])
+            ->assertJsonValidationErrors('salary_max');
+        $this->actingAs($user)->patchJson("/api/job-applications/{$job->id}", ['salary_min' => 55000])
+            ->assertOk()
+            ->assertJsonPath('data.salary_min', 55000);
+    }
+
+    public function test_another_users_salary_range_is_not_revealed_by_validation(): void
+    {
+        $job = User::factory()->create()->jobApplications()->create([...self::NEW_JOB, 'salary_min' => 50000, 'salary_max' => 60000]);
+
+        $this->actingAs(User::factory()->create())
+            ->patchJson("/api/job-applications/{$job->id}", ['salary_min' => 90000])
+            ->assertNotFound()
+            ->assertJsonMissingValidationErrors('salary_min');
+    }
+
     public function test_details_can_be_changed_and_cleared(): void
     {
         $user = User::factory()->create();

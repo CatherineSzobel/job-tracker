@@ -19,12 +19,6 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
 {
     use SkipsFailures;
 
-    /**
-     * Columns added after the first exports. A file without one leaves that field as it is, so re-importing
-     * an older export doesn't clear it.
-     */
-    private const DETAIL_COLUMNS = ['salary_min', 'salary_max', 'salary_currency', 'source', 'contact_name', 'contact_details', 'deadline'];
-
     public function model(array $row)
     {
         // Rows are saved one at a time, so re-importing (or a repeated row) updates the
@@ -46,7 +40,9 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
             'location' => $row['location'] ?? null,
             'notes' => $this->sanitizeText($row['notes'] ?? null),
             'job_link' => $this->sanitizeUrl($row['job_link'] ?? null),
-            ...array_intersect_key($row, array_flip(self::DETAIL_COLUMNS)),
+            // The detail columns came after the first exports: a file without one leaves that field as it is,
+            // so re-importing an older export doesn't clear it
+            ...array_intersect_key($row, array_flip(ApplicationDetailRules::fields())),
         ]);
     }
 
@@ -79,7 +75,7 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
     {
         $status = isset($data['status']) ? $this->toEnumValue($data['status']) : JobStatus::Applied->value;
 
-        foreach (self::DETAIL_COLUMNS as $column) {
+        foreach (ApplicationDetailRules::fields() as $column) {
             if (array_key_exists($column, $data)) {
                 $data[$column] = $this->nullIfEmpty($data[$column]);
             }

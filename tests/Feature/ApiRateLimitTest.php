@@ -18,7 +18,10 @@ class ApiRateLimitTest extends TestCase
 
         $this->useUp(60);
 
-        $this->getJson('/api/tags')->assertTooManyRequests()->assertHeader('Retry-After');
+        $this->getJson('/api/tags')
+            ->assertTooManyRequests()
+            ->assertHeader('Retry-After')
+            ->assertJsonPath('message', 'Too many requests — wait a minute and try again.');
     }
 
     public function test_the_user_route_is_limited_too(): void

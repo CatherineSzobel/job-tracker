@@ -15,6 +15,16 @@ use Illuminate\Validation\Rule;
 class ApplicationDetailRules
 {
     /**
+     * The detail fields, in the order the export lists them
+     *
+     * @return list<string>
+     */
+    public static function fields(): array
+    {
+        return array_keys(self::rules());
+    }
+
+    /**
      * As for adding one (the import loosens a couple). $partial (editing): each field only when it's sent.
      *
      * @return array<string, list<mixed>>

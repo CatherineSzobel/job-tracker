@@ -12,13 +12,13 @@ class AuthHardeningTest extends TestCase
 
     // Login rate limiting is covered in LoginTest
 
-    public function test_register_is_rate_limited(): void
+    public function test_register_is_rate_limited_per_ip_whatever_the_email(): void
     {
         for ($i = 0; $i < 5; $i++) {
-            $this->postJson('/api/register', ['email' => 'not-an-email'])->assertUnprocessable();
+            $this->postJson('/api/register', ['email' => "not-an-email-{$i}"])->assertUnprocessable();
         }
 
-        $this->postJson('/api/register', ['email' => 'not-an-email'])->assertTooManyRequests();
+        $this->postJson('/api/register', ['email' => 'another-one'])->assertTooManyRequests();
     }
 
     public function test_demo_user_cannot_change_password(): void

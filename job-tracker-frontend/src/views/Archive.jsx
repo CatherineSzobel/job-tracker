@@ -26,7 +26,6 @@ export default function Archive() {
     const { sendBatch, busy: batchBusy } = useSendBatch({ setJobs: setArchivedJobs, listShowsArchived: true, onDone: exitSelecting });
     const showToast = useToastStore((state) => state.showToast);
 
-    // Also run after a restore is undone, to bring the applications back
     const loadArchivedJobs = useCallback(
         () =>
             API.get("/job-applications", { params: { archived: true } })
@@ -50,10 +49,13 @@ export default function Archive() {
     const selectedJobs = archivedJobs.filter((job) => selectedIds.includes(job.id));
     const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
 
+    // The batch answer is in the list shape, so the re-archived applications go straight back in
+    const addBack = (archivedAgain) =>
+        setArchivedJobs((currentJobs) => [...archivedAgain, ...currentJobs.filter((job) => !archivedAgain.some((archived) => archived.id === job.id))]);
+
     const undoRestoreSelected = async (ids) => {
-        if (await undoArchiving(ids, true)) {
-            loadArchivedJobs();
-        }
+        const archivedAgain = await undoArchiving(ids, true);
+        if (archivedAgain) addBack(archivedAgain);
     };
 
     // The bar's Restore: straight away, with Undo on the toast
@@ -102,7 +104,7 @@ export default function Archive() {
                             key={job.id}
                             job={job}
                             onRemove={removeJob}
-                            onUndone={loadArchivedJobs}
+                            onUndone={addBack}
                             selecting={selecting}
                             selected={selectedIds.includes(job.id)}
                             onToggleSelect={toggleSelected}

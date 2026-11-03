@@ -26,10 +26,8 @@ class AppServiceProvider extends ServiceProvider
         // Rules for new passwords (register + change password)
         Password::defaults(fn () => Password::min(8));
 
-        // Register: 5 attempts per minute per email + IP (login limits failed attempts in LoginRequest)
-        RateLimiter::for('register', function (Request $request) {
-            return Limit::perMinute(5)->by(strtolower((string) $request->input('email')).'|'.$request->ip());
-        });
+        // Register: 5 attempts per minute per IP, whatever email is sent (login limits failed attempts in LoginRequest)
+        RateLimiter::for('register', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
 
         // Every logged-in API route: 60 a minute per user. The shared demo account also counts per IP,
         // so one visitor can't use up the limit for the others.
@@ -41,7 +39,11 @@ class AppServiceProvider extends ServiceProvider
                 default => (string) $user->id,
             };
 
-            return Limit::perMinute(60)->by($key);
+            return Limit::perMinute(60)->by($key)->response(fn (Request $request, array $headers) => response()->json(
+                ['message' => 'Too many requests — wait a minute and try again.'],
+                429,
+                $headers,
+            ));
         });
     }
 }

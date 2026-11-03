@@ -13,13 +13,10 @@ const API = axios.create({
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Session expired: forget the user, ProtectedRoute then redirects to /login
-    if (error.response?.status === 401) {
+    // Session expired: forget the user, ProtectedRoute then redirects to /login. A save after the session
+    // expired fails the CSRF check first (419), so that means the same.
+    if ([401, 419].includes(error.response?.status)) {
       useAuthStore.getState().clearSession()
-    }
-    // Rate limited (60 requests a minute): replace Laravel's "Too Many Attempts." for every caller's toast
-    if (error.response?.status === 429 && error.response.data) {
-      error.response.data.message = 'Too many requests — wait a minute and try again.'
     }
     return Promise.reject(error)
   }

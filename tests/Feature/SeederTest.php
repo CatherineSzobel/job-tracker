@@ -28,6 +28,26 @@ class SeederTest extends TestCase
         $this->assertGreaterThanOrEqual(20, $demo->jobApplications()->count());
     }
 
+    public function test_demo_reset_replaces_the_demo_data_and_leaves_other_users_alone(): void
+    {
+        $disk = Storage::fake(config('filesystems.documents_disk'));
+        $this->seed();
+        $oldDemo = User::where('email', config('app.demo_email'))->sole();
+        $oldDemo->jobApplications()->delete();
+        $oldDemo->notes()->create(['title' => 'Hi', 'content' => 'Left by a visitor']);
+        $otherUser = User::factory()->create();
+        $otherUser->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer']);
+
+        $this->artisan('demo:reset')->assertSuccessful();
+
+        $demo = User::where('email', config('app.demo_email'))->sole();
+        $this->assertGreaterThanOrEqual(20, $demo->jobApplications()->count());
+        $this->assertFalse($demo->notes()->where('content', 'Left by a visitor')->exists());
+        $this->assertSame([], $disk->allFiles("documents/{$oldDemo->id}"));
+        $this->assertNotSame([], $disk->allFiles("documents/{$demo->id}"));
+        $this->assertSame(1, $otherUser->jobApplications()->count());
+    }
+
     public function test_demo_data_shows_every_part_of_the_app_relative_to_today(): void
     {
         Storage::fake(config('filesystems.documents_disk'));

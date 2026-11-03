@@ -12,6 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentService
@@ -72,13 +73,21 @@ class DocumentService
 
     /**
      * Archive a document that is attached to an application (it stays visible there);
-     * delete an unattached one, file included.
+     * delete an unattached one, file included. $archiveOnly: the user was told it would be archived, so one no longer
+     * attached answers 409 instead of being deleted without asking.
      *
      * @return bool true when archived, false when deleted
      */
-    public function archiveOrDelete(Document $document): bool
+    public function archiveOrDelete(Document $document, bool $archiveOnly = false): bool
     {
-        if ($document->jobApplications()->exists()) {
+        $isAttached = $document->jobApplications()->exists();
+        abort_if(
+            $archiveOnly && ! $isAttached,
+            Response::HTTP_CONFLICT,
+            'This document is no longer attached to any application, so it would be deleted rather than archived.'
+        );
+
+        if ($isAttached) {
             $document->archived_at ??= now();
             $document->save();
 

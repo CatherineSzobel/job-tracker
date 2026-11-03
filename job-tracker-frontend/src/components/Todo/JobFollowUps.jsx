@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ListTodo } from "lucide-react";
 import Card from "../UI/Card";
 import PageLoader from "../UI/PageLoader";
@@ -10,9 +10,14 @@ import { EMPTY_TODO_DRAFT } from "../../constants/todos";
 
 // This application's to-dos. Quick-add chips only prefill the form; nothing is created until Add.
 // onChange() runs after a change the activity timeline shows: a to-do ticked off or back on, or a done one deleted.
-export default function JobFollowUps({ job, onChange }) {
+// onOpenCountChange(count) runs whenever the open to-dos may have changed, so Archive asks about the current ones.
+export default function JobFollowUps({ job, onChange, onOpenCountChange }) {
   const { todos, loading, addTodo, updateTodo, deleteTodo } = useTodos({ job_application_id: job.id });
   const [draft, setDraft] = useState(EMPTY_TODO_DRAFT);
+
+  useEffect(() => {
+    if (!loading) onOpenCountChange?.(todos.filter((todo) => !todo.done).length);
+  }, [todos, loading, onOpenCountChange]);
 
   const updateAndNotify = async (todo, changes) => {
     await updateTodo(todo, changes);

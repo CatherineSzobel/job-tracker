@@ -13,7 +13,7 @@ import useArchiveWithTodos, { archiveChanges, showArchivedToast, undoArchiving }
 // One application in the grid: status and priority, the position (link to the detail page) and company,
 // when and where (and "Apply by" while it's only saved), the salary range, tags, then "View posting" and Archive. Delete lives on the detail page.
 // onRemove(id) is called after the job is archived so the parent can drop it. The toast then offers Undo
-// (unless open to-dos were deleted with it); onUndone() is called once it's restored, to reload the list.
+// (unless open to-dos were deleted with it); onUndone(jobs) is called once it's restored, with the batch answer to put back in the list.
 // In select mode (selecting) clicking the card calls onToggleSelect(id) and the footer actions are hidden.
 // pendingChanges (useBatchChanges().forJob): this application's unsaved batch change to preview, or null.
 export default function JobCard({ job, onRemove, onUndone, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
@@ -24,9 +24,8 @@ export default function JobCard({ job, onRemove, onUndone, selecting = false, se
   const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency, { compact: true });
 
   const undoArchive = async () => {
-    if (await undoArchiving([job.id], false)) {
-      onUndone?.();
-    }
+    const restoredJobs = await undoArchiving([job.id], false);
+    if (restoredJobs) onUndone?.(restoredJobs);
   };
 
   // deleteOpenTodos: the user's answer, or undefined to let the server follow their setting

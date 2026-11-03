@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { LANDING_SHOWCASE, screenshotFor } from "../../constants/landing";
 import { useThemeStore } from "../../stores/useThemeStore";
 import Screenshot from "./Screenshot";
@@ -24,7 +24,6 @@ const featureClasses = (isSelected) =>
 export default function Showcase() {
   const darkMode = useThemeStore((state) => state.darkMode);
   const [activeSlideId, setActiveSlideId] = useState(AVAILABLE_SLIDES[0]?.id);
-  const preloaded = useRef(false);
 
   if (AVAILABLE_SLIDES.length === 0) return null;
 
@@ -36,13 +35,10 @@ export default function Showcase() {
     document.getElementById(tabId(slide.id))?.focus();
   };
 
-  // The first time someone reaches for the list, fetch the other screenshots so switching tabs is instant
-  const preloadScreenshots = () => {
-    if (preloaded.current) return;
-    preloaded.current = true;
-    AVAILABLE_SLIDES.forEach((slide) => {
-      new Image().src = screenshotFor(slide.fileName, darkMode);
-    });
+  // Fetch a tab's screenshot (in the current theme) when it's pointed at or focused, so choosing it is instant;
+  // the browser's cache makes a repeat free
+  const preloadScreenshot = (slide) => {
+    new Image().src = screenshotFor(slide.fileName, darkMode);
   };
 
   const moveWithKeys = (event) => {
@@ -72,8 +68,6 @@ export default function Showcase() {
               aria-label="Features"
               aria-orientation="vertical"
               onKeyDown={moveWithKeys}
-              onPointerEnter={preloadScreenshots}
-              onFocus={preloadScreenshots}
               className="flex max-w-full flex-[1_1_280px] flex-wrap gap-2"
             >
               {AVAILABLE_SLIDES.map((slide) => {
@@ -89,6 +83,8 @@ export default function Showcase() {
                     aria-controls={PANEL_ID}
                     tabIndex={isSelected ? 0 : -1}
                     onClick={() => setActiveSlideId(slide.id)}
+                    onPointerEnter={() => preloadScreenshot(slide)}
+                    onFocus={() => preloadScreenshot(slide)}
                     className={featureClasses(isSelected)}
                   >
                     <FeatureIcon size={20} aria-hidden="true" />

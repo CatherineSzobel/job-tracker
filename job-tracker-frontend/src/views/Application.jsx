@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { format, formatDistanceToNow, isPast, parseISO } from "date-fns";
 import { ChevronLeft, ClipboardList, EllipsisVertical, ExternalLink, MapPin, Pencil, Plus, StickyNote, Tag } from "lucide-react";
@@ -48,6 +48,9 @@ export default function Application() {
   // Counts to-do changes, so the activity timeline refetches (a ticked-off to-do shows there)
   const [todoChanges, setTodoChanges] = useState(0);
 
+  // Re-renders when the next interview starts, so it joins the activity timeline (activityKey) on an open page
+  const [, setInterviewsStarted] = useState(0);
+
   const { tags: allTags, createTag } = useTags();
   const showToast = useToastStore((state) => state.showToast);
   const setPageTitle = usePageTitleStore((state) => state.setPageTitle);
@@ -67,6 +70,17 @@ export default function Application() {
     fetchJob();
   }, [id]);
 
+  const nextStart = Math.min(...(job?.interviews ?? []).map((interview) => new Date(interview.interview_date)).filter((date) => date > Date.now()));
+  useEffect(() => {
+    if (!Number.isFinite(nextStart)) return;
+    // setTimeout can't wait longer than about 24 days
+    const timer = setTimeout(() => setInterviewsStarted((count) => count + 1), Math.min(nextStart - Date.now(), 2 ** 31 - 1));
+    return () => clearTimeout(timer);
+  }, [nextStart]);
+
+  // The to-dos card reports its open ones, so Archive's prompt and toast use the current number
+  const setOpenTodosCount = useCallback((count) => setJob((current) => current && { ...current, open_todos_count: count }), []);
+
   // The breadcrumb shows the position instead of "Application"
   const savedPosition = editing ? originalJob?.position : job?.position;
   useEffect(() => {
@@ -83,8 +97,13 @@ export default function Application() {
   };
 
   const cancelEditing = () => {
-    // Tags and documents save on their own, so Cancel keeps the current ones
-    setJob((currentJob) => ({ ...originalJob, tags: currentJob.tags, documents: currentJob.documents }));
+    // Tags, documents and to-dos save on their own, so Cancel keeps the current ones
+    setJob((currentJob) => ({
+      ...originalJob,
+      tags: currentJob.tags,
+      documents: currentJob.documents,
+      open_todos_count: currentJob.open_todos_count,
+    }));
     setEditing(false);
   };
 
@@ -228,10 +247,11 @@ export default function Application() {
 
   const jobTags = job.tags ?? [];
   const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
-  // Saves and status changes move updated_at; documents and to-dos are tracked separately
-  const activityKey = [job.updated_at, (job.documents ?? []).map((document) => document.id).join(","), todoChanges].join("|");
   const jobTagIds = jobTags.map((tag) => tag.id);
   const interviews = [...(job.interviews ?? [])].sort((first, second) => new Date(first.interview_date) - new Date(second.interview_date));
+  // Saves and status changes move updated_at; documents, to-dos and interviews that have started are tracked separately
+  const pastInterviewIds = interviews.filter((interview) => isPast(new Date(interview.interview_date))).map((interview) => interview.id);
+  const activityKey = [job.updated_at, (job.documents ?? []).map((document) => document.id).join(","), todoChanges, pastInterviewIds.join(",")].join("|");
   const nextInterviewId = interviews.find((interview) => !isPast(new Date(interview.interview_date)))?.id;
 
   return (
@@ -367,7 +387,7 @@ export default function Application() {
             )}
           </Card>
 
-          <JobFollowUps job={job} onChange={() => setTodoChanges((count) => count + 1)} />
+          <JobFollowUps job={job} onChange={() => setTodoChanges((count) => count + 1)} onOpenCountChange={setOpenTodosCount} />
 
           <ApplicationActivity jobId={job.id} refreshKey={activityKey} />
         </div>
