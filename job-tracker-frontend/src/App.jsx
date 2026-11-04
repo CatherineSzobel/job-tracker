@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useAuthStore } from "./stores/useAuthStore";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -7,23 +7,24 @@ import Layout from "./components/Layouts/Layout";
 import AuthLayout from "./components/Layouts/AuthLayout";
 import ConfirmDialog from "./components/UI/ConfirmDialog";
 import Toaster from "./components/UI/Toaster";
+import PageLoader from "./components/UI/PageLoader";
 
-// Views
-import Register from "./views/Register";
-import Login from "./views/Login";
-import Dashboard from "./views/Dashboard";
-import Applications from "./views/Applications";
-import Interviews from "./views/Interviews";
-import Interview from "./views/Interview";
-import QuestionBank from "./views/QuestionBank";
-import Calendar from "./views/Calendar";
-import Profile from "./views/Profile";
-import Documents from "./views/Documents";
-import Settings from "./views/Settings";
-import Application from "./views/Application";
-import Archive from "./views/Archive";
-import Todos from "./views/Todos";
-import Landing from "./views/Landing";
+// Views, each in its own chunk so a page only loads its own code
+const Register = lazy(() => import("./views/Register"));
+const Login = lazy(() => import("./views/Login"));
+const Dashboard = lazy(() => import("./views/Dashboard"));
+const Applications = lazy(() => import("./views/Applications"));
+const Interviews = lazy(() => import("./views/Interviews"));
+const Interview = lazy(() => import("./views/Interview"));
+const QuestionBank = lazy(() => import("./views/QuestionBank"));
+const Calendar = lazy(() => import("./views/Calendar"));
+const Profile = lazy(() => import("./views/Profile"));
+const Documents = lazy(() => import("./views/Documents"));
+const Settings = lazy(() => import("./views/Settings"));
+const Application = lazy(() => import("./views/Application"));
+const Archive = lazy(() => import("./views/Archive"));
+const Todos = lazy(() => import("./views/Todos"));
+const Landing = lazy(() => import("./views/Landing"));
 
 function App() {
 
@@ -34,6 +35,7 @@ function App() {
   }, [checkSession])
   return (
     <>
+    <Suspense fallback={<PageLoader />}>
     <Routes>
 
       <Route element={<AuthLayout />}>
@@ -67,6 +69,7 @@ function App() {
 
       <Route path="*" element={<p className="text-center mt-10">Page not found</p>} />
     </Routes>
+    </Suspense>
 
     {/* Toasts and confirm dialogs work on every page: the app, login/register and the landing page */}
     <Toaster />

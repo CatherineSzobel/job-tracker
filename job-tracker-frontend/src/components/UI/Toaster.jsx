@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CircleAlert, CircleCheck, X } from "lucide-react";
 import { useToastStore } from "../../stores/useToastStore";
 
@@ -17,6 +17,8 @@ const TOAST_TYPES = {
 function Toast({ toast, onDismiss }) {
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
+  // Where focus was before it came into the toast, to go back there once the toast's buttons are gone
+  const focusBefore = useRef(null);
   const { icon: Icon, iconClasses } = TOAST_TYPES[toast.type];
   const paused = hovered || focused;
   const duration = toast.action ? ACTION_TOAST_DURATION_MS : TOAST_DURATION_MS;
@@ -27,8 +29,18 @@ function Toast({ toast, onDismiss }) {
     return () => clearTimeout(timer);
   }, [paused, duration, onDismiss, toast.id]);
 
-  const runAction = () => {
+  const onFocusEvent = (event) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) focusBefore.current = event.relatedTarget;
+    setFocused(true);
+  };
+
+  const close = () => {
     onDismiss(toast.id);
+    if (focusBefore.current?.isConnected) focusBefore.current.focus();
+  };
+
+  const runAction = () => {
+    close();
     toast.action.onClick();
   };
 
@@ -38,7 +50,7 @@ function Toast({ toast, onDismiss }) {
       // Mouse only: a tap counts as entering but never leaves, so the toast would stay forever
       onPointerEnter={(event) => event.pointerType === "mouse" && setHovered(true)}
       onPointerLeave={() => setHovered(false)}
-      onFocus={() => setFocused(true)}
+      onFocus={onFocusEvent}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
       }}
@@ -51,7 +63,7 @@ function Toast({ toast, onDismiss }) {
           {toast.action.label}
         </button>
       )}
-      <button type="button" onClick={() => onDismiss(toast.id)} aria-label="Dismiss" className="btn-icon-sm">
+      <button type="button" onClick={close} aria-label="Dismiss" className="btn-icon-sm">
         <X size={16} aria-hidden="true" />
       </button>
     </div>

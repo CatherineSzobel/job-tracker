@@ -7,9 +7,8 @@ import { formatShortDate } from "../../utils/formatDate";
 import { formatSalary } from "../../utils/formatSalary";
 
 // One application on the board: position (link), company, priority, when applied (or the deadline while
-// it's only saved) and the salary. Dragging needs a mouse; with a keyboard or on a phone, the status is changed
-// on the application's page.
-function BoardCard({ job, dragging, onDragStart, onDragEnd }) {
+// it's only saved) and the salary. Drag it with a mouse, or pick a column from its "Move to" list (keyboard, phones).
+function BoardCard({ job, dragging, onDragStart, onDragEnd, onMove }) {
   const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency, { compact: true });
   const when = job.status === "saved" ? job.deadline && `Apply by ${formatShortDate(job.deadline)}` : job.applied_date && `Applied ${formatShortDate(job.applied_date)}`;
 
@@ -29,12 +28,24 @@ function BoardCard({ job, dragging, onDragStart, onDragEnd }) {
       </div>
       <PriorityLabel priority={job.priority} />
       {(when || salary) && <p className="text-sm text-muted">{[when, salary].filter(Boolean).join(" · ")}</p>}
+      <select
+        aria-label={`Move ${job.position} at ${job.company_name} to`}
+        value={job.status}
+        onChange={(event) => onMove(job, event.target.value)}
+        className="input-field min-h-10 py-1 text-sm"
+      >
+        {JOB_STATUSES.map(({ value, label }) => (
+          <option key={value} value={value}>
+            {value === job.status ? label : `Move to ${label}`}
+          </option>
+        ))}
+      </select>
     </li>
   );
 }
 
 // Applications as a board: a column per status (all of them, so a card can be dropped into an empty one).
-// Drag a card to another column to change its status: onMove(job, status) saves it and resolves to true when it
+// Drag a card to another column, or use its "Move to" list, to change its status: onMove(job, status) saves it and resolves to true when it
 // worked. jobs: already filtered and sorted; each column keeps that order.
 export default function ApplicationBoard({ jobs, onMove }) {
   const [draggedJob, setDraggedJob] = useState(null);
@@ -111,6 +122,7 @@ export default function ApplicationBoard({ jobs, onMove }) {
                       dragging={draggedJob?.id === job.id}
                       onDragStart={startDrag}
                       onDragEnd={endDrag}
+                      onMove={move}
                     />
                   ))}
                 </ul>

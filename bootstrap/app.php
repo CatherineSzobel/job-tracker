@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind a load balancer (e.g. Laravel Cloud) its address changes, so trust whichever one forwards the
+        // request: the real visitor IP (rate limits) and https links. Only safe while the app isn't reachable directly.
+        $middleware->trustProxies(at: '*');
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
