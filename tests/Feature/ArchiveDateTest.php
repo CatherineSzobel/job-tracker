@@ -13,11 +13,6 @@ class ArchiveDateTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function jobFor(User $user, bool $archived = false): JobApplication
-    {
-        return $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer', 'is_archived' => $archived]);
-    }
-
     private function migration(): Migration
     {
         return require collect(glob(database_path('migrations/*_add_archived_at_to_job_applications_table.php')))->sole();
@@ -26,7 +21,7 @@ class ArchiveDateTest extends TestCase
     public function test_archiving_records_the_date_editing_keeps_it_and_restoring_clears_it(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
         $this->travelTo('2026-10-02 09:30:00');
 
         $this->actingAs($user)->putJson("/api/job-applications/{$job->id}", ['is_archived' => true])
@@ -45,8 +40,8 @@ class ArchiveDateTest extends TestCase
     public function test_batch_archive_dates_only_newly_archived_applications_and_batch_restore_clears_them(): void
     {
         $user = User::factory()->create();
-        $active = $this->jobFor($user);
-        $alreadyArchived = $this->jobFor($user, archived: true);
+        $active = JobApplication::factory()->for($user)->create();
+        $alreadyArchived = JobApplication::factory()->for($user)->archived()->create();
         $alreadyArchived->forceFill(['archived_at' => '2026-09-01 08:00:00'])->save();
         $this->travelTo('2026-10-02 09:30:00');
         $ids = [$active->id, $alreadyArchived->id];
@@ -68,7 +63,7 @@ class ArchiveDateTest extends TestCase
         $migration->down();
         $user = User::factory()->create();
         // Without the model's events: before the migration there's no archived_at column for it to fill in
-        [$archived, $active] = JobApplication::withoutEvents(fn () => [$this->jobFor($user, archived: true), $this->jobFor($user)]);
+        [$archived, $active] = JobApplication::withoutEvents(fn () => [JobApplication::factory()->for($user)->archived()->create(), JobApplication::factory()->for($user)->create()]);
         DB::table('job_applications')->update(['updated_at' => '2026-08-15 14:00:00']);
 
         $migration->up();

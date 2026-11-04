@@ -27,12 +27,10 @@ class JobApplicationService
     public function __construct(private InterviewPrepService $interviewPrep) {}
 
     /**
-     * Create a new job application for a user, applied today unless it's only saved for later
+     * Create a new job application for a user (applied today unless it's only saved for later, see JobApplication::booted())
      */
     public function create(array $data, User $user): JobApplication
     {
-        $data['applied_date'] = ($data['status'] ?? null) === JobStatus::Saved->value ? null : now()->toDateString();
-
         return $user->jobApplications()->create($data);
     }
 

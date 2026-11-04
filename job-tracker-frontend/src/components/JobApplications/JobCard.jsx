@@ -8,32 +8,27 @@ import { formatSalary } from "../../utils/formatSalary";
 import CardTags from "../Tags/CardTags";
 import PriorityLabel from "../UI/PriorityLabel";
 import StatusChip from "../UI/StatusChip";
-import useArchiveWithTodos, { archiveChanges, showArchivedToast, undoArchiving } from "./useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, showArchivedToast } from "./useArchiveWithTodos";
 
 // One application in the grid: status and priority, the position (link to the detail page) and company,
 // when and where (and "Apply by" while it's only saved), the salary range, tags, then "View posting" and Archive. Delete lives on the detail page.
 // onRemove(id) is called after the job is archived so the parent can drop it. The toast then offers Undo
-// (unless open to-dos were deleted with it); onUndone(jobs) is called once it's restored, with the batch answer to put back in the list.
+// (unless open to-dos were deleted with it), which calls onUndo([id]) to restore it.
 // In select mode (selecting) clicking the card calls onToggleSelect(id) and the footer actions are hidden.
 // pendingChanges (useBatchChanges().forJob): this application's unsaved batch change to preview, or null.
-export default function JobCard({ job, onRemove, onUndone, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
+export default function JobCard({ job, onRemove, onUndo, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
   const showToast = useToastStore((state) => state.showToast);
   const newStatus = pendingChanges?.status && pendingChanges.status !== job.status ? pendingChanges.status : null;
   const shownStatus = newStatus ?? job.status;
   const deadlinePassed = describeDueDate(job.deadline).state === "overdue";
   const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency, { compact: true });
 
-  const undoArchive = async () => {
-    const restoredJobs = await undoArchiving([job.id], false);
-    if (restoredJobs) onUndone?.(restoredJobs);
-  };
-
   // deleteOpenTodos: the user's answer, or undefined to let the server follow their setting
   const archive = async (deleteOpenTodos) => {
     try {
       const res = await API.put(`/job-applications/${job.id}`, archiveChanges(deleteOpenTodos));
       onRemove?.(job.id);
-      showArchivedToast([job], [res.data.data], undoArchive);
+      showArchivedToast([job], [res.data.data], () => onUndo?.([job.id]));
     } catch (err) {
       console.error(err);
       showToast("Failed to archive job");

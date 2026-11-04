@@ -9,7 +9,7 @@ import ApplicationDetailsFields from "../components/JobApplications/ApplicationD
 import ContactLink from "../components/JobApplications/ContactLink";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
-import useArchiveWithTodos, { archiveChanges, showArchivedToast, undoArchiving } from "../components/JobApplications/useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, restoreJob, showArchivedToast, undoArchiving } from "../components/JobApplications/useArchiveWithTodos";
 import TagChip from "../components/Tags/TagChip";
 import TagInput from "../components/Tags/TagInput";
 import useTags from "../components/Tags/useTags";
@@ -18,17 +18,17 @@ import Card from "../components/UI/Card";
 import Menu, { MenuDivider, MenuItem } from "../components/UI/Menu";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
-import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, STATUS_BADGE_CLASSES, priorityLabel, sourceLabel, APPLICATION_EDIT_FIELDS } from "../constants/jobs";
+import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, jobStatusFor, priorityLabel, sourceLabel, APPLICATION_EDIT_FIELDS } from "../constants/jobs";
 import { confirmAction } from "../stores/useConfirmStore";
 import { usePageTitleStore } from "../stores/usePageTitleStore";
-import { showUndoToast, useToastStore } from "../stores/useToastStore";
+import { useToastStore } from "../stores/useToastStore";
 import { toInterviewPayload } from "../components/Interview/interviewPayload";
 import { formatSalary } from "../utils/formatSalary";
 
 // The two-column status picker's buttons: the chosen one in its status colours with a border of the same hue
 const statusOptionClasses = (isChosen, status) =>
   `min-h-10 rounded-lg border text-sm font-semibold transition-colors ${
-    isChosen ? `border-current ${STATUS_BADGE_CLASSES[status]}` : "border-line bg-surface text-muted-2 hover:bg-soft"
+    isChosen ? `border-current ${jobStatusFor(status)?.badge}` : "border-line bg-surface text-muted-2 hover:bg-soft"
   }`;
 
 export default function Application() {
@@ -204,14 +204,8 @@ export default function Application() {
 
   // An archived application's ⋮ offers Restore instead of Archive; it stays on this page
   const restore = async () => {
-    try {
-      const res = await API.put(`/job-applications/${job.id}`, { is_archived: false });
-      setJob(res.data.data);
-      showUndoToast("Application restored", undoRestore);
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to restore the application");
-    }
+    const restored = await restoreJob(job, undoRestore);
+    if (restored) setJob(restored);
   };
 
   const deleteJob = async () => {

@@ -19,7 +19,7 @@ class DashboardStatsTest extends TestCase
         $today = $user->jobApplications()->create(['company_name' => 'A', 'position' => 'Dev', 'status' => 'applied', 'applied_date' => '2026-09-30']);
         $user->jobApplications()->create(['company_name' => 'B', 'position' => 'Dev', 'status' => 'applied', 'applied_date' => '2026-09-28']);
         $user->jobApplications()->create(['company_name' => 'C', 'position' => 'Dev', 'status' => 'offer', 'applied_date' => '2026-09-27']);
-        $user->jobApplications()->create(['company_name' => 'D', 'position' => 'Dev', 'status' => 'rejected', 'applied_date' => null, 'is_archived' => true]);
+        $user->jobApplications()->create(['company_name' => 'D', 'position' => 'Dev', 'status' => 'rejected', 'applied_date' => '2026-08-03', 'is_archived' => true]);
         // At 15:00 the 09:00 interview is over and only the 17:00 one is upcoming
         $today->interviews()->create(['user_id' => $user->id, 'interview_date' => '2026-09-30 09:00:00']);
         $today->interviews()->create(['user_id' => $user->id, 'interview_date' => '2026-09-30 17:00:00']);

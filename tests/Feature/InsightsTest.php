@@ -14,7 +14,7 @@ class InsightsTest extends TestCase
 
     private function jobFor(User $user, array $attributes = []): JobApplication
     {
-        return $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer', 'applied_date' => '2026-10-01', ...$attributes]);
+        return JobApplication::factory()->for($user)->create(['applied_date' => '2026-10-01', ...$attributes]);
     }
 
     public function test_without_applications_the_counts_are_zero_and_the_rates_empty(): void

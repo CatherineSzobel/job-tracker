@@ -4,7 +4,7 @@ import API from "../api/axios";
 import ApplicationBoard from "../components/JobApplications/ApplicationBoard";
 import { APPLICATION_SORTS, sortApplications } from "../components/JobApplications/applicationSorts";
 import BatchBar from "../components/JobApplications/BatchBar";
-import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
+import { addJobsBack, batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
 import JobDateGroups from "../components/JobApplications/JobDateGroups";
@@ -156,13 +156,10 @@ export default function Applications() {
   // Every pending change, including ones on cards a filter now hides (they were made on purpose)
   const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
 
-  // The batch answer is in the list shape, so the restored applications go straight back in (the sort runs on render)
-  const addBack = (restoredJobs) =>
-    setJobs((currentJobs) => [...restoredJobs, ...currentJobs.filter((job) => !restoredJobs.some((restored) => restored.id === job.id))]);
-
+  // The toast's Undo after archiving, for the bar and for a card: restores them and puts them back in the list
   const undoArchiveSelected = async (ids) => {
     const restoredJobs = await undoArchiving(ids, false);
-    if (restoredJobs) addBack(restoredJobs);
+    if (restoredJobs) setJobs((currentJobs) => addJobsBack(currentJobs, restoredJobs));
   };
 
   // deleteOpenTodos: the answer from the to-dos prompt, or undefined to let the server follow the user's setting.
@@ -193,7 +190,7 @@ export default function Applications() {
       key={job.id}
       job={job}
       onRemove={(id) => setJobs((currentJobs) => currentJobs.filter((existing) => existing.id !== id))}
-      onUndone={addBack}
+      onUndo={undoArchiveSelected}
       selecting={selecting}
       selected={selectedIds.includes(job.id)}
       onToggleSelect={toggleSelected}

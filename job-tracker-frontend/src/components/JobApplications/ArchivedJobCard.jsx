@@ -2,34 +2,22 @@ import { Link } from "react-router-dom";
 import { RotateCcw, Trash2 } from "lucide-react";
 import API from "../../api/axios";
 import { confirmAction } from "../../stores/useConfirmStore";
-import { showUndoToast, useToastStore } from "../../stores/useToastStore";
+import { useToastStore } from "../../stores/useToastStore";
 import { formatShortDate } from "../../utils/formatDate";
 import CardTags from "../Tags/CardTags";
 import StatusChip from "../UI/StatusChip";
-import { undoArchiving } from "./useArchiveWithTodos";
+import { restoreJob } from "./useArchiveWithTodos";
 
 // An archived application: position (link to its page), company and status, when it was applied for and archived, tags,
 // then Restore and a trash button to delete it for good. onRemove(id) is called after it's restored or deleted.
-// Restoring offers Undo on the toast; onUndone(jobs) is called once it's archived again, with the batch answer to put back in the list.
+// Restoring offers Undo on the toast, which calls onUndo([id]) to archive it again.
 // In select mode (selecting) clicking the card calls onToggleSelect(id) and the actions are hidden.
 // pendingChanges (useBatchChanges().forJob): this application's unsaved batch change to preview, or null.
-export default function ArchivedJobCard({ job, onRemove, onUndone, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
+export default function ArchivedJobCard({ job, onRemove, onUndo, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
     const showToast = useToastStore((state) => state.showToast);
 
-    const undoRestore = async () => {
-        const archivedAgain = await undoArchiving([job.id], true);
-        if (archivedAgain) onUndone?.(archivedAgain);
-    };
-
     const restore = async () => {
-        try {
-            await API.put(`/job-applications/${job.id}`, { is_archived: false });
-            onRemove?.(job.id);
-            showUndoToast("Application restored", undoRestore);
-        } catch (err) {
-            console.error(err);
-            showToast("Failed to restore job");
-        }
+        if (await restoreJob(job, () => onUndo?.([job.id]))) onRemove?.(job.id);
     };
 
     const deleteForGood = async () => {

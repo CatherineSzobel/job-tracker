@@ -7,6 +7,7 @@ use App\Enums\Currency;
 use App\Enums\JobStatus;
 use App\Enums\Priority;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JobApplication extends Model
 {
+    /** @use HasFactory<\Database\Factories\JobApplicationFactory> */
+    use HasFactory;
+
     /**
      * The columns other lists show about an application (interviews, to-dos, reminders), for eager loads
      * like 'job:'.JobApplication::SUMMARY_COLUMNS.
@@ -68,13 +72,18 @@ class JobApplication extends Model
     }
 
     /**
-     * The rules every save follows (single updates, batches, re-imports): moving on from Saved for the first time
+     * The rules every save follows (single updates, batches, imports): a new one without an applied date is applied
+     * today unless it's only Saved; moving on from Saved for the first time
      * makes today the applied date (not to Withdrawn or No response, which can mean it was never sent); archived_at follows is_archived (an archived one keeps the date it was first
      * archived); and each status change is recorded in the history.
      */
     protected static function booted(): void
     {
         static::saving(function (JobApplication $job) {
+            // No status yet means the column default, Applied
+            if (! $job->exists && $job->applied_date === null && $job->status !== JobStatus::Saved) {
+                $job->applied_date = now()->toDateString();
+            }
             $notSent = [JobStatus::Saved, JobStatus::Withdrawn, JobStatus::NoResponse];
             if ($job->isDirty('status') && $job->applied_date === null
                 && in_array($job->getOriginal('status'), $notSent, true) && ! in_array($job->status, $notSent, true)) {

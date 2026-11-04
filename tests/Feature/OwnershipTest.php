@@ -14,28 +14,20 @@ class OwnershipTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function jobFor(User $user): JobApplication
-    {
-        return $user->jobApplications()->create([
-            'company_name' => 'Acme',
-            'position' => 'Developer',
-        ]);
-    }
-
     public function test_user_cannot_update_another_users_job_application(): void
     {
-        $job = $this->jobFor(User::factory()->create());
+        $job = JobApplication::factory()->for(User::factory()->create())->create();
 
         $this->actingAs(User::factory()->create())
             ->putJson("/api/job-applications/{$job->id}", ['company_name' => 'Hacked'])
             ->assertNotFound();
 
-        $this->assertSame('Acme', $job->fresh()->company_name);
+        $this->assertSame($job->company_name, $job->fresh()->company_name);
     }
 
     public function test_user_cannot_delete_another_users_job_application(): void
     {
-        $job = $this->jobFor(User::factory()->create());
+        $job = JobApplication::factory()->for(User::factory()->create())->create();
 
         $this->actingAs(User::factory()->create())
             ->deleteJson("/api/job-applications/{$job->id}")
@@ -47,7 +39,7 @@ class OwnershipTest extends TestCase
     public function test_user_can_update_and_delete_own_job_application(): void
     {
         $owner = User::factory()->create();
-        $job = $this->jobFor($owner);
+        $job = JobApplication::factory()->for($owner)->create();
 
         $this->actingAs($owner)
             ->putJson("/api/job-applications/{$job->id}", ['company_name' => 'Globex'])
@@ -78,7 +70,7 @@ class OwnershipTest extends TestCase
     public function test_other_users_records_are_not_found_on_every_route(): void
     {
         $owner = User::factory()->create();
-        $job = $this->jobFor($owner);
+        $job = JobApplication::factory()->for($owner)->create();
         $interview = $job->interviews()->create(['user_id' => $owner->id, 'interview_date' => now()->addDay()]);
         $todo = $owner->todos()->create(['text' => 'Mine']);
         $note = $owner->notes()->create(['title' => 'Mine', 'content' => 'Secret']);
@@ -87,7 +79,7 @@ class OwnershipTest extends TestCase
         $document = Document::factory()->for($owner)->create(['name' => 'Mine']);
 
         $intruder = User::factory()->create();
-        $intruderJob = $this->jobFor($intruder);
+        $intruderJob = JobApplication::factory()->for($intruder)->create();
 
         $requests = [
             ['getJson', "/api/job-applications/{$job->id}"],
@@ -139,7 +131,7 @@ class OwnershipTest extends TestCase
     public function test_owner_can_still_manage_own_records(): void
     {
         $owner = User::factory()->create();
-        $job = $this->jobFor($owner);
+        $job = JobApplication::factory()->for($owner)->create();
         $interview = $job->interviews()->create(['user_id' => $owner->id, 'interview_date' => now()->addDay()]);
         $todo = $owner->todos()->create(['text' => 'Mine']);
         $note = $owner->notes()->create(['title' => 'Mine', 'content' => '']);

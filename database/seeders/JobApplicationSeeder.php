@@ -235,7 +235,8 @@ class JobApplicationSeeder extends Seeder
             'is_archived' => isset($application['archived']),
         ]);
 
-        $lastChange = $this->moment($application['applied'] ?? 3, '09:00');
+        $createdAt = $this->moment($application['applied'] ?? 3, '09:00');
+        $lastChange = $createdAt;
         foreach ($application['history'] ?? [] as [$from, $to, $daysAgo]) {
             $lastChange = $this->moment($daysAgo, '11:15');
             $job->statusChanges()->create(['from_status' => $from, 'to_status' => $to, 'changed_at' => $lastChange]);
@@ -243,7 +244,7 @@ class JobApplicationSeeder extends Seeder
 
         $archivedAt = isset($application['archived']) ? $this->moment($application['archived'], '17:00') : null;
         DB::table('job_applications')->where('id', $job->id)->update([
-            'created_at' => $this->moment($application['applied'] ?? 3, '09:00'),
+            'created_at' => $createdAt,
             'updated_at' => $archivedAt ?? $lastChange,
             'archived_at' => $archivedAt,
         ]);
@@ -257,8 +258,7 @@ class JobApplicationSeeder extends Seeder
     private function createInterview(User $user, JobApplication $job, array $interview, InterviewPrepService $prep): void
     {
         $type = InterviewType::from($interview['type']);
-        [$hour, $minute] = explode(':', $interview['at']);
-        $date = Carbon::today()->addDays($interview['in'])->setTime((int) $hour, (int) $minute);
+        $date = $this->moment(-$interview['in'], $interview['at']);
         $isPast = $interview['in'] < 0;
 
         $checklist = $prep->checklistFor($user, $type);

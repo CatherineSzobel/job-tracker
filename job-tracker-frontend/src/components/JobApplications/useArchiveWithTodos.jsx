@@ -3,6 +3,7 @@ import ArchiveTodosPrompt from "./ArchiveTodosPrompt";
 import { useSettingsStore } from "../../stores/useSettingsStore";
 import { showToast, showUndoToast } from "../../stores/useToastStore";
 import { countOf } from "../../utils/plural";
+import API from "../../api/axios";
 import { batchUpdateJobs } from "./batchUpdate";
 
 // The request body for archiving: delete_open_todos is only sent when the user answered the prompt,
@@ -23,6 +24,19 @@ export async function undoArchiving(ids, isArchived) {
     console.error(err);
     const what = ids.length === 1 ? "the application" : "the applications";
     showToast(`Couldn't undo ${isArchived ? "restoring" : "archiving"} ${what}`);
+    return null;
+  }
+}
+
+// Restores one application, with undo() on the toast. Resolves to the restored application, or null after a toast.
+export async function restoreJob(job, undo) {
+  try {
+    const res = await API.put(`/job-applications/${job.id}`, { is_archived: false });
+    showUndoToast("Application restored", undo);
+    return res.data.data;
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to restore the application");
     return null;
   }
 }

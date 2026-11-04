@@ -147,7 +147,9 @@ export default function Documents() {
           {visibleDocuments.map((item) => {
             const { icon: Icon, label } = CATEGORY_BY_VALUE[item.category];
             const details = item.kind === "file" ? `${formatFileSize(item.size)} · ${formatShortDate(item.created_at)}` : linkDomain(item.url);
-            const sentWith = item.applications_count > 0 ? `Sent with ${countOf(item.applications_count, "application")}` : "Not sent with an application yet";
+            // Its delete button says what it will do: archive one that's attached to applications, delete one that isn't
+            const isAttached = item.applications_count > 0;
+            const sentWith = isAttached ? `Sent with ${countOf(item.applications_count, "application")}` : "Not sent with an application yet";
 
             return (
               <li key={item.id} className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 md:px-6">
@@ -180,28 +182,15 @@ export default function Documents() {
                       <button type="button" onClick={() => setEditingDocument(item)} aria-label={`Rename ${item.name}`} title="Rename" className="btn-icon-sm">
                         <Pencil size={18} aria-hidden="true" />
                       </button>
-                      {/* Says what it will do: archive one that's attached to applications, delete one that isn't */}
-                      {item.applications_count > 0 ? (
-                        <button
-                          type="button"
-                          onClick={() => deleteDocument(item)}
-                          aria-label={`Archive ${item.name}`}
-                          title="Archive (it stays on its applications)"
-                          className="btn-icon-sm"
-                        >
-                          <Archive size={18} aria-hidden="true" />
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => deleteDocument(item)}
-                          aria-label={`Delete ${item.name}`}
-                          title="Delete"
-                          className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-danger transition-colors hover:bg-rejected-bg"
-                        >
-                          <Trash2 size={18} aria-hidden="true" />
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => deleteDocument(item)}
+                        aria-label={`${isAttached ? "Archive" : "Delete"} ${item.name}`}
+                        title={isAttached ? "Archive (it stays on its applications)" : "Delete"}
+                        className={isAttached ? "btn-icon-sm" : "inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-danger transition-colors hover:bg-rejected-bg"}
+                      >
+                        {isAttached ? <Archive size={18} aria-hidden="true" /> : <Trash2 size={18} aria-hidden="true" />}
+                      </button>
                     </>
                   )}
                 </div>

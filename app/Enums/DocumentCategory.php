@@ -2,12 +2,8 @@
 
 namespace App\Enums;
 
-use App\Enums\Concerns\HasValues;
-
 enum DocumentCategory: string
 {
-    use HasValues;
-
     case Cv = 'cv';
     case CoverLetter = 'cover_letter';
     case Portfolio = 'portfolio';

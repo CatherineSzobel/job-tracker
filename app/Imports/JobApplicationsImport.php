@@ -31,13 +31,11 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
         ]);
 
         // status and priority come normalised from prepareForValidation(). An empty applied date keeps the existing
-        // job's, so re-importing doesn't clear it or move it to today; a new one is applied today unless only Saved.
+        // job's, so re-importing doesn't clear it or move it to today; a new one gets today from the model unless Saved.
         return $job->fill([
             'status' => $row['status'],
             'priority' => $row['priority'],
-            'applied_date' => $row['applied_date']
-                ?? $job->applied_date
-                ?? ($row['status'] === JobStatus::Saved->value ? null : now()->format('Y-m-d')),
+            'applied_date' => $row['applied_date'] ?? $job->applied_date,
             'location' => $row['location'] ?? null,
             'notes' => $this->sanitizeText($row['notes'] ?? null),
             'job_link' => $this->sanitizeUrl($row['job_link'] ?? null),

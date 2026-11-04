@@ -1,5 +1,5 @@
 import Card, { CardLink } from "../UI/Card";
-import { JOB_STATUSES, STATUS_BAR_CLASSES } from "../../constants/jobs";
+import { JOB_STATUSES } from "../../constants/jobs";
 import { INSIGHT_STAT_TILES } from "../../constants/dashboard";
 import BarList from "./BarList";
 import SearchInsights from "./SearchInsights";
@@ -49,7 +49,7 @@ export default function Insights({ stats, dailyGoal, weeklyGoal, searchInsights 
         </Card>
 
         <Card title="Applications by status" className="flex-[2_1_400px]">
-          <BarList rows={JOB_STATUSES.map(({ value, label }) => ({ key: value, label, count: stats[value] ?? 0, barClassName: STATUS_BAR_CLASSES[value] }))} />
+          <BarList rows={JOB_STATUSES.map(({ value, label, bar }) => ({ key: value, label, count: stats[value] ?? 0, barClassName: bar }))} />
         </Card>
       </div>
 

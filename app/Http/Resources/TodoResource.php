@@ -18,7 +18,6 @@ class TodoResource extends JsonResource
             'text' => $this->text,
             'done' => (bool) $this->done, // unset on a just-created todo; the column defaults to false
             'due_date' => $this->due_date?->format('Y-m-d'),
-            'completed_at' => $this->completed_at,
             'job_application' => $this->relationLoaded('jobApplication') && $this->jobApplication
                 ? [
                     'id' => $this->jobApplication->id,

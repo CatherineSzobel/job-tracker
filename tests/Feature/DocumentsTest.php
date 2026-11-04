@@ -25,11 +25,6 @@ class DocumentsTest extends TestCase
         return Storage::disk(config('filesystems.documents_disk'));
     }
 
-    private function jobFor(User $user): JobApplication
-    {
-        return $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer']);
-    }
-
     /**
      * A file document whose file really exists on the (fake) documents disk.
      */
@@ -144,7 +139,7 @@ class DocumentsTest extends TestCase
         $newer = Document::factory()->for($user)->create(['name' => 'Newer']);
         Document::factory()->for($user)->archived()->create(['name' => 'Archived']);
         Document::factory()->create(['name' => 'Someone else’s']);
-        $this->jobFor($user)->documents()->attach($older, ['attached_at' => now()]);
+        JobApplication::factory()->for($user)->create()->documents()->attach($older, ['attached_at' => now()]);
 
         $response = $this->actingAs($user)->getJson('/api/documents');
 
@@ -287,7 +282,7 @@ class DocumentsTest extends TestCase
         $this->freezeSecond(); // timestamps are stored without microseconds
         $user = User::factory()->create();
         $document = $this->storedFileFor($user);
-        $this->jobFor($user)->documents()->attach($document, ['attached_at' => now()]);
+        JobApplication::factory()->for($user)->create()->documents()->attach($document, ['attached_at' => now()]);
 
         $this->actingAs($user)->deleteJson("/api/documents/{$document->id}")
             ->assertOk()
@@ -317,7 +312,7 @@ class DocumentsTest extends TestCase
         $this->fakeDocumentsDisk();
         $user = User::factory()->create();
         $document = $this->storedFileFor($user);
-        $this->jobFor($user)->documents()->attach($document, ['attached_at' => now()]);
+        JobApplication::factory()->for($user)->create()->documents()->attach($document, ['attached_at' => now()]);
 
         $this->actingAs($user)->deleteJson("/api/documents/{$document->id}?archive_only=1")->assertOk();
 
@@ -341,7 +336,7 @@ class DocumentsTest extends TestCase
         $disk = $this->fakeDocumentsDisk();
         $user = User::factory()->create();
         $document = $this->storedFileFor($user, ['archived_at' => now()]);
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
         $job->documents()->attach($document, ['attached_at' => now()]);
         $this->actingAs($user)->deleteJson("/api/job-applications/{$job->id}")->assertNoContent();
 
@@ -355,7 +350,7 @@ class DocumentsTest extends TestCase
     {
         $this->travelTo('2026-09-29 12:00:00');
         $user = User::factory()->create();
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
         [$kept, $removed, $added] = Document::factory()->for($user)->count(3)->create();
         $job->documents()->attach([$kept->id, $removed->id], ['attached_at' => '2026-09-28 09:00:00']);
 
@@ -371,7 +366,7 @@ class DocumentsTest extends TestCase
     public function test_sync_with_an_empty_list_detaches_everything(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
         $job->documents()->attach(Document::factory()->for($user)->create(), ['attached_at' => now()]);
 
         $this->actingAs($user)->putJson("/api/job-applications/{$job->id}/documents", ['document_ids' => []])
@@ -384,7 +379,7 @@ class DocumentsTest extends TestCase
     public function test_resync_keeps_the_original_attached_at(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
         $document = Document::factory()->for($user)->create();
         $job->documents()->attach($document, ['attached_at' => '2026-09-01 09:00:00']);
         $this->travelTo('2026-09-29 12:00:00');
@@ -399,7 +394,7 @@ class DocumentsTest extends TestCase
     public function test_sync_rejects_a_newly_added_archived_document_with_422(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
         $archived = Document::factory()->for($user)->archived()->create();
 
         $this->actingAs($user)->putJson("/api/job-applications/{$job->id}/documents", ['document_ids' => [$archived->id]])
@@ -411,7 +406,7 @@ class DocumentsTest extends TestCase
     public function test_sync_keeps_an_already_attached_archived_document(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
         $archived = Document::factory()->for($user)->archived()->create();
         $job->documents()->attach($archived, ['attached_at' => now()]);
         $other = Document::factory()->for($user)->create();
@@ -442,7 +437,7 @@ class DocumentsTest extends TestCase
     public function test_application_show_and_update_include_documents(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
         $document = Document::factory()->for($user)->create();
         $job->documents()->attach($document, ['attached_at' => now()]);
 

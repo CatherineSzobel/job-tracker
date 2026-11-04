@@ -32,7 +32,7 @@ class ApiResponseShapeTest extends TestCase
         'debrief_notes',
     ];
 
-    private const TODO = ['id', 'text', 'done', 'due_date', 'completed_at', 'job_application', 'created_at'];
+    private const TODO = ['id', 'text', 'done', 'due_date', 'job_application', 'created_at'];
 
     private const NOTE = ['id', 'title', 'content', 'is_pinned', 'created_at'];
 

@@ -14,15 +14,10 @@ class TodosTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function jobFor(User $user, string $company = 'Acme'): JobApplication
-    {
-        return $user->jobApplications()->create(['company_name' => $company, 'position' => 'Developer']);
-    }
-
     public function test_creates_a_dated_todo_linked_to_an_application_and_returns_201(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
 
         $this->actingAs($user)->postJson('/api/todos', [
             'text' => 'Email recruiter',
@@ -31,7 +26,7 @@ class TodosTest extends TestCase
         ])
             ->assertCreated()
             ->assertJsonPath('data.due_date', '2026-10-02')
-            ->assertJsonPath('data.job_application', ['id' => $job->id, 'company_name' => 'Acme', 'position' => 'Developer']);
+            ->assertJsonPath('data.job_application', ['id' => $job->id, 'company_name' => $job->company_name, 'position' => $job->position]);
 
         $todo = $user->todos()->sole();
         $this->assertSame('2026-10-02', $todo->due_date->toDateString());
@@ -51,7 +46,7 @@ class TodosTest extends TestCase
     public function test_creating_a_todo_for_another_users_application_returns_422(): void
     {
         $user = User::factory()->create();
-        $othersJob = $this->jobFor(User::factory()->create());
+        $othersJob = JobApplication::factory()->for(User::factory()->create())->create();
 
         $this->actingAs($user)->postJson('/api/todos', ['text' => 'Sneaky', 'job_application_id' => $othersJob->id])
             ->assertJsonValidationErrors('job_application_id');
@@ -85,7 +80,7 @@ class TodosTest extends TestCase
     public function test_update_changes_text_due_date_and_link(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
         $todo = Todo::factory()->for($user)->create(['text' => 'Old']);
 
         $this->actingAs($user)->patchJson("/api/todos/{$todo->id}", [
@@ -106,7 +101,7 @@ class TodosTest extends TestCase
     public function test_update_clears_the_due_date_and_link_with_null(): void
     {
         $user = User::factory()->create();
-        $todo = Todo::factory()->for($user)->create(['due_date' => '2026-10-02', 'job_application_id' => $this->jobFor($user)->id]);
+        $todo = Todo::factory()->for($user)->create(['due_date' => '2026-10-02', 'job_application_id' => JobApplication::factory()->for($user)->create()->id]);
 
         $this->actingAs($user)->patchJson("/api/todos/{$todo->id}", ['due_date' => null, 'job_application_id' => null])
             ->assertOk()
@@ -122,7 +117,7 @@ class TodosTest extends TestCase
     {
         $user = User::factory()->create();
         $todo = Todo::factory()->for($user)->create();
-        $othersJob = $this->jobFor(User::factory()->create());
+        $othersJob = JobApplication::factory()->for(User::factory()->create())->create();
 
         $this->actingAs($user)->patchJson("/api/todos/{$todo->id}", ['job_application_id' => $othersJob->id])
             ->assertJsonValidationErrors('job_application_id');
@@ -147,7 +142,7 @@ class TodosTest extends TestCase
     public function test_list_filters_by_application(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
         $linked = Todo::factory()->for($user)->create(['job_application_id' => $job->id]);
         Todo::factory()->for($user)->create();
 
@@ -161,7 +156,7 @@ class TodosTest extends TestCase
     {
         $user = User::factory()->create();
         Todo::factory()->for($user)->create();
-        $othersJob = $this->jobFor(User::factory()->create());
+        $othersJob = JobApplication::factory()->for(User::factory()->create())->create();
 
         $this->actingAs($user)->getJson("/api/todos?job_application_id={$othersJob->id}")->assertOk()->assertJsonCount(0, 'data');
         $this->getJson('/api/todos?job_application_id=abc')->assertOk()->assertJsonCount(0, 'data');
@@ -170,7 +165,7 @@ class TodosTest extends TestCase
     public function test_deleting_an_application_deletes_its_todos(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
         $linked = Todo::factory()->for($user)->create(['job_application_id' => $job->id]);
         $general = Todo::factory()->for($user)->create();
 
@@ -186,13 +181,14 @@ class TodosTest extends TestCase
         $todo = Todo::factory()->for($user)->create();
         $this->travelTo('2026-10-06 11:00:00');
 
-        $this->actingAs($user)->patchJson("/api/todos/{$todo->id}", ['done' => true])
-            ->assertOk()
-            ->assertJsonPath('data.completed_at', '2026-10-06T11:00:00.000000Z');
+        $this->actingAs($user)->patchJson("/api/todos/{$todo->id}", ['done' => true])->assertOk();
+        $this->assertSame('2026-10-06 11:00:00', $todo->fresh()->completed_at->toDateTimeString());
 
         $this->travel(1)->day();
-        $this->patchJson("/api/todos/{$todo->id}", ['text' => 'Renamed'])->assertJsonPath('data.completed_at', '2026-10-06T11:00:00.000000Z');
-        $this->patchJson("/api/todos/{$todo->id}", ['done' => false])->assertJsonPath('data.completed_at', null);
+        $this->patchJson("/api/todos/{$todo->id}", ['text' => 'Renamed'])->assertOk();
+        $this->assertSame('2026-10-06 11:00:00', $todo->fresh()->completed_at->toDateTimeString());
+        $this->patchJson("/api/todos/{$todo->id}", ['done' => false])->assertOk();
+        $this->assertNull($todo->fresh()->completed_at);
     }
 
     public function test_the_migration_dates_done_todos_by_their_last_update(): void

@@ -17,11 +17,6 @@ class ApplicationActivityTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function jobFor(User $user, array $attributes = []): JobApplication
-    {
-        return $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer', ...$attributes]);
-    }
-
     /**
      * @return list<array{0: string, 1: string}>
      */
@@ -35,7 +30,7 @@ class ApplicationActivityTest extends TestCase
     public function test_a_status_change_is_recorded_once_and_saving_the_same_status_records_nothing(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user, ['status' => JobStatus::Applied]);
+        $job = JobApplication::factory()->for($user)->create(['status' => JobStatus::Applied]);
 
         $this->actingAs($user)->putJson("/api/job-applications/{$job->id}", ['status' => 'interview'])->assertOk();
         $this->putJson("/api/job-applications/{$job->id}", ['status' => 'interview', 'notes' => 'Second round next week'])->assertOk();
@@ -46,8 +41,8 @@ class ApplicationActivityTest extends TestCase
     public function test_batch_status_changes_are_recorded_only_where_the_status_changed(): void
     {
         $user = User::factory()->create();
-        $moved = $this->jobFor($user, ['status' => JobStatus::Interview]);
-        $unchanged = $this->jobFor($user, ['status' => JobStatus::Offer]);
+        $moved = JobApplication::factory()->for($user)->create(['status' => JobStatus::Interview]);
+        $unchanged = JobApplication::factory()->for($user)->create(['status' => JobStatus::Offer]);
 
         $this->actingAs($user)->patchJson('/api/job-applications/batch-changes', ['changes' => [
             ['id' => $moved->id, 'status' => 'offer'],
@@ -62,7 +57,7 @@ class ApplicationActivityTest extends TestCase
     {
         $user = User::factory()->create();
         $this->travelTo('2026-10-01 09:00:00');
-        $job = $this->jobFor($user, ['status' => JobStatus::Saved]);
+        $job = JobApplication::factory()->for($user)->create(['status' => JobStatus::Saved]);
         $this->actingAs($user);
 
         $this->travelTo('2026-10-02 10:00:00');
@@ -98,7 +93,7 @@ class ApplicationActivityTest extends TestCase
     public function test_an_application_added_as_applied_starts_with_its_applied_date(): void
     {
         $user = User::factory()->create();
-        $job = $this->jobFor($user, ['applied_date' => '2026-09-15']);
+        $job = JobApplication::factory()->for($user)->create(['applied_date' => '2026-09-15']);
 
         $this->actingAs($user)->getJson("/api/job-applications/{$job->id}/activity")
             ->assertOk()
@@ -109,7 +104,7 @@ class ApplicationActivityTest extends TestCase
     {
         $user = User::factory()->create();
         $this->travelTo('2026-10-01 09:00:00');
-        $job = $this->jobFor($user, ['status' => 'applied', 'applied_date' => '2026-10-01']);
+        $job = JobApplication::factory()->for($user)->create(['status' => 'applied', 'applied_date' => '2026-10-01']);
         $this->travelTo('2026-10-05 10:00:00');
 
         $this->actingAs($user)->putJson("/api/job-applications/{$job->id}", ['status' => 'saved'])->assertOk();
@@ -124,7 +119,7 @@ class ApplicationActivityTest extends TestCase
 
     public function test_another_users_activity_is_not_found(): void
     {
-        $job = $this->jobFor(User::factory()->create());
+        $job = JobApplication::factory()->for(User::factory()->create())->create();
 
         $this->actingAs(User::factory()->create())->getJson("/api/job-applications/{$job->id}/activity")->assertNotFound();
     }

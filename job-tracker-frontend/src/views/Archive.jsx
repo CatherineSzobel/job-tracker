@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import API from "../api/axios";
 import ArchivedJobCard from "../components/JobApplications/ArchivedJobCard";
 import BatchBar from "../components/JobApplications/BatchBar";
-import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
+import { addJobsBack, batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
 import { undoArchiving } from "../components/JobApplications/useArchiveWithTodos";
 import useBatchChanges from "../components/JobApplications/useBatchChanges";
 import useSendBatch from "../components/JobApplications/useSendBatch";
@@ -26,20 +26,15 @@ export default function Archive() {
     const { sendBatch, busy: batchBusy } = useSendBatch({ setJobs: setArchivedJobs, listShowsArchived: true, onDone: exitSelecting });
     const showToast = useToastStore((state) => state.showToast);
 
-    const loadArchivedJobs = useCallback(
-        () =>
-            API.get("/job-applications", { params: { archived: true } })
-                .then((res) => setArchivedJobs(res.data.data))
-                .catch((err) => {
-                    console.error(err);
-                    showToast("Failed to load archived jobs");
-                }),
-        [showToast]
-    );
-
     useEffect(() => {
-        loadArchivedJobs().finally(() => setLoading(false));
-    }, [loadArchivedJobs]);
+        API.get("/job-applications", { params: { archived: true } })
+            .then((res) => setArchivedJobs(res.data.data))
+            .catch((err) => {
+                console.error(err);
+                showToast("Failed to load archived jobs");
+            })
+            .finally(() => setLoading(false));
+    }, [showToast]);
 
     // Drops a restored or deleted job from the list
     const removeJob = (removedJobId) => {
@@ -49,13 +44,10 @@ export default function Archive() {
     const selectedJobs = archivedJobs.filter((job) => selectedIds.includes(job.id));
     const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
 
-    // The batch answer is in the list shape, so the re-archived applications go straight back in
-    const addBack = (archivedAgain) =>
-        setArchivedJobs((currentJobs) => [...archivedAgain, ...currentJobs.filter((job) => !archivedAgain.some((archived) => archived.id === job.id))]);
-
+    // The toast's Undo after restoring, for the bar and for a card: archives them again and puts them back in the list
     const undoRestoreSelected = async (ids) => {
         const archivedAgain = await undoArchiving(ids, true);
-        if (archivedAgain) addBack(archivedAgain);
+        if (archivedAgain) setArchivedJobs((currentJobs) => addJobsBack(currentJobs, archivedAgain));
     };
 
     // The bar's Restore: straight away, with Undo on the toast
@@ -104,7 +96,7 @@ export default function Archive() {
                             key={job.id}
                             job={job}
                             onRemove={removeJob}
-                            onUndone={addBack}
+                            onUndo={undoRestoreSelected}
                             selecting={selecting}
                             selected={selectedIds.includes(job.id)}
                             onToggleSelect={toggleSelected}
