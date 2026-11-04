@@ -8,11 +8,29 @@ use DateTimeInterface;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
 
-class JobApplicationsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
+class JobApplicationsExport extends DefaultValueBinder implements FromCollection, ShouldAutoSize, WithCustomValueBinder, WithHeadings, WithMapping
 {
+    /**
+     * Every string as plain text, so "=HYPERLINK(...)" typed into a field isn't a live formula in the file
+     */
+    public function bindValue(Cell $cell, mixed $value): bool
+    {
+        if (is_string($value)) {
+            $cell->setValueExplicit($value, DataType::TYPE_STRING);
+
+            return true;
+        }
+
+        return parent::bindValue($cell, $value);
+    }
+
     public function collection()
     {
         return Auth::user()

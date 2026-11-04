@@ -35,7 +35,10 @@ export default function ApplicationActivity({ jobId, refreshKey }) {
     let current = true;
     API.get(`/job-applications/${jobId}/activity`)
       .then((res) => current && setEvents(res.data.data))
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        if (current) setEvents(false);
+      });
     return () => {
       current = false;
     };
@@ -45,6 +48,8 @@ export default function ApplicationActivity({ jobId, refreshKey }) {
     <Card title="Activity" icon={History}>
       {events === null ? (
         <PageLoader text="Loading activity..." compact />
+      ) : events === false ? (
+        <p className="text-muted">Couldn't load the activity.</p>
       ) : events.length === 0 ? (
         <p className="text-muted">Nothing yet.</p>
       ) : (

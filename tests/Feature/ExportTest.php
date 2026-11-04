@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
@@ -47,6 +48,18 @@ class ExportTest extends TestCase
 
         $this->assertSame('tags', $rows[0][8]);
         $this->assertSame('fintech, remote', $rows[1][8]);
+    }
+
+    public function test_export_writes_text_starting_with_an_equals_sign_as_text_not_a_formula(): void
+    {
+        $user = User::factory()->create();
+        $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer', 'contact_name' => '=HYPERLINK("https://evil.test","Open")']);
+
+        $response = $this->actingAs($user)->get('/api/job-applications/export')->assertOk();
+
+        $cell = IOFactory::load($response->baseResponse->getFile()->getPathname())->getActiveSheet()->getCell('N2');
+        $this->assertSame(DataType::TYPE_STRING, $cell->getDataType());
+        $this->assertSame('=HYPERLINK("https://evil.test","Open")', $cell->getValue());
     }
 
     public function test_export_writes_the_salary_source_contact_and_deadline(): void

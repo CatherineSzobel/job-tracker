@@ -14,6 +14,7 @@ use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, WithValidation
 {
@@ -78,6 +79,12 @@ class JobApplicationsImport implements SkipsOnFailure, ToModel, WithHeadingRow, 
         foreach (ApplicationDetailRules::fields() as $column) {
             if (array_key_exists($column, $data)) {
                 $data[$column] = $this->nullIfEmpty($data[$column]);
+            }
+        }
+        // A date cell comes as Excel's day number (46296 = 2026-10-01); a date typed as text is left to the rule
+        foreach (['applied_date', 'deadline'] as $column) {
+            if (is_numeric($data[$column] ?? null)) {
+                $data[$column] = Date::excelToDateTimeObject($data[$column])->format('Y-m-d');
             }
         }
         if (array_key_exists('salary_currency', $data)) {

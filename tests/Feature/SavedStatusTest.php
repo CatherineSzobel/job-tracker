@@ -44,6 +44,18 @@ class SavedStatusTest extends TestCase
         $this->putJson("/api/job-applications/{$job->id}", ['status' => 'interview'])->assertJsonPath('data.applied_date', '2026-10-02');
     }
 
+    public function test_withdrawing_a_saved_application_gives_it_no_applied_date_until_it_is_applied_for(): void
+    {
+        $user = User::factory()->create();
+        $job = $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer', 'status' => JobStatus::Saved]);
+        $this->actingAs($user);
+        $this->travelTo('2026-10-02 09:30:00');
+
+        $this->putJson("/api/job-applications/{$job->id}", ['status' => 'withdrawn'])->assertJsonPath('data.applied_date', null);
+        $this->putJson("/api/job-applications/{$job->id}", ['status' => 'no_response'])->assertJsonPath('data.applied_date', null);
+        $this->putJson("/api/job-applications/{$job->id}", ['status' => 'applied'])->assertJsonPath('data.applied_date', '2026-10-02');
+    }
+
     public function test_batch_status_changes_date_only_the_applications_leaving_saved(): void
     {
         $user = User::factory()->create();

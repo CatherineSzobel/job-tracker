@@ -102,7 +102,7 @@ export default function Applications() {
       return true;
     } catch (err) {
       console.error(err);
-      replaceJob(() => job);
+      replaceJob((existing) => (existing.status === status ? job : existing));
       showToast(err.response?.data?.message || "Failed to move the application");
       return false;
     }

@@ -69,14 +69,15 @@ class JobApplication extends Model
 
     /**
      * The rules every save follows (single updates, batches, re-imports): moving on from Saved for the first time
-     * makes today the applied date; archived_at follows is_archived (an archived one keeps the date it was first
+     * makes today the applied date (not to Withdrawn or No response, which can mean it was never sent); archived_at follows is_archived (an archived one keeps the date it was first
      * archived); and each status change is recorded in the history.
      */
     protected static function booted(): void
     {
         static::saving(function (JobApplication $job) {
-            if ($job->isDirty('status') && $job->getOriginal('status') === JobStatus::Saved
-                && $job->status !== JobStatus::Saved && $job->applied_date === null) {
+            $notSent = [JobStatus::Saved, JobStatus::Withdrawn, JobStatus::NoResponse];
+            if ($job->isDirty('status') && $job->applied_date === null
+                && in_array($job->getOriginal('status'), $notSent, true) && ! in_array($job->status, $notSent, true)) {
                 $job->applied_date = now()->toDateString();
             }
             if ($job->isDirty('is_archived')) {
