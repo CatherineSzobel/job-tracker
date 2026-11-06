@@ -31,7 +31,8 @@ class StoreJobApplicationRequest extends FormRequest
             'status' => ['sometimes', Rule::enum(JobStatus::class)],
             'priority' => ['sometimes', Rule::enum(Priority::class)],
             'job_link' => 'nullable|url:http,https|max:255',
-            'notes' => 'nullable|string',
+            'notes' => 'nullable|string|max:10000',
+            ...ApplicationDetailRules::rules(),
         ];
     }
 }

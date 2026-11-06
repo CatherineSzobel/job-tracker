@@ -99,7 +99,7 @@ class BankQuestionSeeder extends Seeder
 
         $questions = collect(self::QUESTIONS)->map(fn (array $question) => $user->bankQuestions()->create($question));
 
-        $nextInterview = Interview::where('user_id', $user->id)->orderBy('interview_date')->first();
+        $nextInterview = Interview::where('user_id', $user->id)->where('interview_date', '>=', now())->orderBy('interview_date')->first();
         if ($nextInterview === null) {
             return;
         }

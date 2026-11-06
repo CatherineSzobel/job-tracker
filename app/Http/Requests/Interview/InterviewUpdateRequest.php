@@ -27,7 +27,8 @@ class InterviewUpdateRequest extends FormRequest
             'interview_date' => 'sometimes|date',
             'type' => ['sometimes', Rule::enum(InterviewType::class)],
             'location' => 'sometimes|nullable|string|max:255',
-            'notes' => 'sometimes|string|nullable',
+            'meeting_url' => 'sometimes|nullable|url:http,https|max:2048',
+            'notes' => 'sometimes|string|nullable|max:10000',
         ];
     }
 }

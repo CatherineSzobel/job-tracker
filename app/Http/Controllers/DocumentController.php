@@ -57,12 +57,14 @@ class DocumentController extends Controller
         return $this->documentService->download($document);
     }
 
-    // Attached documents are archived (200 + resource), unattached ones deleted (204)
-    public function destroy(Document $document): DocumentResource|Response
+    // Attached documents are archived (200 + resource), unattached ones deleted (204).
+    // archive_only: the user was told it would be archived, so one no longer attached answers 409 instead of
+    // being deleted without asking.
+    public function destroy(Request $request, Document $document): DocumentResource|Response
     {
         Gate::authorize('delete', $document);
 
-        return $this->documentService->archiveOrDelete($document)
+        return $this->documentService->archiveOrDelete($document, $request->boolean('archive_only'))
             ? new DocumentResource($document->loadCount('jobApplications'))
             : response()->noContent();
     }

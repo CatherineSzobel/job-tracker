@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import API from "../api/axios";
@@ -40,6 +40,10 @@ const summaryFor = (date, days, loading) => {
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  // The search insights: null until loaded, false when that failed. Loaded the first time Insights is shown
+  // and kept, so switching tabs doesn't fetch them again.
+  const [searchInsights, setSearchInsights] = useState(null);
+  const searchInsightsRequested = useRef(false);
 
   // One to-do list for the page: Quick to-dos changes it and Coming up shows it, so both stay in step
   const todoList = useTodos();
@@ -88,6 +92,17 @@ export default function Dashboard() {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    if (activeTab !== "insights" || searchInsightsRequested.current) return;
+    searchInsightsRequested.current = true;
+    API.get("/job-applications/insights")
+      .then((res) => setSearchInsights(res.data.data))
+      .catch((err) => {
+        console.error(err);
+        setSearchInsights(false);
+      });
+  }, [activeTab]);
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -103,7 +118,7 @@ export default function Dashboard() {
           {loading ? (
             <PageLoader text="Loading insights..." />
           ) : (
-            <Insights stats={stats} dailyGoal={dailyGoal} weeklyGoal={weeklyGoal} />
+            <Insights stats={stats} dailyGoal={dailyGoal} weeklyGoal={weeklyGoal} searchInsights={searchInsights} />
           )}
         </TabPanel>
       ) : (

@@ -23,6 +23,12 @@ export function mergeBatchResult(currentJobs, updatedJobs, listShowsArchived) {
     .filter((job) => job.is_archived === listShowsArchived);
 }
 
+// The batch answer after an undo is in the list shape, so those applications go straight back in
+// (replacing any copy already there; the page sorts on render)
+export function addJobsBack(currentJobs, jobsBack) {
+  return [...jobsBack, ...currentJobs.filter((job) => !jobsBack.some((back) => back.id === job.id))];
+}
+
 // Every tag id on these applications, once (what "Remove tag" can offer)
 export function tagIdsOf(jobs) {
   return [...new Set(jobs.flatMap((job) => (job.tags ?? []).map((tag) => tag.id)))];

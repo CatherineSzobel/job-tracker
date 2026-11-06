@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\DocumentCategory;
 use App\Enums\DocumentKind;
+use App\Enums\JobStatus;
 use App\Models\Document;
 use App\Models\JobApplication;
 use App\Models\User;
@@ -29,7 +30,7 @@ class DocumentSeeder extends Seeder
         $documentService->deleteFilesFor($user);
 
         $cv = $this->storePdf($user, $disk, DocumentCategory::Cv, 'CV – Software Engineer 2026', 'Test_User_CV_2026.pdf', 'Test User - Software Engineer', [
-            'San Francisco, CA  |  test@example.com',
+            'Ghent, Belgium  |  test@example.com',
             '',
             'Experience',
             '2023 - now   Backend Developer, Acme Corp (Laravel, MySQL, AWS)',
@@ -38,7 +39,7 @@ class DocumentSeeder extends Seeder
             'Skills: PHP, Laravel, React, SQL, Docker, CI/CD',
         ]);
         $oldCv = $this->storePdf($user, $disk, DocumentCategory::Cv, 'CV – 2025 (old)', 'Test_User_CV_2025.pdf', 'Test User - Developer', [
-            'San Francisco, CA  |  test@example.com',
+            'Ghent, Belgium  |  test@example.com',
             '',
             '2020 - now   Full-stack Developer, Globex (PHP, React)',
         ]);
@@ -61,10 +62,12 @@ class DocumentSeeder extends Seeder
         // Points back at the app's own library, so the demo never links to a site someone could own
         $this->link($user, DocumentCategory::Portfolio, 'Portfolio site', rtrim(config('app.frontend_url'), '/').'/documents');
 
-        // What was "sent": the oldest application got the old CV (since archived), the next few the current set
-        $applications = $user->jobApplications()->oldest('applied_date')->take(5)->get();
-        $applications->first()?->documents()->attach($oldCv, ['attached_at' => $applications->first()->applied_date]);
-        $applications->skip(1)->each(fn (JobApplication $application) => $application->documents()->attach(
+        // What was "sent" (Saved ones weren't sent anything): the oldest application got the old CV (since archived),
+        // and the ones that got to an interview or an offer the current set, so the pages people open first show it
+        $applied = $user->jobApplications()->whereNotNull('applied_date');
+        $oldest = $applied->clone()->oldest('applied_date')->first();
+        $oldest?->documents()->attach($oldCv, ['attached_at' => $oldest->applied_date]);
+        $applied->clone()->whereIn('status', [JobStatus::Interview, JobStatus::Offer])->get()->each(fn (JobApplication $application) => $application->documents()->attach(
             [$cv->id, $coverLetter->id, $linkedIn->id],
             ['attached_at' => $application->applied_date],
         ));

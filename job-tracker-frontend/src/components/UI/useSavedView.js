@@ -1,30 +1,29 @@
 import { useState } from "react";
+import { LIST_VIEWS } from "../../constants/views";
 
-const VIEWS = ["grid", "grouped"];
-
-// A stored value that isn't a known view (e.g. from an older version) counts as "grid"
-function readSavedView(storageKey) {
+// A stored value that isn't one of the choices (e.g. from an older version) counts as the default (the first)
+function readSavedChoice(storageKey, choices) {
   try {
-    const savedView = localStorage.getItem(storageKey);
-    return VIEWS.includes(savedView) ? savedView : "grid";
+    const savedValue = localStorage.getItem(storageKey);
+    return choices.some((choice) => choice.value === savedValue) ? savedValue : choices[0].value;
   } catch {
-    return "grid";
+    return choices[0].value;
   }
 }
 
-// "grid" or "grouped", remembered per browser under storageKey. localStorage can throw
-// (private windows, blocked storage); then the choice lasts for this visit only.
-export default function useSavedView(storageKey) {
-  const [view, setView] = useState(() => readSavedView(storageKey));
+// One of `choices` ([{ value }], LIST_VIEWS unless given, e.g. a sort order), remembered per browser under
+// storageKey. localStorage can throw (private windows, blocked storage); then the choice lasts for this visit only.
+export default function useSavedView(storageKey, choices = LIST_VIEWS) {
+  const [value, setValue] = useState(() => readSavedChoice(storageKey, choices));
 
-  const changeView = (nextView) => {
-    setView(nextView);
+  const changeValue = (nextValue) => {
+    setValue(nextValue);
     try {
-      localStorage.setItem(storageKey, nextView);
+      localStorage.setItem(storageKey, nextValue);
     } catch {
       // Storage unavailable: keep the choice in memory only
     }
   };
 
-  return [view, changeView];
+  return [value, changeValue];
 }

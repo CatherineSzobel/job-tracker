@@ -3,12 +3,7 @@ import { Bell } from "lucide-react";
 import Card from "../UI/Card";
 import PageLoader from "../UI/PageLoader";
 import useReminders from "./useReminders";
-
-// What Dismiss will do, shown as its tooltip
-const DISMISS_HINTS = {
-  today: "Hide until tomorrow",
-  permanent: "Hide until you update this application",
-};
+import { REMINDER_DISMISS_HINTS } from "../../constants/reminders";
 
 // Applications to follow up. "Add follow-up" opens the application, where its follow-up shortcuts are.
 // "No reminders" when there are none (which includes reminders being off).
@@ -35,7 +30,7 @@ export default function Reminders() {
                 <Link to={`/jobs/${job.id}`} className="btn-soft">
                   Add follow-up
                 </Link>
-                <button type="button" onClick={() => dismiss(job)} title={DISMISS_HINTS[dismissMode]} className="btn-small">
+                <button type="button" onClick={() => dismiss(job)} title={REMINDER_DISMISS_HINTS[dismissMode]} className="btn-small">
                   Dismiss
                 </button>
               </div>

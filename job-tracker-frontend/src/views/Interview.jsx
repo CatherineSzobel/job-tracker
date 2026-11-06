@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
-import { differenceInCalendarDays, format } from "date-fns";
-import { Check, ChevronLeft, Pencil } from "lucide-react";
+import { format } from "date-fns";
+import { CalendarPlus, Check, ChevronLeft, Pencil, Video } from "lucide-react";
 import API from "../api/axios";
 import Tabs, { TabPanel } from "../components/UI/Tabs";
 import Card from "../components/UI/Card";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
 import InterviewForm from "../components/Interview/InterviewForm";
+import { addInterviewToCalendar } from "../components/Interview/interviewCalendar";
+import { isUpcoming } from "../components/Interview/interviewFilters";
 import BankQuestionForm from "../components/InterviewPrep/BankQuestionForm";
 import BankQuestionsSection from "../components/InterviewPrep/BankQuestionsSection";
 import EditableList from "../components/InterviewPrep/EditableList";
@@ -22,16 +24,15 @@ import { interviewTypeLabel } from "../constants/jobs";
 import { BANK_LINKS_MAX, EMPTY_BANK_QUESTION, PREP_LIMITS, PREP_TABS } from "../constants/interviewPrep";
 import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { useToastStore } from "../stores/useToastStore";
-import { toDateTimeInputValue } from "../utils/dateInput";
+import { toInterviewForm, toInterviewPayload } from "../components/Interview/interviewPayload";
+import { countdownLabel } from "../utils/countdown";
 
 const showToast = (message) => useToastStore.getState().showToast(message);
 
 // The pill above the title: "Today", "Tomorrow", "In 5 days", or "Done" once it's over
 const whenPill = (date) => {
-  if (date < new Date()) return { label: "Done", classes: "bg-subtle text-muted-2" };
-  const days = differenceInCalendarDays(date, new Date());
-  const label = days === 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
-  return { label, classes: "bg-accent text-white" };
+  const countdown = countdownLabel(date);
+  return countdown ? { label: countdown, classes: "bg-accent text-white" } : { label: "Done", classes: "bg-subtle text-muted-2" };
 };
 
 // Keyed by id: opening another interview starts a fresh page, so a save still waiting goes to the
@@ -174,13 +175,7 @@ function InterviewPage({ interviewId }) {
   };
 
   const startEditing = () =>
-    setEditForm({
-      job_id: interview.job_application_id,
-      type: interview.type ?? "",
-      interview_date: toDateTimeInputValue(interview.interview_date),
-      location: interview.location ?? "",
-      notes,
-    });
+    setEditForm({ ...toInterviewForm(interview), notes });
 
   const changeEditForm = (event) => setEditForm((current) => ({ ...current, [event.target.name]: event.target.value }));
 
@@ -188,12 +183,7 @@ function InterviewPage({ interviewId }) {
     event.preventDefault();
     setSavingEdit(true);
     try {
-      const res = await API.put(`/interviews/${interviewId}`, {
-        type: editForm.type || "online",
-        interview_date: editForm.interview_date,
-        location: editForm.location,
-        notes: editForm.notes || null,
-      });
+      const res = await API.put(`/interviews/${interviewId}`, toInterviewPayload(editForm));
       setInterview(res.data.data);
       setNotes(res.data.data.notes ?? "");
       setEditForm(null);
@@ -234,6 +224,7 @@ function InterviewPage({ interviewId }) {
 
   const interviewDate = new Date(interview.interview_date);
   const pill = whenPill(interviewDate);
+  const upcoming = isUpcoming(interview);
 
   return (
     <div className="flex flex-col gap-6">
@@ -258,8 +249,21 @@ function InterviewPage({ interviewId }) {
             </Link>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <SaveStatus status={saveState.status} onRetry={saveState.retry} />
+          {/* Join and Add to calendar only matter until it has happened */}
+          {upcoming && interview.meeting_url && (
+            <a href={interview.meeting_url} target="_blank" rel="noopener noreferrer" className="btn-primary">
+              <Video size={16} aria-hidden="true" />
+              Join
+            </a>
+          )}
+          {upcoming && (
+            <button type="button" onClick={() => addInterviewToCalendar(interview)} className="btn-secondary">
+              <CalendarPlus size={16} aria-hidden="true" />
+              Add to calendar
+            </button>
+          )}
           <button type="button" onClick={startEditing} className="btn-secondary">
             <Pencil size={16} aria-hidden="true" />
             Edit

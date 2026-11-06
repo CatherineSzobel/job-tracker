@@ -23,19 +23,10 @@ import TodoItem from "../components/Todo/TodoItem";
 import useTodos from "../components/Todo/useTodos";
 import { interviewTypeLabel } from "../constants/jobs";
 import { countOf } from "../utils/plural";
+import { CALENDAR_WEEK_OPTIONS, WEEKDAYS, CALENDAR_EVENT_KINDS } from "../constants/calendar";
 
-const WEEK_OPTIONS = { weekStartsOn: 1 };
-const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 // Cells show a few pills, then "+N more"
 const PILLS_PER_CELL = 3;
-
-// Each kind's pill (desktop cells), dot (phone cells) and legend colours.
-// Full class strings (not built at runtime) so Tailwind can find them.
-const EVENT_KINDS = {
-  interview: { label: "Interview", pill: "bg-accent-soft text-accent-text", dot: "bg-accent" },
-  todo: { label: "To-do", pill: "bg-tag-green-bg text-tag-green-fg", dot: "bg-bar-offer" },
-  overdue: { label: "Overdue", pill: "bg-rejected-bg text-rejected-fg", dot: "bg-bar-rejected" },
-};
 
 export default function Calendar() {
   const [interviews, setInterviews] = useState([]);
@@ -54,8 +45,8 @@ export default function Calendar() {
 
   // Whole weeks, Monday first, so the grid starts and ends with the neighbouring months' days
   const days = eachDayOfInterval({
-    start: startOfWeek(startOfMonth(currentMonth), WEEK_OPTIONS),
-    end: endOfWeek(endOfMonth(currentMonth), WEEK_OPTIONS),
+    start: startOfWeek(startOfMonth(currentMonth), CALENDAR_WEEK_OPTIONS),
+    end: endOfWeek(endOfMonth(currentMonth), CALENDAR_WEEK_OPTIONS),
   });
   const today = startOfToday();
 
@@ -117,7 +108,7 @@ export default function Calendar() {
       <div className="flex flex-wrap items-start gap-6">
         <section aria-label="Month" className="flex min-w-0 flex-[3_1_560px] flex-col gap-2 rounded-2xl border border-line bg-surface p-2 sm:p-4">
           <ul className="flex flex-wrap gap-4 px-2 pt-1 pb-2 text-sm text-muted" aria-label="Legend">
-            {Object.values(EVENT_KINDS).map(({ label, dot }) => (
+            {Object.values(CALENDAR_EVENT_KINDS).map(({ label, dot }) => (
               <li key={label} className="inline-flex items-center gap-1.5">
                 <span aria-hidden="true" className={`size-3 rounded ${dot}`} />
                 {label}
@@ -162,7 +153,7 @@ export default function Calendar() {
                   {/* Desktop: pills with the time and company or the to-do; phones: a dot per item */}
                   <span className="hidden flex-col gap-1 sm:flex">
                     {events.slice(0, PILLS_PER_CELL).map((event) => (
-                      <span key={event.key} className={`truncate rounded px-1.5 text-xs/5 font-semibold ${EVENT_KINDS[event.kind].pill}`}>
+                      <span key={event.key} className={`truncate rounded px-1.5 text-xs/5 font-semibold ${CALENDAR_EVENT_KINDS[event.kind].pill}`}>
                         {event.text}
                       </span>
                     ))}
@@ -173,7 +164,7 @@ export default function Calendar() {
                   {events.length > 0 && (
                     <span className="flex flex-wrap gap-0.5 pl-1 sm:hidden">
                       {events.map((event) => (
-                        <span key={event.key} className={`size-2 rounded-full ${EVENT_KINDS[event.kind].dot}`} />
+                        <span key={event.key} className={`size-2 rounded-full ${CALENDAR_EVENT_KINDS[event.kind].dot}`} />
                       ))}
                     </span>
                   )}

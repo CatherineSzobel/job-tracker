@@ -1,4 +1,5 @@
 import { format, isThisYear, parseISO, startOfWeek, subWeeks } from "date-fns";
+import { CALENDAR_WEEK_OPTIONS } from "../constants/calendar";
 
 // Groups items by a date into years and months: [{ year: "2026", months: [{ key: "2026-09", label: "September", items }] }].
 // getDateString(item): an ISO date or date-time, or empty. order: "newest" (latest year and month first) or "oldest".
@@ -41,10 +42,11 @@ export function groupByDate(items, getDateString, order = "newest") {
 }
 
 // Groups items by how recent their date is, newest first: "This week", "Last week", then one group per month
-// ("September", or "September 2025" outside this year), and "No date" last. Weeks start on Monday.
+// ("September", or "September 2025" outside this year), with the items without a date first in one group
+// labelled undatedLabel. Weeks start on Monday.
 // Returns [{ key, label, items }]; inside a group the newest item comes first.
-export function groupByRecency(items, getDateString, today = new Date()) {
-  const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+export function groupByRecency(items, getDateString, undatedLabel) {
+  const thisWeekStart = startOfWeek(new Date(), CALENDAR_WEEK_OPTIONS);
   const lastWeekStart = subWeeks(thisWeekStart, 1);
   const groups = new Map();
   const undatedItems = [];
@@ -71,6 +73,6 @@ export function groupByRecency(items, getDateString, today = new Date()) {
   }
 
   const result = [...groups.values()];
-  if (undatedItems.length > 0) result.push({ key: "undated", label: "No date", items: undatedItems });
-  return result;
+  if (undatedItems.length === 0) return result;
+  return [{ key: "undated", label: undatedLabel, items: undatedItems }, ...result];
 }

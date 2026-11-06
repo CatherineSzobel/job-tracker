@@ -15,3 +15,25 @@ export const ARCHIVE_TODOS_OPTIONS = [
   { value: "delete", label: "Always delete them" },
   { value: "keep", label: "Always keep them" },
 ];
+
+// Due chip colours by state (Todo/DueChip). Full class strings (not built at runtime) so Tailwind can find them.
+export const DUE_STATE_CLASSES = {
+  overdue: "bg-rejected-bg text-rejected-fg",
+  today: "bg-accent text-white",
+  upcoming: "bg-subtle text-muted-2",
+};
+
+// The To-dos page filter chips
+export const TODO_FILTERS = [
+  { value: "all", label: "All" },
+  { value: "linked", label: "Linked to an application" },
+  { value: "general", label: "General" },
+];
+
+// Open to-dos are grouped by due state; done ones sit in a collapsed section at the end
+export const TODO_SECTIONS = [
+  { state: "overdue", title: "Overdue" },
+  { state: "today", title: "Today" },
+  { state: "upcoming", title: "Upcoming" },
+  { state: "none", title: "No due date" },
+];

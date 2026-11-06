@@ -10,6 +10,7 @@ use App\Http\Resources\InterviewDetailResource;
 use App\Http\Resources\InterviewResource;
 use App\Models\Interview;
 use App\Models\JobApplication;
+use App\Services\InterviewCalendarService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -38,6 +39,19 @@ class InterviewController extends Controller
         Gate::authorize('view', $interview);
 
         return new InterviewDetailResource($interview->load([self::JOB, 'bankQuestions']));
+    }
+
+    /**
+     * "Add to calendar": the interview as an .ics file to download
+     */
+    public function calendar(Interview $interview, InterviewCalendarService $calendar): Response
+    {
+        Gate::authorize('view', $interview);
+
+        return response($calendar->ics($interview), 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="'.$calendar->filename($interview).'"',
+        ]);
     }
 
     /**

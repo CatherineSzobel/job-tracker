@@ -41,3 +41,12 @@ export const TEMPLATE_ITEMS_MAX = 30;
 
 // Which interviews a template item is for; "" is saved as null (all of them)
 export const TEMPLATE_TYPE_OPTIONS = [{ value: "", label: "All" }, ...INTERVIEW_TYPES];
+
+// The bank's category filter: All, then each category
+export const BANK_CATEGORY_CHIPS = [{ value: "all", label: "All" }, ...BANK_QUESTION_CATEGORIES];
+
+// A new row in "People you're meeting"
+export const EMPTY_PREP_PERSON = { name: "", role: "", url: "" };
+
+// Interview prep saves this long after the last change
+export const AUTOSAVE_DELAY_MS = 800;

@@ -2,14 +2,11 @@
 
 use App\Models\User;
 use App\Notifications\RemindersDigest;
+use App\Services\DocumentService;
 use App\Services\ReminderService;
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
-
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
 
 Artisan::command('reminders:send', function (ReminderService $reminderService) {
     $sentCount = 0;
@@ -39,3 +36,22 @@ Artisan::command('reminders:send', function (ReminderService $reminderService) {
 })->purpose('Email each user who wants it a digest of their due reminders');
 
 Schedule::command('reminders:send')->dailyAt('08:00');
+
+Artisan::command('demo:reset', function (DocumentService $documentService) {
+    $demo = User::where('email', config('app.demo_email'))->first();
+
+    // All or nothing: if seeding fails, the old demo data stays
+    DB::transaction(function () use ($demo) {
+        $demo?->delete(); // its applications, interviews, to-dos, notes and documents go with it (cascade)
+        $this->call('db:seed', ['--force' => true]);
+    });
+
+    if ($demo) {
+        $documentService->deleteFilesFor($demo);
+    }
+
+    $this->info('The demo account has been reset.');
+})->purpose('Replace the shared demo account with fresh seed data, relative to today');
+
+// Visitors share the demo account, so whatever one of them changes is gone the next morning
+Schedule::command('demo:reset')->dailyAt('04:00');

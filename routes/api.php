@@ -19,19 +19,21 @@ use Illuminate\Support\Facades\Route;
 // Public routes
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 Route::post('/login', [AuthController::class, 'login']); // failed attempts are limited in LoginRequest
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
-Route::middleware('auth:sanctum')->get('/user', fn (Request $request) => new UserResource($request->user()));
-
-// Protected routes. Single-record routes use route model binding;
+// Protected routes, limited by the "api" limiter (AppServiceProvider). Single-record routes use route model binding;
 // ownership is checked by the model's policy (app/Policies), which answers 404.
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', fn (Request $request) => new UserResource($request->user()));
+
     // Registered before the resource so they aren't read as a {job_application} id
     Route::get('/job-applications/stats', [JobApplicationController::class, 'stats']);
+    Route::get('/job-applications/insights', [JobApplicationController::class, 'insights']);
     Route::get('/job-applications/export', [JobApplicationController::class, 'export']);
     Route::post('/job-applications/import', [JobApplicationController::class, 'import']);
     Route::patch('/job-applications/batch', [JobApplicationController::class, 'batchUpdate']);
     Route::patch('/job-applications/batch-changes', [JobApplicationController::class, 'saveChanges']);
     Route::apiResource('job-applications', JobApplicationController::class);
+    Route::get('/job-applications/{job_application}/activity', [JobApplicationController::class, 'activity']);
     Route::post('/job-applications/{job_application}/interviews', [JobApplicationController::class, 'scheduleInterview']);
     Route::put('/job-applications/{job_application}/tags', [JobApplicationController::class, 'syncTags']);
     Route::put('/job-applications/{job_application}/documents', [DocumentController::class, 'syncForApplication']);
@@ -40,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Registered before the resource so "batch" isn't read as an {interview} id
     Route::delete('/interviews/batch', [InterviewController::class, 'batchDestroy']);
     Route::apiResource('interviews', InterviewController::class)->only(['index', 'show', 'update', 'destroy']);
+    Route::get('/interviews/{interview}/calendar', [InterviewController::class, 'calendar']);
     Route::put('/interviews/{interview}/prep', [InterviewController::class, 'updatePrep']);
     Route::put('/interviews/{interview}/bank-questions', [InterviewController::class, 'syncBankQuestions']);
     Route::apiResource('bank-questions', BankQuestionController::class)->except('show');

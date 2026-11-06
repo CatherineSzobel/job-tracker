@@ -4,8 +4,9 @@ import { mergeBatchResult } from "./batchUpdate";
 
 // Sends a batch request for an applications list (Applications or Archive). sendBatch(sendRequest):
 // sendRequest() resolves to the updated applications. Success puts them into the list (dropping those that
-// left it) and runs onDone (ending select mode, which drops the saved changes); failure shows a toast and
-// keeps the selection and unsaved changes, so it can be tried again. busy: a request is running.
+// left it), runs onDone (ending select mode, which drops the saved changes) and resolves to them; failure
+// shows a toast, keeps the selection and unsaved changes, so it can be tried again, and resolves to null.
+// busy: a request is running.
 export default function useSendBatch({ setJobs, listShowsArchived, onDone }) {
   const [busy, setBusy] = useState(false);
 
@@ -15,9 +16,11 @@ export default function useSendBatch({ setJobs, listShowsArchived, onDone }) {
       const updatedJobs = await sendRequest();
       setJobs((currentJobs) => mergeBatchResult(currentJobs, updatedJobs, listShowsArchived));
       onDone();
+      return updatedJobs;
     } catch (err) {
       console.error(err);
       showToast(err.response?.data?.message || "Failed to update the selected applications");
+      return null;
     } finally {
       setBusy(false);
     }

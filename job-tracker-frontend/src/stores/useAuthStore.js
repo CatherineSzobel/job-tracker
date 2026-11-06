@@ -113,7 +113,9 @@ export const useAuthStore = create(
                         sessionChecked: true,
                     })
                 } catch {
-                    get().clearSession()
+                    // A 401/419 already cleared the session (api/axios.js). Anything else (rate limit, network,
+                    // server error) doesn't mean logged out, so the remembered user stays.
+                    set({ isLoading: false, sessionChecked: true })
                 }
             },
 

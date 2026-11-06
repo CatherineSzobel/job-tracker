@@ -23,11 +23,6 @@ class InterviewPrepTest extends TestCase
         'Have CV and job ad to hand',
     ];
 
-    private function jobFor(User $user): JobApplication
-    {
-        return $user->jobApplications()->create(['company_name' => 'Acme', 'position' => 'Developer']);
-    }
-
     /**
      * Schedules an interview through the API, the way the app does.
      *
@@ -35,7 +30,7 @@ class InterviewPrepTest extends TestCase
      */
     private function schedule(User $user, array $fields = []): Interview
     {
-        $job = $this->jobFor($user);
+        $job = JobApplication::factory()->for($user)->create();
 
         $this->actingAs($user)
             ->postJson("/api/job-applications/{$job->id}/interviews", ['interview_date' => now()->addDay()->toDateTimeString(), ...$fields])
@@ -49,7 +44,7 @@ class InterviewPrepTest extends TestCase
      */
     private function interviewFor(User $user): Interview
     {
-        return $this->jobFor($user)->interviews()->create([
+        return JobApplication::factory()->for($user)->create()->interviews()->create([
             'user_id' => $user->id,
             'interview_date' => now()->addDay(),
             'type' => 'online',
@@ -128,7 +123,7 @@ class InterviewPrepTest extends TestCase
             ->assertJsonPath('data.prep', ['checklist' => [], 'people' => [], 'questions_to_ask' => [], 'questions_asked' => []])
             ->assertJsonPath('data.prep_progress', ['done' => 0, 'total' => 0])
             ->assertJsonPath('data.rating', null)
-            ->assertJsonPath('data.job.company_name', 'Acme');
+            ->assertJsonPath('data.job.company_name', $interview->job->company_name);
     }
 
     public function test_saving_prep_replaces_the_document_rating_and_debrief_notes(): void

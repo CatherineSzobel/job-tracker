@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,24 +12,28 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        // Demo account offered on the login page (see config/app.php demo_email)
-        $user = User::factory()->create([
+        // Demo account offered on the login page (see config/app.php demo_email). In-app reminders are on and the
+        // goals are small, so the dashboard has something to show. Not a factory: Faker isn't installed in production.
+        $user = User::create([
             'name' => 'Test User',
             'email' => config('app.demo_email'),
             'password' => 'secret123',
+            'reminders_in_app' => true,
+            'daily_goal' => 3,
+            'weekly_goal' => 10,
         ]);
 
         $user->profile()->create([
             'name' => $user->name,
-            'title' => 'Software Engineer',
-            'bio' => 'This is a test user for seeding job applications.',
-            'location' => 'San Francisco, CA',
+            'title' => 'Full-stack Developer',
+            'bio' => 'Full-stack developer working with Laravel and React, looking for a product team in Belgium or remote.',
+            'location' => 'Ghent, Belgium',
         ]);
 
         $this->call([
             JobApplicationSeeder::class,
+            TodoSeeder::class,
+            NoteSeeder::class,
             BankQuestionSeeder::class,
             DocumentSeeder::class,
         ]);

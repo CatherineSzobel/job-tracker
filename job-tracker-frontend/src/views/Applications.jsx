@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { EllipsisVertical, Plus } from "lucide-react";
 import API from "../api/axios";
+import ApplicationBoard from "../components/JobApplications/ApplicationBoard";
+import { APPLICATION_SORTS, sortApplications } from "../components/JobApplications/applicationSorts";
 import BatchBar from "../components/JobApplications/BatchBar";
-import { batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
+import { addJobsBack, batchUpdateJobs, saveJobChanges } from "../components/JobApplications/batchUpdate";
 import JobCard from "../components/JobApplications/JobCard";
 import JobForm from "../components/JobApplications/JobForm";
 import JobDateGroups from "../components/JobApplications/JobDateGroups";
-import useArchiveWithTodos, { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, showArchivedToast, undoArchiving } from "../components/JobApplications/useArchiveWithTodos";
 import useBatchChanges from "../components/JobApplications/useBatchChanges";
 import useSendBatch from "../components/JobApplications/useSendBatch";
 import ManageTagsModal from "../components/Tags/ManageTagsModal";
@@ -23,9 +25,10 @@ import useSavedView from "../components/UI/useSavedView";
 import useSelection from "../components/UI/useSelection";
 import { filterChipClasses, filterChipCountClasses } from "../components/UI/filterChipClasses";
 import { EMPTY_JOB, JOB_STATUSES, PRIORITIES } from "../constants/jobs";
-import { confirmAction } from "../stores/useConfirmStore";
+import { APPLICATION_VIEWS } from "../constants/views";
 import { useToastStore } from "../stores/useToastStore";
 import { countOf } from "../utils/plural";
+import { saveBlob } from "../utils/saveBlob";
 
 export default function Applications() {
   const fileInputRef = useRef(null);
@@ -41,7 +44,9 @@ export default function Applications() {
   const [tagFilter, setTagFilter] = useState([]);
   const [search, setSearch] = useState("");
   const [showManageTags, setShowManageTags] = useState(false);
-  const [view, changeView] = useSavedView("applications-view");
+  const [view, changeView] = useSavedView("applications-view", APPLICATION_VIEWS);
+  const isBoard = view === "board";
+  const [sort, changeSort] = useSavedView("applications-sort", APPLICATION_SORTS);
   const { tags, reloadTags, createTag, updateTag, deleteTag } = useTags();
   // Unsaved status and tag changes, per application; leaving select mode (any way) drops them
   const batchChanges = useBatchChanges();
@@ -84,6 +89,31 @@ export default function Applications() {
     }
   };
 
+  // The board's drag: shows at once, rolls back if the save fails. Resolves to whether it worked.
+  // The response replaces the card (leaving Saved also sets the applied date).
+  const moveJob = async (job, status) => {
+    const replaceJob = (next) =>
+      setJobs((currentJobs) => currentJobs.map((existing) => (existing.id === job.id ? next(existing) : existing)));
+
+    replaceJob((existing) => ({ ...existing, status }));
+    try {
+      const res = await API.put(`/job-applications/${job.id}`, { status });
+      replaceJob((existing) => ({ ...existing, ...res.data.data }));
+      return true;
+    } catch (err) {
+      console.error(err);
+      replaceJob((existing) => (existing.status === status ? job : existing));
+      showToast(err.response?.data?.message || "Failed to move the application");
+      return false;
+    }
+  };
+
+  // The board has no select mode (its columns already are the statuses), so switching to it leaves select mode
+  const switchView = (nextView) => {
+    if (nextView === "board") exitSelecting();
+    changeView(nextView);
+  };
+
   const toggleTagFilter = (tagId) =>
     setTagFilter((currentIds) =>
       currentIds.includes(tagId) ? currentIds.filter((id) => id !== tagId) : [...currentIds, tagId]
@@ -111,7 +141,8 @@ export default function Applications() {
   const filteredJobs = jobs.filter((job) => {
     const searchMatch =
       !searchText || [job.position, job.company_name, job.location].some((value) => value?.toLowerCase().includes(searchText));
-    const statusMatch = statusFilter === "all" || job.status === statusFilter;
+    // The board shows every status as a column, so the status chips don't apply there
+    const statusMatch = isBoard || statusFilter === "all" || job.status === statusFilter;
     const priorityMatch = priorityFilter === "all" || job.priority === priorityFilter;
     const tagMatch = tagFilter.every((tagId) => job.tags?.some((tag) => tag.id === tagId));
     return searchMatch && statusMatch && priorityMatch && tagMatch;
@@ -125,15 +156,21 @@ export default function Applications() {
   // Every pending change, including ones on cards a filter now hides (they were made on purpose)
   const saveBatchChanges = () => sendBatch(() => saveJobChanges(batchChanges.toRequest()));
 
-  // deleteOpenTodos: the answer from the to-dos prompt, or undefined when it wasn't asked
-  // (then confirm here, and the server follows the user's setting)
+  // The toast's Undo after archiving, for the bar and for a card: restores them and puts them back in the list
+  const undoArchiveSelected = async (ids) => {
+    const restoredJobs = await undoArchiving(ids, false);
+    if (restoredJobs) setJobs((currentJobs) => addJobsBack(currentJobs, restoredJobs));
+  };
+
+  // deleteOpenTodos: the answer from the to-dos prompt, or undefined to let the server follow the user's setting.
+  // No "Are you sure?": the toast offers Undo instead, unless open to-dos were deleted too.
   const archiveSelected = async (deleteOpenTodos) => {
-    const count = visibleSelectedIds.length;
-    const wasAsked = deleteOpenTodos !== undefined;
-    if (!wasAsked && !(await confirmAction({ message: `Archive ${countOf(count, "application")}?`, confirmLabel: "Archive" }))) {
-      return;
-    }
-    sendBatch(() => batchUpdateJobs(visibleSelectedIds, archiveChanges(deleteOpenTodos)));
+    const ids = visibleSelectedIds;
+    const jobsBefore = jobs.filter((job) => ids.includes(job.id));
+    const archivedJobs = await sendBatch(() => batchUpdateJobs(ids, archiveChanges(deleteOpenTodos)));
+    if (!archivedJobs) return;
+
+    showArchivedToast(jobsBefore, archivedJobs, () => undoArchiveSelected(ids));
   };
 
   const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archiveSelected);
@@ -153,6 +190,7 @@ export default function Applications() {
       key={job.id}
       job={job}
       onRemove={(id) => setJobs((currentJobs) => currentJobs.filter((existing) => existing.id !== id))}
+      onUndo={undoArchiveSelected}
       selecting={selecting}
       selected={selectedIds.includes(job.id)}
       onToggleSelect={toggleSelected}
@@ -163,14 +201,7 @@ export default function Applications() {
   const exportJobs = async () => {
     try {
       const res = await API.get("/job-applications/export", { responseType: "blob" });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "job-applications.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      saveBlob(res, "job-applications.xlsx");
     } catch (err) {
       console.error("Export failed", err);
     }
@@ -214,8 +245,16 @@ export default function Applications() {
 
   // Status chips count every active application, whatever the other filters are
   const statusCounts = Object.fromEntries(JOB_STATUSES.map(({ value }) => [value, jobs.filter((job) => job.status === value).length]));
-  const statusChips = [{ value: "all", label: "All", count: jobs.length }, ...JOB_STATUSES.map((status) => ({ ...status, count: statusCounts[status.value] }))];
+  // Statuses nobody is in are left out (seven chips take five rows on a phone), unless that's the current filter
+  const statusChips = [
+    { value: "all", label: "All", count: jobs.length },
+    ...JOB_STATUSES.map((status) => ({ ...status, count: statusCounts[status.value] })).filter(
+      ({ value, count }) => count > 0 || value === statusFilter
+    ),
+  ];
   const isFiltered = filteredJobs.length !== jobs.length;
+  // "By date" groups by applied date instead
+  const sortedJobs = view === "grouped" ? filteredJobs : sortApplications(filteredJobs, sort);
 
   return (
     <div className={`flex flex-col gap-6 ${selecting ? "pb-32" : ""}`}>
@@ -224,15 +263,17 @@ export default function Applications() {
         description={`${countOf(jobs.length, "active application")}${isFiltered ? ` · ${filteredJobs.length} shown` : ""}`}
         actions={
           <>
-            <ViewToggle view={view} onChange={changeView} />
+            <ViewToggle view={view} onChange={switchView} views={APPLICATION_VIEWS} />
 
-            <SelectModeButtons
-              selecting={selecting}
-              visibleCount={visibleIds.length}
-              onStart={startSelecting}
-              onSelectAll={() => selectMany(visibleIds)}
-              onCancel={exitSelecting}
-            />
+            {!isBoard && (
+              <SelectModeButtons
+                selecting={selecting}
+                visibleCount={visibleIds.length}
+                onStart={startSelecting}
+                onSelectAll={() => selectMany(visibleIds)}
+                onCancel={exitSelecting}
+              />
+            )}
 
             <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
               <Plus size={20} strokeWidth={2.5} aria-hidden="true" />
@@ -261,21 +302,23 @@ export default function Applications() {
           </>
         }
       >
-        {/* Filters: search, status chips with counts, then priority and tags */}
+        {/* Filters: search, status chips with counts (not on the board), then priority, sort (not "By date") and tags */}
         <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
           <SearchInput label="Search position, company or location" value={search} onChange={setSearch} />
 
-          <div role="group" aria-label="Filter by status" className="flex flex-wrap gap-2">
-            {statusChips.map(({ value, label, count }) => {
-              const isActive = statusFilter === value;
-              return (
-                <button key={value} type="button" aria-pressed={isActive} onClick={() => setStatusFilter(value)} className={filterChipClasses(isActive)}>
-                  {label}
-                  <span className={filterChipCountClasses(isActive)}>{count}</span>
-                </button>
-              );
-            })}
-          </div>
+          {!isBoard && (
+            <div role="group" aria-label="Filter by status" className="flex flex-wrap gap-2">
+              {statusChips.map(({ value, label, count }) => {
+                const isActive = statusFilter === value;
+                return (
+                  <button key={value} type="button" aria-pressed={isActive} onClick={() => setStatusFilter(value)} className={filterChipClasses(isActive)}>
+                    {label}
+                    <span className={filterChipCountClasses(isActive)}>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-4">
             <label className="inline-flex items-center gap-2 font-semibold">
@@ -291,6 +334,18 @@ export default function Applications() {
                 ))}
               </select>
             </label>
+
+            {/* "By date" is always in applied-date order; on the board the sort orders each column */}
+            {view !== "grouped" && (
+              <label className="inline-flex items-center gap-2 font-semibold">
+                Sort
+                <select className="input-field min-h-10 w-auto py-1 font-normal" value={sort} onChange={(e) => changeSort(e.target.value)}>
+                  {APPLICATION_SORTS.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             {tags.length > 0 && (
               <div role="group" aria-label="Filter by tag" className="flex flex-wrap items-center gap-2">
@@ -314,6 +369,8 @@ export default function Applications() {
         </div>
       ) : filteredJobs.length === 0 ? (
         <p className="text-muted">No applications match these filters.</p>
+      ) : isBoard ? (
+        <ApplicationBoard jobs={sortedJobs} onMove={moveJob} />
       ) : view === "grouped" ? (
         <JobDateGroups
           jobs={filteredJobs}
@@ -322,7 +379,7 @@ export default function Applications() {
           onSelectAll={(groupJobs) => selectMany(groupJobs.map((job) => job.id))}
         />
       ) : (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">{filteredJobs.map(renderJob)}</ul>
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">{sortedJobs.map(renderJob)}</ul>
       )}
 
       {showForm && (

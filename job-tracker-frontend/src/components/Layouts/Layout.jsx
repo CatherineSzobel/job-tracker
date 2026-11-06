@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
+import PageLoader from "../UI/PageLoader";
 import Sidebar from "../Sidebar";
 import Navbar from "../Navbar";
 import PhoneBar from "../PhoneBar";
@@ -14,7 +16,10 @@ function Layout() {
         <PhoneBar />
         <Navbar />
         <main className="mx-auto w-full max-w-[1280px] flex-1 p-4 sm:p-6 lg:p-8">
-          <Outlet />
+          {/* While a page's code loads, the sidebar and bars stay */}
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

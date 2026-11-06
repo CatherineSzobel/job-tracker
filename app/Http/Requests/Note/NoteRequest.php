@@ -19,7 +19,7 @@ class NoteRequest extends FormRequest
     {
         return [
             'title' => 'required|string|max:255',
-            'content' => 'nullable|string',
+            'content' => 'nullable|string|max:10000',
             'is_pinned' => 'boolean',
         ];
     }

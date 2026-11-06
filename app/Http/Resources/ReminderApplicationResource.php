@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 /**
  * An application in the reminders list: the usual fields plus how long it's been without an update
- * (updated_at itself stays hidden, as everywhere else).
+ * (the reminder card's "No update for N days").
  *
  * @mixin \App\Models\JobApplication
  */

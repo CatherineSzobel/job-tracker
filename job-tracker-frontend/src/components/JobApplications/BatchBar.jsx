@@ -5,12 +5,7 @@ import SelectionBar from "../UI/SelectionBar";
 import { JOB_STATUSES, jobStatusLabel } from "../../constants/jobs";
 import { tagIdsOf } from "./batchUpdate";
 import { countOf } from "../../utils/plural";
-
-// How the tag field behaves when adding vs removing a tag
-const TAG_MODES = {
-  add: { placeholder: "Tag to add…", submitLabel: "Add", allowCreate: true },
-  remove: { placeholder: "Tag to remove…", submitLabel: "Remove", allowCreate: false },
-};
+import { BATCH_TAG_MODES } from "../../constants/tags";
 
 // A summary line's text: "Status: Applied", "+ remote", "− fintech"
 const summaryLabel = (line) => {
@@ -36,7 +31,7 @@ function PendingChange({ label, onUndo }) {
 // preview them) on the applications selected when it's made, and then the selection is cleared
 // (onClearSelection) so the next change starts from a fresh pick. The summary lists the changes until Save
 // (onSave) sends all of them in one request; Cancel leaves select mode, which drops them. Archive and
-// Restore (onApply(request)) act on the selection straight away, since they ask first, and wait until
+// Restore (onApply()) act on the selection straight away (the toast offers Undo), and wait until
 // unsaved changes are saved or undone.
 export default function BatchBar({ selectedJobs, actions, tags, changes, onSave, onApply, onClearSelection, onCreateTag, onCancel, busy = false }) {
   // "add" or "remove" while the tag field is open
@@ -97,9 +92,9 @@ export default function BatchBar({ selectedJobs, actions, tags, changes, onSave,
               tags={tagChoices}
               onSelect={pickTag}
               onCreate={onCreateTag}
-              allowCreate={TAG_MODES[tagMode].allowCreate}
-              placeholder={TAG_MODES[tagMode].placeholder}
-              submitLabel={TAG_MODES[tagMode].submitLabel}
+              allowCreate={BATCH_TAG_MODES[tagMode].allowCreate}
+              placeholder={BATCH_TAG_MODES[tagMode].placeholder}
+              submitLabel={BATCH_TAG_MODES[tagMode].submitLabel}
             />
           </div>
         ) : (
@@ -114,12 +109,12 @@ export default function BatchBar({ selectedJobs, actions, tags, changes, onSave,
         ))}
 
       {actions.includes("archive") && (
-        <button type="button" disabled={actsNowDisabled} title={actsNowTitle} onClick={() => onApply({ is_archived: true })} className="btn-bar">
+        <button type="button" disabled={actsNowDisabled} title={actsNowTitle} onClick={onApply} className="btn-bar">
           Archive
         </button>
       )}
       {actions.includes("restore") && (
-        <button type="button" disabled={actsNowDisabled} title={actsNowTitle} onClick={() => onApply({ is_archived: false })} className="btn-bar">
+        <button type="button" disabled={actsNowDisabled} title={actsNowTitle} onClick={onApply} className="btn-bar">
           Restore
         </button>
       )}

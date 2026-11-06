@@ -2,11 +2,9 @@ import { ExternalLink, Plus } from "lucide-react";
 import Avatar from "../UI/Avatar";
 import Card from "../UI/Card";
 import RemoveButton from "../UI/RemoveButton";
-import { PREP_LIMITS } from "../../constants/interviewPrep";
+import { PREP_LIMITS, EMPTY_PREP_PERSON } from "../../constants/interviewPrep";
 import { removeAt, replaceAt } from "../../utils/lists";
 import { toSavableUrl } from "./prepDocument";
-
-const EMPTY_PERSON = { name: "", role: "", url: "" };
 
 // The "People you're meeting" card. A person is saved once they have a name; a link once it's an http(s)
 // link (until then the row says so).
@@ -19,7 +17,7 @@ export default function PeopleList({ people, onChange }) {
       title="People you're meeting"
       action={
         people.length < PREP_LIMITS.people && (
-          <button type="button" onClick={() => onChange([...people, EMPTY_PERSON])} className="btn-soft">
+          <button type="button" onClick={() => onChange([...people, EMPTY_PREP_PERSON])} className="btn-soft">
             <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
             Add person
           </button>

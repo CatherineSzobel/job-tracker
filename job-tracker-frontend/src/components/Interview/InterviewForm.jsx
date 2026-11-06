@@ -81,6 +81,21 @@ export default function InterviewForm({
             </div>
 
             <div>
+                <label htmlFor="interview-meeting-url" className="input-label">
+                    Meeting link <span className="font-normal text-muted">(optional)</span>
+                </label>
+                <input
+                    id="interview-meeting-url"
+                    type="url"
+                    name="meeting_url"
+                    placeholder="https://… (Zoom, Teams, Meet)"
+                    value={newInterview.meeting_url ?? ""}
+                    onChange={handleChange}
+                    className="input-field"
+                />
+            </div>
+
+            <div>
                 <label htmlFor="interview-notes" className="input-label">
                     Prep notes <span className="font-normal text-muted">(optional)</span>
                 </label>

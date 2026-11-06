@@ -6,22 +6,18 @@ import { useToastStore } from "../../stores/useToastStore";
 import { formatShortDate } from "../../utils/formatDate";
 import CardTags from "../Tags/CardTags";
 import StatusChip from "../UI/StatusChip";
+import { restoreJob } from "./useArchiveWithTodos";
 
-// An archived application: position (link to its page), company and status, when it was applied for, tags,
+// An archived application: position (link to its page), company and status, when it was applied for and archived, tags,
 // then Restore and a trash button to delete it for good. onRemove(id) is called after it's restored or deleted.
+// Restoring offers Undo on the toast, which calls onUndo([id]) to archive it again.
 // In select mode (selecting) clicking the card calls onToggleSelect(id) and the actions are hidden.
 // pendingChanges (useBatchChanges().forJob): this application's unsaved batch change to preview, or null.
-export default function ArchivedJobCard({ job, onRemove, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
+export default function ArchivedJobCard({ job, onRemove, onUndo, selecting = false, selected = false, onToggleSelect, pendingChanges = null }) {
     const showToast = useToastStore((state) => state.showToast);
 
     const restore = async () => {
-        try {
-            await API.put(`/job-applications/${job.id}`, { is_archived: false });
-            onRemove?.(job.id);
-        } catch (err) {
-            console.error(err);
-            showToast("Failed to restore job");
-        }
+        if (await restoreJob(job, () => onUndo?.([job.id]))) onRemove?.(job.id);
     };
 
     const deleteForGood = async () => {
@@ -67,7 +63,13 @@ export default function ArchivedJobCard({ job, onRemove, selecting = false, sele
                 <StatusChip status={job.status} />
             </div>
 
-            {job.applied_date && <p className="text-sm text-muted">Applied {formatShortDate(job.applied_date)}</p>}
+            {(job.applied_date || job.archived_at) && (
+                <p className="text-sm text-muted">
+                    {[job.applied_date && `Applied ${formatShortDate(job.applied_date)}`, job.archived_at && `archived ${formatShortDate(job.archived_at)}`]
+                        .filter(Boolean)
+                        .join(" · ")}
+                </p>
+            )}
 
             <CardTags
                 tags={job.tags}

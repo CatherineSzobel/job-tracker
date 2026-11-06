@@ -6,12 +6,7 @@ import { showToast } from "../stores/useToastStore";
 import Avatar from "../components/UI/Avatar";
 import PageHeader from "../components/UI/PageHeader";
 import PageLoader from "../components/UI/PageLoader";
-
-const TEXT_FIELDS = [
-  { key: "name", label: "Name", placeholder: "Your name" },
-  { key: "title", label: "Title", placeholder: "Frontend Developer" },
-  { key: "location", label: "Location", placeholder: "City, Country" },
-];
+import { PROFILE_TEXT_FIELDS } from "../constants/profile";
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -90,7 +85,7 @@ export default function Profile() {
       {editing ? (
         <form onSubmit={saveProfile} aria-label="Edit profile" className="flex flex-col gap-6 rounded-2xl border border-line bg-surface p-6 md:p-8">
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-x-6 gap-y-4">
-            {TEXT_FIELDS.map(({ key, label, placeholder }) => (
+            {PROFILE_TEXT_FIELDS.map(({ key, label, placeholder }) => (
               <div key={key}>
                 <label htmlFor={`profile-${key}`} className="input-label">
                   {label}

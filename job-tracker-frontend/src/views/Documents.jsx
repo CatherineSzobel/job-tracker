@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { confirmAction } from "../stores/useConfirmStore";
-import { Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { Archive, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import API from "../api/axios";
-import { showToast } from "../stores/useToastStore";
+import { showToast, showUndoToast } from "../stores/useToastStore";
 import Modal from "../components/UI/Modal";
 import PageHeader from "../components/UI/PageHeader";
 import PageLoader from "../components/UI/PageLoader";
@@ -10,17 +10,10 @@ import { SEGMENTED_TRACK_CLASSES, segmentClasses } from "../components/UI/segmen
 import DocumentForm from "../components/Documents/DocumentForm";
 import OpenDocumentButton from "../components/Documents/OpenDocumentButton";
 import { apiErrorMessage, formatFileSize, linkDomain } from "../components/Documents/documentUtils";
-import { CATEGORY_BY_VALUE, DOCUMENT_CATEGORIES } from "../constants/documents";
+import { CATEGORY_BY_VALUE, DOCUMENT_ADD_TABS, DOCUMENT_FILTER_CHIPS } from "../constants/documents";
 import { formatShortDate } from "../utils/formatDate";
 import { countOf } from "../utils/plural";
 import { filterChipClasses } from "../components/UI/filterChipClasses";
-
-const ADD_TABS = [
-  { value: "file", label: "Upload file" },
-  { value: "link", label: "Add link" },
-];
-
-const FILTER_CHIPS = [{ value: "all", label: "All" }, ...DOCUMENT_CATEGORIES];
 
 export default function Documents() {
   const [documents, setDocuments] = useState([]);
@@ -30,12 +23,18 @@ export default function Documents() {
   const [addTab, setAddTab] = useState(null); // "file" | "link" while the Add modal is open
   const [editingDocument, setEditingDocument] = useState(null);
 
+  // Also run after an archive is undone, to put the document back in its place
+  const loadDocuments = useCallback(
+    () =>
+      API.get("/documents", { params: { include_archived: showArchived ? 1 : 0 } })
+        .then((res) => setDocuments(res.data.data))
+        .catch((err) => console.error(err)),
+    [showArchived]
+  );
+
   useEffect(() => {
-    API.get("/documents", { params: { include_archived: showArchived ? 1 : 0 } })
-      .then((res) => setDocuments(res.data.data))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, [showArchived]);
+    loadDocuments().finally(() => setLoading(false));
+  }, [loadDocuments]);
 
   const visibleDocuments =
     categoryFilter === "all" ? documents : documents.filter((item) => item.category === categoryFilter);
@@ -53,23 +52,41 @@ export default function Documents() {
     setEditingDocument(null);
   };
 
+  const undoArchive = async (item) => {
+    try {
+      await API.post(`/documents/${item.id}/restore`);
+      loadDocuments();
+    } catch (err) {
+      console.error(err);
+      showToast(apiErrorMessage(err, "Couldn't undo archiving the document"));
+    }
+  };
+
+  // The server deletes a document that isn't attached anywhere, and archives one that is (the applications keep
+  // it). A real delete asks first; an archive happens straight away and the toast offers Undo. archive_only makes
+  // sure an archive never turns into an unasked delete: if it was detached meanwhile, the server refuses (409) and
+  // the reloaded list shows it with Delete.
   const deleteDocument = async (item) => {
-    const count = item.applications_count;
-    const message = count > 0
-      ? `"${item.name}" is attached to ${countOf(count, "application")}, so it will be archived instead of deleted. It stays visible on those applications and you can restore it later.`
-      : `Delete "${item.name}"? This can't be undone.`;
-    if (!(await confirmAction({ message, confirmLabel: count > 0 ? "Archive" : "Delete", danger: count === 0 }))) return;
+    const willArchive = item.applications_count > 0;
+    if (!willArchive && !(await confirmAction({ message: `Delete "${item.name}"? This can't be undone.`, confirmLabel: "Delete", danger: true }))) {
+      return;
+    }
 
     try {
-      const res = await API.delete(`/documents/${item.id}`);
+      const res = await API.delete(`/documents/${item.id}`, { params: willArchive ? { archive_only: 1 } : {} });
       if (res.status === 204 || !showArchived) {
         setDocuments((prev) => prev.filter((other) => other.id !== item.id));
       } else {
         replaceDocument(res.data.data);
       }
+      if (res.status !== 204) {
+        const count = res.data.data.applications_count;
+        showUndoToast(`"${item.name}" archived; it stays on the ${countOf(count, "application")} it was sent with`, () => undoArchive(item));
+      }
     } catch (err) {
       console.error(err);
       showToast(apiErrorMessage(err, "Failed to delete document"));
+      if (err.response?.status === 409) loadDocuments();
     }
   };
 
@@ -104,7 +121,7 @@ export default function Documents() {
         {/* The type chips scroll sideways rather than wrapping into several rows (p-0.5 keeps the focus ring visible) */}
         <div className="min-w-0 flex-[1_1_320px] overflow-x-auto p-0.5">
           <div role="group" aria-label="Filter by type" className="flex w-max gap-2">
-            {FILTER_CHIPS.map(({ value, label }) => (
+            {DOCUMENT_FILTER_CHIPS.map(({ value, label }) => (
               <button
                 key={value}
                 type="button"
@@ -130,7 +147,9 @@ export default function Documents() {
           {visibleDocuments.map((item) => {
             const { icon: Icon, label } = CATEGORY_BY_VALUE[item.category];
             const details = item.kind === "file" ? `${formatFileSize(item.size)} · ${formatShortDate(item.created_at)}` : linkDomain(item.url);
-            const sentWith = item.applications_count > 0 ? `Sent with ${countOf(item.applications_count, "application")}` : "Not sent with an application yet";
+            // Its delete button says what it will do: archive one that's attached to applications, delete one that isn't
+            const isAttached = item.applications_count > 0;
+            const sentWith = isAttached ? `Sent with ${countOf(item.applications_count, "application")}` : "Not sent with an application yet";
 
             return (
               <li key={item.id} className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 md:px-6">
@@ -166,11 +185,11 @@ export default function Documents() {
                       <button
                         type="button"
                         onClick={() => deleteDocument(item)}
-                        aria-label={`Delete ${item.name}`}
-                        title="Delete"
-                        className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-danger transition-colors hover:bg-rejected-bg"
+                        aria-label={`${isAttached ? "Archive" : "Delete"} ${item.name}`}
+                        title={isAttached ? "Archive (it stays on its applications)" : "Delete"}
+                        className={isAttached ? "btn-icon-sm" : "inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-danger transition-colors hover:bg-rejected-bg"}
                       >
-                        <Trash2 size={18} aria-hidden="true" />
+                        {isAttached ? <Archive size={18} aria-hidden="true" /> : <Trash2 size={18} aria-hidden="true" />}
                       </button>
                     </>
                   )}
@@ -184,7 +203,7 @@ export default function Documents() {
       {addTab && (
         <Modal title="Add document or link" onClose={() => setAddTab(null)}>
           <div role="group" aria-label="What to add" className={`${SEGMENTED_TRACK_CLASSES} mb-4`}>
-            {ADD_TABS.map(({ value, label }) => (
+            {DOCUMENT_ADD_TABS.map(({ value, label }) => (
               <button key={value} type="button" aria-pressed={addTab === value} onClick={() => setAddTab(value)} className={segmentClasses(addTab === value)}>
                 {label}
               </button>

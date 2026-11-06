@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-
-const AUTOSAVE_DELAY_MS = 800;
+import { AUTOSAVE_DELAY_MS } from "../../constants/interviewPrep";
 
 // Saving while you type: schedule(value) saves it after a short pause, one request at a time and
 // always the latest value (last write wins). Whatever is still waiting is sent when the page unmounts,

@@ -27,18 +27,17 @@ class JobApplicationService
     public function __construct(private InterviewPrepService $interviewPrep) {}
 
     /**
-     * Create a new job application for a user
+     * Create a new job application for a user (applied today unless it's only saved for later, see JobApplication::booted())
      */
     public function create(array $data, User $user): JobApplication
     {
-        $data['applied_date'] = now()->toDateString();
-
         return $user->jobApplications()->create($data);
     }
 
     /**
-     * Update an existing job application. Archiving it also deletes its open to-dos when
-     * $deleteOpenTodos is true, or when it's null and the owner's setting is "delete".
+     * Update an existing job application. Archiving it sets archived_at and also deletes its open to-dos
+     * when $deleteOpenTodos is true, or when it's null and the owner's setting is "delete". Restoring
+     * clears archived_at. Moving on from Saved for the first time makes today the applied date.
      */
     public function update(JobApplication $job, array $data, ?bool $deleteOpenTodos = null): JobApplication
     {
@@ -46,6 +45,7 @@ class JobApplicationService
             // Only active → archived counts: the job page re-sends is_archived: true on every save
             $isBeingArchived = ! $job->is_archived && (bool) ($data['is_archived'] ?? false);
 
+            // The applied date and archived_at follow from the model's own rules (JobApplication::booted())
             $job->update($data);
 
             if ($isBeingArchived && ($deleteOpenTodos ?? $job->user->archive_todos === ArchiveTodosAction::Delete)) {
@@ -59,7 +59,8 @@ class JobApplicationService
     /**
      * Archive or restore several of the user's applications, all or nothing.
      * Any id that isn't one of theirs answers 404 before anything changes. Archiving follows the same
-     * open to-dos rule as update(): only applications going from active to archived.
+     * open to-dos rule as update(): only applications going from active to archived. Those get archived_at
+     * (already archived ones keep theirs); restoring clears it.
      *
      * @param  list<int>  $ids
      * @return EloquentCollection<int, JobApplication>
@@ -72,8 +73,8 @@ class JobApplicationService
 
             $newlyArchivedIds = $isArchived ? $jobs->where('is_archived', false)->modelKeys() : [];
 
-            // A query update, so updated_at moves too (archiving counts as an update)
-            $user->jobApplications()->whereKey($ids)->update(['is_archived' => $isArchived]);
+            // Saved one by one, so each follows the model's rules (archived_at); a selection is small
+            $jobs->each(fn (JobApplication $job) => $job->update(['is_archived' => $isArchived]));
 
             if ($newlyArchivedIds !== [] && ($deleteOpenTodos ?? $user->archive_todos === ArchiveTodosAction::Delete)) {
                 Todo::whereIn('job_application_id', $newlyArchivedIds)->where('done', false)->delete();
@@ -100,15 +101,12 @@ class JobApplicationService
             $jobs = $user->jobApplications()->whereKey($ids)->get()->keyBy('id');
             abort_if($jobs->count() !== count($ids), 404);
 
-            // One query per status, not per application. A query update, so updated_at moves too
-            // (a status change counts as an update)
-            collect($changes)->whereNotNull('status')->groupBy('status')
-                ->each(fn (Collection $group, string $status) => $user->jobApplications()
-                    ->whereKey($group->pluck('id'))
-                    ->update(['status' => $status]));
-
             foreach ($changes as $change) {
                 $job = $jobs[$change['id']];
+                // Saved one by one, so the model records the history and the applied date (JobApplication::booted())
+                if (isset($change['status'])) {
+                    $job->update(['status' => $change['status']]);
+                }
                 if (! empty($change['add_tag_ids'])) {
                     $job->tags()->syncWithoutDetaching($change['add_tag_ids']);
                 }
@@ -225,16 +223,17 @@ class JobApplicationService
     /**
      * Dashboard counts for a user's jobs (archived included), counted in the database.
      *
-     * @return array{total: int, archived: int, applied: int, interview: int, offer: int, rejected: int, todayApplications: int, weekApplications: int, upcomingInterviews: int}
+     * @return array{total: int, archived: int, saved: int, applied: int, interview: int, offer: int, rejected: int, no_response: int, withdrawn: int, todayApplications: int, weekApplications: int, upcomingInterviews: int}
      */
     public function getStatsForUser(User $user): array
     {
         $today = Carbon::today();
         $jobs = $user->jobApplications();
 
-        // One count per status: applied, interview, offer, rejected
+        // One count per JobStatus value (saved, applied, …, withdrawn), 0 for statuses nobody is in, in one query
+        $countsByStatus = $jobs->clone()->toBase()->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
         $statusCounts = collect(JobStatus::cases())
-            ->mapWithKeys(fn (JobStatus $status) => [$status->value => $jobs->clone()->where('status', $status)->count()]);
+            ->mapWithKeys(fn (JobStatus $status) => [$status->value => (int) ($countsByStatus[$status->value] ?? 0)]);
 
         return [
             'total' => $jobs->count(),

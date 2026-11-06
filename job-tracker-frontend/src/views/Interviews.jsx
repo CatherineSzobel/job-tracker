@@ -6,7 +6,8 @@ import { confirmAction } from "../stores/useConfirmStore";
 import API from "../api/axios";
 import InterviewForm from "../components/Interview/InterviewForm";
 import InterviewListCard from "../components/Interview/InterviewListCard";
-import { INTERVIEW_WHEN_OPTIONS, filterInterviews, sortOrderFor } from "../components/Interview/interviewFilters";
+import { filterInterviews, sortOrderFor } from "../components/Interview/interviewFilters";
+import { INTERVIEW_WHEN_OPTIONS } from "../constants/interviews";
 import DateGroups from "../components/UI/DateGroups";
 import PageHeader from "../components/UI/PageHeader";
 import SearchInput from "../components/UI/SearchInput";
@@ -20,7 +21,7 @@ import useSavedView from "../components/UI/useSavedView";
 import useSelection from "../components/UI/useSelection";
 import { EMPTY_INTERVIEW } from "../constants/jobs";
 import { useToastStore } from "../stores/useToastStore";
-import { toDateTimeInputValue } from "../utils/dateInput";
+import { toInterviewForm, toInterviewPayload } from "../components/Interview/interviewPayload";
 import { countOf } from "../utils/plural";
 
 const showToast = (message) => useToastStore.getState().showToast(message);
@@ -94,12 +95,7 @@ export default function Interviews() {
     setSaving(true);
 
     try {
-      const payload = {
-        type: newInterview.type || "online",
-        interview_date: newInterview.interview_date,
-        location: newInterview.location,
-        notes: newInterview.notes || "",
-      };
+      const payload = toInterviewPayload(newInterview);
 
       if (editingInterview) {
         const res = await API.put(`/interviews/${editingInterview.id}`, payload);
@@ -164,13 +160,7 @@ export default function Interviews() {
 
   const startEdit = (interview) => {
     setEditingInterview(interview);
-    setNewInterview({
-      job_id: interview.job_application_id,
-      type: interview.type || "",
-      interview_date: toDateTimeInputValue(interview.interview_date),
-      location: interview.location || "",
-      notes: interview.notes || "",
-    });
+    setNewInterview(toInterviewForm(interview));
     setShowForm(true);
   };
 

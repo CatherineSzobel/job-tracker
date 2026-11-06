@@ -35,6 +35,12 @@ export default function Showcase() {
     document.getElementById(tabId(slide.id))?.focus();
   };
 
+  // Fetch a tab's screenshot (in the current theme) when it's pointed at or focused, so choosing it is instant;
+  // the browser's cache makes a repeat free
+  const preloadScreenshot = (slide) => {
+    new Image().src = screenshotFor(slide.fileName, darkMode);
+  };
+
   const moveWithKeys = (event) => {
     const currentIndex = AVAILABLE_SLIDES.indexOf(activeSlide);
     const lastIndex = AVAILABLE_SLIDES.length - 1;
@@ -77,6 +83,8 @@ export default function Showcase() {
                     aria-controls={PANEL_ID}
                     tabIndex={isSelected ? 0 : -1}
                     onClick={() => setActiveSlideId(slide.id)}
+                    onPointerEnter={() => preloadScreenshot(slide)}
+                    onFocus={() => preloadScreenshot(slide)}
                     className={featureClasses(isSelected)}
                   >
                     <FeatureIcon size={20} aria-hidden="true" />
@@ -92,16 +100,26 @@ export default function Showcase() {
             aria-labelledby={showList ? tabId(activeSlide.id) : undefined}
             className="flex min-w-0 flex-[999_1_560px] flex-col gap-4"
           >
+            {/* One <img> whose src changes (no key): the current picture stays until the next has loaded */}
             <Screenshot
-              key={activeSlide.id}
               src={screenshotFor(activeSlide.fileName, darkMode)}
               alt={activeSlide.alt}
               frameClassName="bg-surface"
               lazy
             />
-            <figcaption className="flex flex-col gap-1">
-              <strong className="text-xl/8 font-semibold">{activeSlide.label}</strong>
-              <span className="text-lg/8 text-muted">{activeSlide.caption}</span>
+            {/* Every caption in the same grid cell, only the active one visible: the cell is as tall as the longest,
+                so a caption that wraps to more lines doesn't move what's below (visibility also hides the others
+                from screen readers) */}
+            <figcaption className="grid">
+              {AVAILABLE_SLIDES.map((slide) => (
+                <div
+                  key={slide.id}
+                  className={`col-start-1 row-start-1 flex flex-col gap-1 ${slide.id === activeSlide.id ? "" : "invisible"}`}
+                >
+                  <strong className="text-xl/8 font-semibold">{slide.label}</strong>
+                  <span className="text-lg/8 text-muted">{slide.caption}</span>
+                </div>
+              ))}
             </figcaption>
           </figure>
         </div>

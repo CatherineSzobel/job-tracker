@@ -1,16 +1,11 @@
-import { CalendarDays, LayoutGrid } from "lucide-react";
 import { SEGMENTED_TRACK_CLASSES, segmentClasses } from "./segmentedClasses";
+import { LIST_VIEWS } from "../../constants/views";
 
-const VIEW_OPTIONS = [
-  { value: "grid", label: "Grid", icon: LayoutGrid },
-  { value: "grouped", label: "By date", icon: CalendarDays },
-];
-
-// Segmented control for the list's view: Grid or grouped by date
-export default function ViewToggle({ view, onChange }) {
+// Segmented control for the list's view: Grid or grouped by date, or the given views (e.g. with Board)
+export default function ViewToggle({ view, onChange, views = LIST_VIEWS }) {
   return (
     <div role="group" aria-label="View" className={SEGMENTED_TRACK_CLASSES}>
-      {VIEW_OPTIONS.map((option) => {
+      {views.map((option) => {
         const ViewIcon = option.icon;
         return (
           <button

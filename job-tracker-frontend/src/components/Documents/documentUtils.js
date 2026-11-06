@@ -1,17 +1,11 @@
 import API from "../../api/axios";
 import { ACCEPTED_FILE_EXTENSIONS, MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_MB } from "../../constants/documents";
+import { saveBlob } from "../../utils/saveBlob";
 
-// Authenticated blob fetch (same pattern as the Excel export), saved under the original filename
+// Authenticated blob fetch, saved under the original filename
 export async function downloadDocument(fileDocument) {
   const res = await API.get(`/documents/${fileDocument.id}/download`, { responseType: "blob" });
-  const url = window.URL.createObjectURL(new Blob([res.data]));
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", fileDocument.original_filename);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  saveBlob(res, fileDocument.original_filename);
 }
 
 // e.g. 2048 → "2 KB", 3355443 → "3.2 MB"

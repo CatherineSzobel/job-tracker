@@ -21,7 +21,11 @@ class InterviewResource extends JsonResource
             'interview_date' => $this->interview_date,
             'type' => $this->type,
             'location' => $this->location,
+            // The video call link, for the Join button
+            'meeting_url' => $this->meeting_url,
             'notes' => $this->notes,
+            // The debrief's 1–5 stars, shown on past interview cards
+            'rating' => $this->rating,
             // For the "Prep 3/7" chip on interview cards; lists don't carry the prep document itself
             'prep_progress' => [
                 'done' => count(array_filter($checklist, fn (array $item) => (bool) $item['done'])),

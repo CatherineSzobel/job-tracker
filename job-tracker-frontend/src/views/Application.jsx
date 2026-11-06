@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { format, isPast, parseISO } from "date-fns";
+import { format, formatDistanceToNow, isPast, parseISO } from "date-fns";
 import { ChevronLeft, ClipboardList, EllipsisVertical, ExternalLink, MapPin, Pencil, Plus, StickyNote, Tag } from "lucide-react";
 import API from "../api/axios";
 import AttachedDocuments from "../components/Documents/AttachedDocuments";
+import ApplicationActivity from "../components/JobApplications/ApplicationActivity";
+import ApplicationDetailsFields from "../components/JobApplications/ApplicationDetailsFields";
+import ContactLink from "../components/JobApplications/ContactLink";
 import InterviewCard from "../components/Interview/InterviewCard";
 import InterviewForm from "../components/Interview/InterviewForm";
-import useArchiveWithTodos, { archiveChanges } from "../components/JobApplications/useArchiveWithTodos";
+import useArchiveWithTodos, { archiveChanges, restoreJob, showArchivedToast, undoArchiving } from "../components/JobApplications/useArchiveWithTodos";
 import TagChip from "../components/Tags/TagChip";
 import TagInput from "../components/Tags/TagInput";
 import useTags from "../components/Tags/useTags";
@@ -15,24 +18,18 @@ import Card from "../components/UI/Card";
 import Menu, { MenuDivider, MenuItem } from "../components/UI/Menu";
 import Modal from "../components/UI/Modal";
 import PageLoader from "../components/UI/PageLoader";
-import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, STATUS_BADGE_CLASSES, priorityLabel } from "../constants/jobs";
+import { EMPTY_INTERVIEW, JOB_STATUSES, PRIORITIES, PRIORITY_TEXT_CLASSES, jobStatusFor, priorityLabel, sourceLabel, APPLICATION_EDIT_FIELDS } from "../constants/jobs";
 import { confirmAction } from "../stores/useConfirmStore";
 import { usePageTitleStore } from "../stores/usePageTitleStore";
 import { useToastStore } from "../stores/useToastStore";
+import { toInterviewPayload } from "../components/Interview/interviewPayload";
+import { formatSalary } from "../utils/formatSalary";
 
-// The 2×2 status picker's buttons: the chosen one in its status colours with a border of the same hue
+// The two-column status picker's buttons: the chosen one in its status colours with a border of the same hue
 const statusOptionClasses = (isChosen, status) =>
   `min-h-10 rounded-lg border text-sm font-semibold transition-colors ${
-    isChosen ? `border-current ${STATUS_BADGE_CLASSES[status]}` : "border-line bg-surface text-muted-2 hover:bg-soft"
+    isChosen ? `border-current ${jobStatusFor(status)?.badge}` : "border-line bg-surface text-muted-2 hover:bg-soft"
   }`;
-
-// The fields the header shows as inputs while editing
-const HEADER_FIELDS = [
-  { name: "position", label: "Position", required: true },
-  { name: "company_name", label: "Company", required: true },
-  { name: "location", label: "Location", required: true },
-  { name: "job_link", label: "Link to the posting", type: "url" },
-];
 
 export default function Application() {
   const navigate = useNavigate();
@@ -48,6 +45,11 @@ export default function Application() {
   // "Add interview" form (null while closed)
   const [newInterview, setNewInterview] = useState(null);
   const [savingInterview, setSavingInterview] = useState(false);
+  // Counts to-do changes, so the activity timeline refetches (a ticked-off to-do shows there)
+  const [todoChanges, setTodoChanges] = useState(0);
+
+  // Re-renders when the next interview starts, so it joins the activity timeline (activityKey) on an open page
+  const [, setInterviewsStarted] = useState(0);
 
   const { tags: allTags, createTag } = useTags();
   const showToast = useToastStore((state) => state.showToast);
@@ -68,6 +70,17 @@ export default function Application() {
     fetchJob();
   }, [id]);
 
+  const nextStart = Math.min(...(job?.interviews ?? []).map((interview) => new Date(interview.interview_date)).filter((date) => date > Date.now()));
+  useEffect(() => {
+    if (!Number.isFinite(nextStart)) return;
+    // setTimeout can't wait longer than about 24 days
+    const timer = setTimeout(() => setInterviewsStarted((count) => count + 1), Math.min(nextStart - Date.now(), 2 ** 31 - 1));
+    return () => clearTimeout(timer);
+  }, [nextStart]);
+
+  // The to-dos card reports its open ones, so Archive's prompt and toast use the current number
+  const setOpenTodosCount = useCallback((count) => setJob((current) => current && { ...current, open_todos_count: count }), []);
+
   // The breadcrumb shows the position instead of "Application"
   const savedPosition = editing ? originalJob?.position : job?.position;
   useEffect(() => {
@@ -84,8 +97,13 @@ export default function Application() {
   };
 
   const cancelEditing = () => {
-    // Tags and documents save on their own, so Cancel keeps the current ones
-    setJob((currentJob) => ({ ...originalJob, tags: currentJob.tags, documents: currentJob.documents }));
+    // Tags, documents and to-dos save on their own, so Cancel keeps the current ones
+    setJob((currentJob) => ({
+      ...originalJob,
+      tags: currentJob.tags,
+      documents: currentJob.documents,
+      open_todos_count: currentJob.open_todos_count,
+    }));
     setEditing(false);
   };
 
@@ -98,7 +116,7 @@ export default function Application() {
       setEditing(false);
     } catch (err) {
       console.error(err);
-      showToast("Failed to save changes");
+      showToast(err.response?.data?.message || "Failed to save changes");
     } finally {
       setSaving(false);
     }
@@ -139,8 +157,7 @@ export default function Application() {
     e.preventDefault();
     setSavingInterview(true);
     try {
-      const { job_id, ...payload } = newInterview;
-      const res = await API.post(`/job-applications/${job_id}/interviews`, payload);
+      const res = await API.post(`/job-applications/${newInterview.job_id}/interviews`, toInterviewPayload(newInterview));
       setJob((prev) => ({ ...prev, interviews: [...(prev.interviews ?? []), res.data.data] }));
       setNewInterview(null);
     } catch (err) {
@@ -151,11 +168,23 @@ export default function Application() {
     }
   };
 
-  // deleteOpenTodos: the answer from the to-dos prompt, or undefined to follow the user's setting
+  // Restores it. Still on Applications (where archiving went), it comes back to this page; anywhere else the
+  // user has moved on, so they stay where they are. Read at undo time: this page has unmounted by then.
+  const undoArchive = async () => {
+    if (!(await undoArchiving([job.id], false))) return;
+    if (window.location.pathname === "/applications") {
+      navigate(`/jobs/${job.id}`);
+    } else {
+      showToast("Application restored", "success");
+    }
+  };
+
+  // deleteOpenTodos: the answer from the to-dos prompt, or undefined to follow the user's setting.
+  // The toast offers Undo, unless open to-dos were deleted too.
   const archive = async (deleteOpenTodos) => {
     try {
-      await API.put(`/job-applications/${job.id}`, archiveChanges(deleteOpenTodos));
-      showToast("Application archived", "success");
+      const res = await API.put(`/job-applications/${job.id}`, archiveChanges(deleteOpenTodos));
+      showArchivedToast([job], [res.data.data], undoArchive);
       navigate("/applications");
     } catch (err) {
       console.error(err);
@@ -164,6 +193,20 @@ export default function Application() {
   };
 
   const { requestArchive, prompt: archivePrompt } = useArchiveWithTodos(archive);
+
+  // Archives it again. The batch answer has no interviews or documents, so it's merged into what's shown.
+  const undoRestore = async () => {
+    const archived = await undoArchiving([job.id], true);
+    if (archived) {
+      setJob((current) => ({ ...current, ...archived[0] }));
+    }
+  };
+
+  // An archived application's ⋮ offers Restore instead of Archive; it stays on this page
+  const restore = async () => {
+    const restored = await restoreJob(job, undoRestore);
+    if (restored) setJob(restored);
+  };
 
   const deleteJob = async () => {
     if (!(await confirmAction({ message: "Delete this job application?", confirmLabel: "Delete", danger: true }))) return;
@@ -197,8 +240,12 @@ export default function Application() {
   }
 
   const jobTags = job.tags ?? [];
+  const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
   const jobTagIds = jobTags.map((tag) => tag.id);
   const interviews = [...(job.interviews ?? [])].sort((first, second) => new Date(first.interview_date) - new Date(second.interview_date));
+  // Saves and status changes move updated_at; documents, to-dos and interviews that have started are tracked separately
+  const pastInterviewIds = interviews.filter((interview) => isPast(new Date(interview.interview_date))).map((interview) => interview.id);
+  const activityKey = [job.updated_at, (job.documents ?? []).map((document) => document.id).join(","), todoChanges, pastInterviewIds.join(",")].join("|");
   const nextInterviewId = interviews.find((interview) => !isPast(new Date(interview.interview_date)))?.id;
 
   return (
@@ -213,7 +260,7 @@ export default function Application() {
         {editing ? (
           // Only the header fields are a <form>: the tag and follow-up forms below can't sit inside one
           <form id="application-edit-form" onSubmit={saveChanges} className="grid min-w-0 flex-[1_1_480px] gap-4 sm:grid-cols-2">
-            {HEADER_FIELDS.map(({ name, label, type = "text", required = false }) => (
+            {APPLICATION_EDIT_FIELDS.map(({ name, label, type = "text", required = false }) => (
               <div key={name}>
                 <label htmlFor={`edit-${name}`} className="input-label">
                   {label}
@@ -273,7 +320,11 @@ export default function Application() {
                 Edit
               </button>
               <Menu label="More actions" buttonClassName="btn-secondary w-12 px-0" buttonContent={<EllipsisVertical size={20} aria-hidden="true" />}>
-                <MenuItem onClick={() => requestArchive({ openTodosCount: job.open_todos_count ?? 0 })}>Archive</MenuItem>
+                {job.is_archived ? (
+                  <MenuItem onClick={restore}>Restore</MenuItem>
+                ) : (
+                  <MenuItem onClick={() => requestArchive({ openTodosCount: job.open_todos_count ?? 0 })}>Archive</MenuItem>
+                )}
                 <MenuDivider />
                 <MenuItem onClick={deleteJob} danger>
                   Delete application
@@ -330,7 +381,9 @@ export default function Application() {
             )}
           </Card>
 
-          <JobFollowUps job={job} />
+          <JobFollowUps job={job} onChange={() => setTodoChanges((count) => count + 1)} onOpenCountChange={setOpenTodosCount} />
+
+          <ApplicationActivity jobId={job.id} refreshKey={activityKey} />
         </div>
 
         <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-6">
@@ -377,7 +430,45 @@ export default function Application() {
               <dd className="font-semibold">{job.applied_date ? format(parseISO(job.applied_date), "d MMM yyyy") : "—"}</dd>
               <dt className="text-muted">Location</dt>
               <dd className="font-semibold break-words">{job.location || "—"}</dd>
+              {/* The optional details only when filled in; while editing they're the inputs below */}
+              {!editing && (
+                <>
+                  {job.deadline && (
+                    <>
+                      <dt className="text-muted">Apply by</dt>
+                      <dd className="font-semibold">{format(parseISO(job.deadline), "d MMM yyyy")}</dd>
+                    </>
+                  )}
+                  {salary && (
+                    <>
+                      <dt className="text-muted">Salary</dt>
+                      <dd className="font-semibold break-words">{salary}</dd>
+                    </>
+                  )}
+                  {job.source && (
+                    <>
+                      <dt className="text-muted">Found via</dt>
+                      <dd className="font-semibold">{sourceLabel(job.source)}</dd>
+                    </>
+                  )}
+                  {(job.contact_name || job.contact_details) && (
+                    <>
+                      <dt className="self-start text-muted">Contact</dt>
+                      <dd className="flex min-w-0 flex-col">
+                        {job.contact_name && <span className="font-semibold break-words">{job.contact_name}</span>}
+                        {job.contact_details && <ContactLink contact={job.contact_details} />}
+                      </dd>
+                    </>
+                  )}
+                </>
+              )}
+              <dt className="text-muted">Last update</dt>
+              <dd className="font-semibold" title={format(parseISO(job.updated_at), "d MMM yyyy, HH:mm")}>
+                {formatDistanceToNow(parseISO(job.updated_at), { addSuffix: true })}
+              </dd>
             </dl>
+
+            {editing && <ApplicationDetailsFields values={job} onChange={handleChange} idPrefix="edit" form="application-edit-form" />}
           </Card>
 
           {/* Tags save straight away, also while the other fields are being edited */}

@@ -1,13 +1,17 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { Clock, EllipsisVertical, MapPin } from "lucide-react";
+import { Clock, EllipsisVertical, MapPin, Star, Video } from "lucide-react";
 import DateBlock from "../UI/DateBlock";
 import Menu, { MenuDivider, MenuItem } from "../UI/Menu";
+import { addInterviewToCalendar } from "./interviewCalendar";
 import { isUpcoming } from "./interviewFilters";
+import { RATING_VALUES } from "../../constants/interviewPrep";
 import { interviewTypeLabel } from "../../constants/jobs";
+import { countdownLabel } from "../../utils/countdown";
 
 // An interview on the Interviews page: date block (filled for the next one), company (link to the prep page)
-// and position, ⋮ with Edit and Delete, type / time / place, then prep progress or the debrief link.
+// and position, ⋮ with Edit, Add to calendar (upcoming) and Delete, type / time and countdown / place / "Join call",
+// then prep progress, or the debrief rating and link.
 // In select mode clicking the card calls onToggleSelect(id), and the links and actions are hidden.
 export default function InterviewListCard({ interview, isNext = false, onEdit, onDelete, selecting = false, selected = false, onToggleSelect }) {
   const upcoming = isUpcoming(interview);
@@ -49,6 +53,7 @@ export default function InterviewListCard({ interview, isNext = false, onEdit, o
           <div className="-mt-1 -mr-2">
             <Menu label={`Actions for ${company}`} buttonClassName="btn-icon-sm" buttonContent={<EllipsisVertical size={20} aria-hidden="true" />} width="w-48">
               <MenuItem onClick={() => onEdit(interview)}>Edit</MenuItem>
+              {upcoming && <MenuItem onClick={() => addInterviewToCalendar(interview)}>Add to calendar</MenuItem>}
               <MenuDivider />
               <MenuItem onClick={() => onDelete(interview)} danger>
                 Delete
@@ -62,13 +67,24 @@ export default function InterviewListCard({ interview, isNext = false, onEdit, o
         <span className="rounded-full bg-accent-soft px-2.5 leading-6 font-semibold text-accent-text">{interviewTypeLabel(interview.type)}</span>
         <span className="inline-flex items-center gap-1.5">
           <Clock size={16} aria-hidden="true" />
-          {format(date, upcoming ? "HH:mm" : "d MMM yyyy · HH:mm")}
+          {upcoming ? `${format(date, "HH:mm")} · ${countdownLabel(date)}` : format(date, "d MMM yyyy · HH:mm")}
         </span>
         {interview.location && (
           <span className="inline-flex min-w-0 items-center gap-1.5 break-words">
             <MapPin size={16} aria-hidden="true" className="shrink-0" />
             {interview.location}
           </span>
+        )}
+        {upcoming && interview.meeting_url && !selecting && (
+          <a
+            href={interview.meeting_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-10 items-center gap-1.5 font-semibold text-accent-text hover:underline"
+          >
+            <Video size={16} aria-hidden="true" />
+            Join call
+          </a>
         )}
       </div>
 
@@ -96,9 +112,19 @@ export default function InterviewListCard({ interview, isNext = false, onEdit, o
               </Link>
             </>
           ) : (
-            <Link to={`/interviews/${interview.id}?tab=debrief`} className="btn-small ml-auto">
-              Open debrief
-            </Link>
+            <>
+              {interview.rating ? (
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
+                  <Star size={16} fill="currentColor" aria-hidden="true" className="text-bar-interview" />
+                  Rated {interview.rating} of {RATING_VALUES.length}
+                </span>
+              ) : (
+                <span className="text-sm text-muted">Not rated yet</span>
+              )}
+              <Link to={`/interviews/${interview.id}?tab=debrief`} className="btn-small ml-auto">
+                Open debrief
+              </Link>
+            </>
           )}
         </div>
       )}

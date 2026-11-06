@@ -28,7 +28,7 @@ export const LANDING_SHOWCASE = [
     icon: Briefcase,
     fileName: "applications.png",
     alt: "The applications page with job cards, tags and filters",
-    caption: "Every application in a grid or grouped by date, with tags, filters and batch edits.",
+    caption: "Every application in a grid, by date or on a board, with salaries, tags, filters and batch edits.",
   },
   {
     id: "interviews",
@@ -36,7 +36,7 @@ export const LANDING_SHOWCASE = [
     icon: ClipboardList,
     fileName: "interviews.png",
     alt: "The interviews page with upcoming interview cards, filters and search",
-    caption: "Upcoming and past interviews, with search and a calendar view.",
+    caption: "Upcoming and past interviews with countdowns, a Join button and Add to calendar.",
   },
   {
     id: "interview-prep",
@@ -91,3 +91,10 @@ export function screenshotFor(fileName, darkMode = false) {
   if (!lightUrl || !darkMode) return lightUrl;
   return fileUrl(fileName.replace(/\.png$/, "-dark.png")) ?? lightUrl;
 }
+
+// The landing page footer's links
+export const LANDING_FOOTER_LINKS = [
+  { label: "GitHub", href: GITHUB_URL },
+  { label: "Log in", to: "/login" },
+  { label: "Sign up", to: "/register" },
+];

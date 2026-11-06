@@ -6,7 +6,7 @@ import LandingHeader from "../components/Landing/LandingHeader";
 import Screenshot from "../components/Landing/Screenshot";
 import SectionHeading from "../components/Landing/SectionHeading";
 import Showcase from "../components/Landing/Showcase";
-import { ABOUT, GITHUB_URL, HOW_IT_WORKS, TECH_STACK, screenshotFor } from "../constants/landing";
+import { ABOUT, GITHUB_URL, HOW_IT_WORKS, TECH_STACK, screenshotFor, LANDING_FOOTER_LINKS } from "../constants/landing";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useThemeStore } from "../stores/useThemeStore";
 import { showToast } from "../stores/useToastStore";
@@ -25,12 +25,6 @@ const CTA_CLASSES = {
 };
 
 const EYEBROW_CLASSES = "text-sm/6 font-semibold tracking-[0.08em] text-accent-text uppercase";
-
-const FOOTER_LINKS = [
-  { label: "GitHub", href: GITHUB_URL },
-  { label: "Log in", to: "/login" },
-  { label: "Sign up", to: "/register" },
-];
 
 // What Job Tracker is and does, for visitors who aren't logged in (shown at "/" by ProtectedRoute)
 export default function Landing() {
@@ -171,7 +165,7 @@ export default function Landing() {
         </section>
       </main>
 
-      <Footer links={FOOTER_LINKS} />
+      <Footer links={LANDING_FOOTER_LINKS} />
     </div>
   );
 }

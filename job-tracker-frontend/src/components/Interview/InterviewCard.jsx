@@ -3,8 +3,9 @@ import { format, isPast } from "date-fns";
 import { ArrowRight } from "lucide-react";
 import DateBlock from "../UI/DateBlock";
 import { interviewTypeLabel } from "../../constants/jobs";
+import { countdownLabel } from "../../utils/countdown";
 
-// One interview on the application page: a date block (filled for the next one), type and time, a short
+// One interview on the application page: a date block (filled for the next one), type, time and countdown, a short
 // note, then prep progress (or the debrief once it's over). isNext: the next upcoming interview.
 export default function InterviewCard({ interview, isNext = false }) {
   const date = new Date(interview.interview_date);
@@ -16,7 +17,7 @@ export default function InterviewCard({ interview, isNext = false }) {
       <DateBlock date={date} top="month" tone={isNext ? "highlight" : isOver ? "muted" : "default"} />
       <div className="flex min-w-0 flex-[1_1_200px] flex-col">
         <strong className="font-semibold">
-          {interviewTypeLabel(interview.type)} interview · {isOver ? "Done" : format(date, "HH:mm")}
+          {interviewTypeLabel(interview.type)} interview · {isOver ? "Done" : `${format(date, "HH:mm")} · ${countdownLabel(date)}`}
         </strong>
         <span className="text-sm break-words text-muted">
           {interview.notes || interview.location || format(date, "EEEE d MMMM yyyy")}

@@ -1,13 +1,12 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowRight, CalendarDays, MapPin, Phone, SquareCheck, Video } from "lucide-react";
+import { ArrowRight, CalendarDays, SquareCheck } from "lucide-react";
 import Card, { CardLink } from "../UI/Card";
 import PageLoader from "../UI/PageLoader";
 import { COMING_UP_DAYS } from "../../constants/dashboard";
 import { interviewTypeLabel } from "../../constants/jobs";
 import { describeDueDate, formatDueDate } from "../../utils/dueDate";
-
-const INTERVIEW_TYPE_ICONS = { phone: Phone, online: Video, onsite: MapPin };
+import { INTERVIEW_TYPE_ICONS } from "../../constants/interviews";
 
 // "Today", "Tomorrow · Fri 9 Oct", "Sun 11 Oct"
 const dayLabel = (date) => {

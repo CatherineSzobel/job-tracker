@@ -19,7 +19,20 @@ class Todo extends Model
         return [
             'done' => 'boolean',
             'due_date' => 'date',
+            'completed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Ticking a to-do off records when (completed_at); unticking it clears that.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Todo $todo) {
+            if ($todo->isDirty('done')) {
+                $todo->completed_at = $todo->done ? now() : null;
+            }
+        });
     }
 
     public function user(): BelongsTo

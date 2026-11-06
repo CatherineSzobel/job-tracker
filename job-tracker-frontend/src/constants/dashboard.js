@@ -8,3 +8,11 @@ export const DEFAULT_DASHBOARD_TAB = DASHBOARD_TABS[0].id;
 
 // "Coming up" covers today and the following days, this many in total
 export const COMING_UP_DAYS = 7;
+
+// The Insights tab's stat tiles: the label and the stats key each one shows
+export const INSIGHT_STAT_TILES = [
+  { label: "Total applications", valueKey: "total" },
+  { label: "Applied today", valueKey: "todayApplications" },
+  { label: "Applied this week", valueKey: "weekApplications" },
+  { label: "Upcoming interviews", valueKey: "upcomingInterviews" },
+];
